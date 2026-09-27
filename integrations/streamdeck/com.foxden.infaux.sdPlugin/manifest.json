@@ -1,0 +1,72 @@
+{
+  "Actions": [
+    {
+      "Icon": "icons/actionCpu",
+      "Name": "CPU Monitor",
+      "States": [
+        {
+          "Image": "icons/actionCpu",
+          "TitleAlignment": "middle"
+        }
+      ],
+      "Tooltip": "Live CPU Temperature, Load, and Power from inFaux",
+      "UUID": "com.foxden.infaux.cpu"
+    },
+    {
+      "Icon": "icons/actionGpu",
+      "Name": "GPU Monitor",
+      "PropertyInspectorPath": "propertyInspector.html",
+      "States": [
+        {
+          "Image": "icons/actionGpu",
+          "TitleAlignment": "middle"
+        }
+      ],
+      "Tooltip": "Live GPU Temperature, Load, and Power from inFaux (Tap key to cycle GPUs)",
+      "UUID": "com.foxden.infaux.gpu"
+    },
+    {
+      "Icon": "icons/actionRam",
+      "Name": "RAM Monitor",
+      "States": [
+        {
+          "Image": "icons/actionRam",
+          "TitleAlignment": "middle"
+        }
+      ],
+      "Tooltip": "Live RAM Usage and Percentage from inFaux",
+      "UUID": "com.foxden.infaux.ram"
+    },
+    {
+      "Icon": "icons/actionNet",
+      "Name": "Network Monitor",
+      "PropertyInspectorPath": "propertyInspector.html",
+      "States": [
+        {
+          "Image": "icons/actionNet",
+          "TitleAlignment": "middle"
+        }
+      ],
+      "Tooltip": "Live Network Upload / Download from inFaux (Tap key to cycle adapters)",
+      "UUID": "com.foxden.infaux.net"
+    }
+  ],
+  "Author": "FoxDen Software",
+  "Category": "inFaux Telemetry",
+  "CategoryIcon": "icons/categoryIcon",
+  "CodePath": "index.html",
+  "Description": "Hardware Monitor for inFaux",
+  "Icon": "icons/pluginIcon",
+  "Name": "inFaux Telemetry",
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "SDKVersion": 2,
+  "Software": {
+    "MinimumVersion": "6.0"
+  },
+  "Version": "1.0.0"
+}

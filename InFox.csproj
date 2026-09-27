@@ -29,6 +29,11 @@
     <Resource Include="inFaux.ico" />
   </ItemGroup>
 
+  <!-- Embed official Stream Deck companion plugin for zero-friction LCM -->
+  <ItemGroup>
+    <EmbeddedResource Include="integrations\streamdeck\com.foxden.infaux.streamDeckPlugin" LogicalName="com.foxden.infaux.streamDeckPlugin" />
+  </ItemGroup>
+
   <!-- Framework reference for embedded ASP.NET Core Kestrel minimal API & WebSockets -->
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -49,6 +54,18 @@
   </ItemGroup>
 
 </Project>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

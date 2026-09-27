@@ -147,6 +147,15 @@ if (Test-Path $verifySrc) {
     $checksumEntries.Add("$verifyHash  verify.ps1")
 }
 
+$streamDeckSrc = Join-Path $root "integrations\streamdeck\com.foxden.infaux.streamDeckPlugin"
+$streamDeckHash = $null
+if (Test-Path $streamDeckSrc) {
+    $dest = Join-Path $publishDir "com.foxden.infaux.streamDeckPlugin"
+    Copy-Item $streamDeckSrc -Destination $dest -Force
+    $streamDeckHash = (Get-FileHash -Path $dest -Algorithm SHA256).Hash.ToLowerInvariant()
+    $checksumEntries.Add("$streamDeckHash  com.foxden.infaux.streamDeckPlugin")
+}
+
 $checksumsFile = Join-Path $publishDir "SHA256SUMS.txt"
 Set-Content -Path $checksumsFile -Value ($checksumEntries -join "`r`n") -Encoding ASCII
 
@@ -158,6 +167,7 @@ Write-Host "[+] Binary SHA-256:      $hash" -ForegroundColor Green
 if ($installHash) { Write-Host "[+] Installer SHA-256:   $installHash" -ForegroundColor Green }
 if ($uninstallHash) { Write-Host "[+] Uninstaller SHA-256: $uninstallHash" -ForegroundColor Green }
 if ($verifyHash) { Write-Host "[+] Verifier SHA-256:    $verifyHash" -ForegroundColor Green }
+if ($streamDeckHash) { Write-Host "[+] StreamDeck SHA-256:  $streamDeckHash" -ForegroundColor Green }
 Write-Host "[+] Checksums file:      $checksumsFile" -ForegroundColor Green
 
 # 6. Git Commit & Tagging (if not DryRun or SkipGit)
@@ -194,7 +204,7 @@ Write-Host @"
   | File | SHA-256 Checksum |
   | :--- | :--- |
   | **inFaux.exe** | ${bt}$hash${bt} |
-$(if ($installHash) { "  | **install.ps1** | ${bt}$installHash${bt} |`n" })$(if ($uninstallHash) { "  | **uninstall.ps1** | ${bt}$uninstallHash${bt} |`n" })$(if ($verifyHash) { "  | **verify.ps1** | ${bt}$verifyHash${bt} |`n" })
+$(if ($installHash) { "  | **install.ps1** | ${bt}$installHash${bt} |`n" })$(if ($uninstallHash) { "  | **uninstall.ps1** | ${bt}$uninstallHash${bt} |`n" })$(if ($verifyHash) { "  | **verify.ps1** | ${bt}$verifyHash${bt} |`n" })$(if ($streamDeckHash) { "  | **com.foxden.infaux.streamDeckPlugin** | ${bt}$streamDeckHash${bt} |`n" })
   Verify integrity before running (PowerShell):
   ${tripleBt}powershell
   Get-FileHash .\inFaux.exe -Algorithm SHA256
@@ -206,9 +216,10 @@ $(if ($installHash) { "  | **install.ps1** | ${bt}$installHash${bt} |`n" })$(if 
   2. publish\install.ps1
   3. publish\uninstall.ps1
   4. publish\verify.ps1
-  5. publish\SHA256SUMS.txt
-  6. publish\inFaux.exe.sha256
-  7. publish\release_notes.md (Use this for the GitHub release body!)
+  5. publish\com.foxden.infaux.streamDeckPlugin
+  6. publish\SHA256SUMS.txt
+  7. publish\inFaux.exe.sha256
+  8. publish\release_notes.md (Use this for the GitHub release body!)
 
   $rocketEmoji NEXT STEP (GIT PUSH):
   git push origin HEAD --tags
@@ -223,6 +234,7 @@ $checksumRows.Add("| **inFaux.exe** | ${bt}$hash${bt} |")
 if ($installHash) { $checksumRows.Add("| **install.ps1** | ${bt}$installHash${bt} |") }
 if ($uninstallHash) { $checksumRows.Add("| **uninstall.ps1** | ${bt}$uninstallHash${bt} |") }
 if ($verifyHash) { $checksumRows.Add("| **verify.ps1** | ${bt}$verifyHash${bt} |") }
+if ($streamDeckHash) { $checksumRows.Add("| **com.foxden.infaux.streamDeckPlugin** | ${bt}$streamDeckHash${bt} |") }
 
 $checksumSection = @"
 ## $lockEmoji Checksums & Binary Verification
@@ -250,15 +262,35 @@ else {
 # $foxEmoji inFaux v$cleanVersion
 *FoxDen Software*
 
-The modern, native hardware monitor and open telemetry server for Windows. Real telemetry. Faux drivers.
+> **Real telemetry. Faux drivers.**  
+> The modern, native, lean hardware monitor and open telemetry server for Windows.
+
+---
+
+### ⚡ Quick Install (Non-Elevated PowerShell)
+
+Run in a standard **(non-administrator)** PowerShell window:
+
+${tripleBt}powershell
+irm https://raw.githubusercontent.com/TalviFox/inFaux/main/install.ps1 | iex
+${tripleBt}
+
+*Zero-elevation install into `%LOCALAPPDATA%\Programs\inFaux`, sets up shortcuts, Task Scheduler autostart without UAC prompts, and cryptographically validates SHA-256 hashes.*
+
+---
 
 ## $memoEmoji What's New in v$cleanVersion
 
-- Initial Release of inFaux
-- Curated human-first telemetry for CPU, GPU, RAM, NVMe, Battery, and Network
-- Embedded local REST and WebSocket API on port 8765
-- Dynamic numeric temperature badge rendering in the Windows System Tray
-- Zero bloat, no drivers, sub-0.1% CPU overhead
+- **100% Zero-Driver Architecture:** Runs completely as standard user (`asInvoker`) with **0 UAC prompts**, 0 kernel drivers (`.sys`), and passes Windows 11 Core Isolation / Memory Integrity without flags.
+- **The Thermodynamic Observer:** Per-core thermal flux simulation using Newton's cooling laws, dynamic Joule heating, and passive chassis baselines.
+- **Curated Multi-View Dashboard:** Instant glanceable metric cards with 60-second rolling sparklines for CPU, GPU, RAM, Storage, and Network, plus deep per-component drilldown views.
+- **Built-In Elgato Stream Deck Companion (Zero-Config LCM):**
+  - Live CPU wattage, GPU wattage, RAM usage, and Network throughput gauges directly on your Stream Deck.
+  - Multi-GPU (`RTX 3080 Ti`, `Intel UHD 770`, APUs) and Multi-Network adapter dropdown picker + physical tap-to-cycle!
+  - 1-Click install, repair, and uninstall directly from the inFaux **Settings** tab.
+- **Embedded Kestrel REST & WebSocket API:** Open port `8765` for Home Assistant, custom widgets, or LAN monitoring without shared memory limits or paywalls.
+- **Dynamic GDI+ Numeric Tray Badge:** Renders live temperature numbers directly onto your Windows notification tray icon with thermal color-coding.
+- **Fox Coat Theme Engine:** 4 curated dark-mode color themes (Classic Cyan, Solar Gold, Blood Orange, Midnight Emerald).
 
 $checksumSection
 "@

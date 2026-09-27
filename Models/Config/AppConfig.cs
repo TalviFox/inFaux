@@ -20,6 +20,15 @@ namespace InFox.Models.Config
         [JsonPropertyName("traySensorTarget")]
         public string TraySensorTarget { get; set; } = "cpu_temp"; // "cpu_temp", "gpu_temp", "auto_max_temp"
 
+        [JsonPropertyName("theme")]
+        public string Theme { get; set; } = "RedFox"; // "RedFox", "ArcticFox", "FennecFox", "SilverFox"
+
+        [JsonPropertyName("arcticFoxLightMode")]
+        public bool ArcticFoxLightMode { get; set; } = false;
+
+        [JsonPropertyName("silverFoxOledMode")]
+        public bool SilverFoxOledMode { get; set; } = false;
+
         [JsonPropertyName("preferredNetworkAdapter")]
         public string PreferredNetworkAdapter { get; set; } = "Auto"; // "Auto" or specific adapter name/description
 
@@ -40,6 +49,9 @@ namespace InFox.Models.Config
 
         [JsonPropertyName("startWithWindows")]
         public bool StartWithWindows { get; set; } = true;
+
+        [JsonPropertyName("minimizeOnStartup")]
+        public bool MinimizeOnStartup { get; set; } = false;
 
         [JsonPropertyName("checkForUpdates")]
         public bool CheckForUpdates { get; set; } = true;

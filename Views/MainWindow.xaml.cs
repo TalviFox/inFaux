@@ -2,10 +2,12 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using InFox.Services;
 using InFox.ViewModels;
 
@@ -67,6 +69,11 @@ namespace InFox.Views
         {
             InitializeComponent();
             DataContext = new MainViewModel();
+
+            ThemeService.ThemeChanged += (theme) =>
+            {
+                Dispatcher.InvokeAsync(() => ApplyDarkThemeWindowBar());
+            };
 
             Loaded += (s, e) =>
             {
@@ -146,23 +153,24 @@ namespace InFox.Views
                 var hwnd = new WindowInteropHelper(this).Handle;
                 if (hwnd == IntPtr.Zero) return;
 
-                int useDarkMode = 1;
+                var theme = ThemeService.CurrentTheme;
+                int useDarkMode = theme.IsLightMode ? 0 : 1;
                 // Enable immersive dark mode (attribute 20 for Win11/Win10 20H1+, 19 for older Win10)
                 if (DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref useDarkMode, sizeof(int)) != 0)
                 {
                     DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1, ref useDarkMode, sizeof(int));
                 }
 
-                // Win11 (build 22000+) custom title bar color: #0C1017 (matching inFaux header)
-                int captionColor = ToColorRef(0x0C, 0x10, 0x17);
+                // Win11 (build 22000+) custom title bar color (matching active theme header)
+                int captionColor = ToColorRef(theme.DwmCaptionR, theme.DwmCaptionG, theme.DwmCaptionB);
                 DwmSetWindowAttribute(hwnd, DWMWA_CAPTION_COLOR, ref captionColor, sizeof(int));
 
-                // Win11 title text color: #ECEFF4
-                int textColor = ToColorRef(0xEC, 0xEF, 0xF4);
+                // Win11 title text color
+                int textColor = ToColorRef(theme.DwmTextR, theme.DwmTextG, theme.DwmTextB);
                 DwmSetWindowAttribute(hwnd, DWMWA_TEXT_COLOR, ref textColor, sizeof(int));
 
-                // Win11 border color: #1E293B (matching border theme)
-                int borderColor = ToColorRef(0x1E, 0x29, 0x3B);
+                // Win11 border color (matching active theme card border)
+                int borderColor = ToColorRef(theme.DwmBorderR, theme.DwmBorderG, theme.DwmBorderB);
                 DwmSetWindowAttribute(hwnd, DWMWA_BORDER_COLOR, ref borderColor, sizeof(int));
             }
             catch
@@ -250,6 +258,98 @@ namespace InFox.Views
                 System.Windows.MessageBox.Show($"Audit failed: {ex.Message}", "Audit Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        private void OnCopyHashClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string hash = UpdateService.Instance.GetLocalExecutableHash();
+                System.Windows.Clipboard.SetText(hash);
+                if (sender is System.Windows.Controls.Button btn)
+                {
+                    string oldText = btn.Content?.ToString() ?? "Copy Hash";
+                    btn.Content = "✓ Copied!";
+                    var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+                    timer.Tick += (s, args) =>
+                    {
+                        btn.Content = oldText;
+                        timer.Stop();
+                    };
+                    timer.Start();
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggingService.Instance.Error("UI", $"Failed to copy hash: {ex.Message}");
+            }
+        }
+
+        private void OnUninstallClick(object sender, RoutedEventArgs e)
+        {
+            var confirm = System.Windows.MessageBox.Show(
+                "Are you sure you want to completely uninstall inFaux?\n\nThis will remove scheduled autostart tasks, Start Menu shortcuts, and application files.",
+                "inFaux Clean System Removal",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (confirm == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    string? exePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
+                    string appDir = !string.IsNullOrEmpty(exePath) ? (Path.GetDirectoryName(exePath) ?? "") : AppDomain.CurrentDomain.BaseDirectory;
+                    string scriptPath = Path.Combine(appDir, "uninstall.ps1");
+
+                    if (!File.Exists(scriptPath))
+                    {
+                        string localPath = Path.Combine(Environment.CurrentDirectory, "uninstall.ps1");
+                        if (File.Exists(localPath)) scriptPath = localPath;
+                    }
+
+                    if (File.Exists(scriptPath))
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = "powershell.exe",
+                            Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\"",
+                            UseShellExecute = true
+                        });
+                        ExitApplication();
+                    }
+                    else
+                    {
+                        // Portable cleanup fallback
+                        StartupService.SetStartup(false);
+                        System.Windows.MessageBox.Show("inFaux scheduled startup tasks have been cleanly removed.", "inFaux Clean Removal", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show($"Uninstallation error: {ex.Message}", "Uninstall Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void OnWebsiteClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "https://github.com/TalviFox/inFaux",
+                    UseShellExecute = true
+                });
+            }
+            catch { }
+        }
+
+        private void OnThemeCardClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.Tag is string themeId)
+            {
+                (DataContext as MainViewModel)?.SelectTheme(themeId);
+            }
+        }
         private void OnCpuCardClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             (DataContext as MainViewModel)?.OpenDetail("Cpu");
@@ -292,6 +392,62 @@ namespace InFox.Views
             {
                 (DataContext as MainViewModel)?.SelectGpuById(gpuId);
             }
+        }
+
+        private void OnInstallStreamDeckPluginClick(object sender, RoutedEventArgs e)
+        {
+            if (StreamDeckService.InstallOrUpdatePlugin(out var error))
+            {
+                (DataContext as MainViewModel)?.RefreshStreamDeckState();
+                System.Windows.MessageBox.Show(
+                    $"inFaux Stream Deck Companion Plugin (v{StreamDeckService.BundledVersion}) has been successfully deployed to your Elgato Stream Deck plugins folder!\n\nIf Stream Deck is running, restart it to load or refresh your keys.",
+                    "Stream Deck Companion Installed",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            else
+            {
+                System.Windows.MessageBox.Show(
+                    $"Failed to deploy Stream Deck plugin: {error}",
+                    "Installation Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void OnUninstallStreamDeckPluginClick(object sender, RoutedEventArgs e)
+        {
+            var result = System.Windows.MessageBox.Show(
+                "Are you sure you want to remove the inFaux Companion Plugin from your Elgato Stream Deck?",
+                "Confirm Plugin Removal",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                if (StreamDeckService.UninstallPlugin(out var error))
+                {
+                    (DataContext as MainViewModel)?.RefreshStreamDeckState();
+                    System.Windows.MessageBox.Show(
+                        "inFaux Stream Deck plugin has been removed cleanly.",
+                        "Plugin Removed",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+                else
+                {
+                    System.Windows.MessageBox.Show(
+                        $"Failed to remove plugin: {error}",
+                        "Removal Error",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void OnOpenStreamDeckFolderClick(object sender, RoutedEventArgs e)
+        {
+            StreamDeckService.OpenPluginFolder();
         }
     }
 }

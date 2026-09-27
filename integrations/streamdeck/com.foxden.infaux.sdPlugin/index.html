@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>inFaux Stream Deck Plugin</title>
+</head>
+<body>
+  <canvas id="deckCanvas" width="144" height="144" style="display:none;"></canvas>
+  <script>
+    let websocket = null;
+    let pluginUUID = null;
+    const activeInstances = new Map();
+    let latestData = null;
+    let isFetching = false;
+
+    const canvas = document.getElementById('deckCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function roundRect(ctx, x, y, w, h, r) {
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, r);
+        ctx.closePath();
+        return;
+      }
+      if (w < 2 * r) r = w / 2;
+      if (h < 2 * r) r = h / 2;
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function getTempColor(t) {
+      if (!t) return '#94a3b8';
+      if (t < 55) return '#4ade80';
+      if (t < 72) return '#38bdf8';
+      if (t < 82) return '#fbbf24';
+      return '#f87171';
+    }
+
+    function renderOffline(title) {
+      ctx.clearRect(0, 0, 144, 144);
+      ctx.fillStyle = '#161922';
+      roundRect(ctx, 4, 4, 136, 136, 16);
+      ctx.fill();
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(title, 72, 36);
+
+      ctx.fillStyle = '#f87171';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText('OFFLINE', 72, 82);
+
+      ctx.fillStyle = '#64748b';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('Check inFaux', 72, 114);
+
+      return canvas.toDataURL('image/png');
+    }
+
+    function renderCpu(inst, data) {
+      if (!data || !data.cpu) return renderOffline('CPU');
+
+      const cpu = data.cpu;
+      const temp = Math.round(cpu.tempC || 0);
+      const load = Math.round(cpu.loadPercent || 0);
+      const watts = Math.round(cpu.powerWatts || 0);
+
+      ctx.clearRect(0, 0, 144, 144);
+      ctx.fillStyle = '#12151f';
+      roundRect(ctx, 4, 4, 136, 136, 16);
+      ctx.fill();
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Header row
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('CPU', 16, 32);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 15px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(`${watts}W`, 128, 32);
+
+      // Main stat: Temp
+      ctx.fillStyle = getTempColor(temp);
+      ctx.font = 'bold 40px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${temp}°C`, 72, 78);
+
+      // Sub stat: Load
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.fillText(`${load}% LOAD`, 72, 108);
+
+      // Progress bar
+      ctx.fillStyle = '#1e2433';
+      roundRect(ctx, 16, 120, 112, 8, 4);
+      ctx.fill();
+
+      const fillW = Math.max(8, (112 * Math.min(100, load)) / 100);
+      ctx.fillStyle = load > 80 ? '#f87171' : (load > 50 ? '#fbbf24' : '#38bdf8');
+      roundRect(ctx, 16, 120, fillW, 8, 4);
+      ctx.fill();
+
+      return canvas.toDataURL('image/png');
+    }
+
+    function getSelectedGpu(inst, data) {
+      if (!data) return null;
+      const targetId = inst.settings ? inst.settings.gpuId : null;
+
+      if (data.gpus && data.gpus.length > 0) {
+        if (targetId && targetId !== 'auto') {
+          const match = data.gpus.find(g => g.id === targetId);
+          if (match) return match;
+        }
+        return data.gpu || data.gpus[0];
+      }
+      return data.gpu || null;
+    }
+
+    function getGpuHeaderTitle(gpu, data) {
+      if (!data || !data.gpus || data.gpus.length <= 1) return 'GPU';
+
+      const idx = data.gpus.findIndex(g => g.id === gpu.id);
+      const name = gpu.name || '';
+
+      // Clean concise names for the 144x144 key header
+      if (name.includes('RTX')) {
+        const m = name.match(/RTX\s*\d+[A-Za-z]*/i);
+        if (m) return m[0].replace(/\s+/g, '');
+      }
+      if (name.includes('RX')) {
+        const m = name.match(/RX\s*\d+[A-Za-z]*/i);
+        if (m) return m[0].replace(/\s+/g, '');
+      }
+      if (name.includes('UHD')) return 'UHD' + (name.match(/\d{3}/)?.[0] || '');
+      if (name.includes('Iris')) return 'IrisXe';
+      if (name.includes('Arc')) return 'Arc';
+
+      return idx >= 0 ? `GPU ${idx}` : 'GPU';
+    }
+
+    function renderGpu(inst, data) {
+      const gpu = getSelectedGpu(inst, data);
+      if (!gpu) return renderOffline('GPU');
+
+      const temp = Math.round(gpu.tempC || 0);
+      const load = Math.round(gpu.loadPercent || 0);
+      const watts = Math.round(gpu.powerWatts || 0);
+      const headerTitle = getGpuHeaderTitle(gpu, data);
+
+      ctx.clearRect(0, 0, 144, 144);
+      ctx.fillStyle = '#12151f';
+      roundRect(ctx, 4, 4, 136, 136, 16);
+      ctx.fill();
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Header row
+      ctx.fillStyle = '#4ade80';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(headerTitle, 16, 32);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 15px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(watts > 0 ? `${watts}W` : 'SoC', 128, 32);
+
+      // Main stat: Temp
+      ctx.fillStyle = getTempColor(temp);
+      ctx.font = 'bold 40px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${temp}°C`, 72, 78);
+
+      // Sub stat: Load
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.fillText(`${load}% LOAD`, 72, 108);
+
+      // Progress bar
+      ctx.fillStyle = '#1e2433';
+      roundRect(ctx, 16, 120, 112, 8, 4);
+      ctx.fill();
+
+      const fillW = Math.max(8, (112 * Math.min(100, load)) / 100);
+      ctx.fillStyle = load > 80 ? '#f87171' : (load > 50 ? '#fbbf24' : '#4ade80');
+      roundRect(ctx, 16, 120, fillW, 8, 4);
+      ctx.fill();
+
+      return canvas.toDataURL('image/png');
+    }
+
+    function renderRam(inst, data) {
+      if (!data || !data.memory) return renderOffline('RAM');
+
+      const mem = data.memory;
+      const used = (mem.usedGb || 0).toFixed(1);
+      const total = Math.round(mem.totalGb || 0);
+      const pct = Math.round(mem.percent || 0);
+
+      ctx.clearRect(0, 0, 144, 144);
+      ctx.fillStyle = '#12151f';
+      roundRect(ctx, 4, 4, 136, 136, 16);
+      ctx.fill();
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Header row
+      ctx.fillStyle = '#c084fc';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('RAM', 16, 32);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 15px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(`${total}G`, 128, 32);
+
+      // Main stat: Used GB
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 36px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${used}G`, 72, 78);
+
+      // Sub stat: %
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.fillText(`${pct}% USED`, 72, 108);
+
+      // Progress bar
+      ctx.fillStyle = '#1e2433';
+      roundRect(ctx, 16, 120, 112, 8, 4);
+      ctx.fill();
+
+      const fillW = Math.max(8, (112 * Math.min(100, pct)) / 100);
+      ctx.fillStyle = '#c084fc';
+      roundRect(ctx, 16, 120, fillW, 8, 4);
+      ctx.fill();
+
+      return canvas.toDataURL('image/png');
+    }
+
+    function getSelectedAdapter(inst, data) {
+      if (!data || !data.network) return null;
+      const targetId = inst.settings ? inst.settings.adapterId : null;
+
+      if (targetId && targetId !== 'auto' && data.network.availableAdapters) {
+        const match = data.network.availableAdapters.find(a => a.id === targetId || a.name === targetId);
+        if (match) return match;
+      }
+      return null; // Null means Auto (aggregate/primary)
+    }
+
+    function getNetHeaderTitle(adapter, data) {
+      if (!adapter) return 'NETWORK';
+      const name = adapter.name || '';
+      if (name.toLowerCase().includes('wi-fi') || name.toLowerCase().includes('wifi')) return 'WI-FI';
+      if (name.toLowerCase().includes('ethernet')) return 'ETHERNET';
+      return name.length > 9 ? name.substring(0, 8) + '…' : name.toUpperCase();
+    }
+
+    function renderNet(inst, data) {
+      if (!data || !data.network) return renderOffline('NET');
+
+      const adapter = getSelectedAdapter(inst, data);
+      const down = (adapter ? adapter.downloadMbps : data.network.downloadMbps || 0).toFixed(1);
+      const up = (adapter ? adapter.uploadMbps : data.network.uploadMbps || 0).toFixed(1);
+      const headerTitle = getNetHeaderTitle(adapter, data);
+
+      ctx.clearRect(0, 0, 144, 144);
+      ctx.fillStyle = '#12151f';
+      roundRect(ctx, 4, 4, 136, 136, 16);
+      ctx.fill();
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Header
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(headerTitle, 72, 32);
+
+      // Down
+      ctx.fillStyle = '#4ade80';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`↓ ${down} M`, 72, 70);
+
+      // Up
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`↑ ${up} M`, 72, 106);
+
+      return canvas.toDataURL('image/png');
+    }
+
+    function renderInstance(inst) {
+      if (!websocket || websocket.readyState !== WebSocket.OPEN) return;
+
+      try {
+        let imgData = null;
+        if (inst.action === 'com.foxden.infaux.cpu') {
+          imgData = renderCpu(inst, latestData);
+        } else if (inst.action === 'com.foxden.infaux.gpu') {
+          imgData = renderGpu(inst, latestData);
+        } else if (inst.action === 'com.foxden.infaux.ram') {
+          imgData = renderRam(inst, latestData);
+        } else if (inst.action === 'com.foxden.infaux.net') {
+          imgData = renderNet(inst, latestData);
+        }
+
+        if (imgData) {
+          websocket.send(JSON.stringify({
+            event: 'setImage',
+            context: inst.context,
+            payload: {
+              image: imgData,
+              target: 0
+            }
+          }));
+
+          websocket.send(JSON.stringify({
+            event: 'setTitle',
+            context: inst.context,
+            payload: {
+              title: '',
+              target: 0
+            }
+          }));
+        }
+      } catch (err) {
+        console.error('Error rendering instance:', err);
+      }
+    }
+
+    function saveInstanceSettings(inst) {
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.send(JSON.stringify({
+          event: 'setSettings',
+          context: inst.context,
+          payload: inst.settings
+        }));
+      }
+    }
+
+    async function pollTelemetry() {
+      if (activeInstances.size === 0) return;
+      if (isFetching) return;
+      isFetching = true;
+
+      try {
+        const res = await fetch('http://127.0.0.1:8765/api/v1/summary', { cache: 'no-store' });
+        if (res.ok) {
+          latestData = await res.json();
+        } else {
+          latestData = null;
+        }
+      } catch (err) {
+        latestData = null;
+      } finally {
+        isFetching = false;
+      }
+
+      for (const inst of activeInstances.values()) {
+        renderInstance(inst);
+      }
+    }
+
+    setInterval(pollTelemetry, 1000);
+
+    window.connectElgatoStreamDeckSocket = function(inPort, inPluginUUID, inRegisterEvent, inInfo, inActionInfo) {
+      pluginUUID = inPluginUUID;
+      websocket = new WebSocket('ws://127.0.0.1:' + inPort);
+
+      websocket.onopen = function() {
+        websocket.send(JSON.stringify({
+          event: inRegisterEvent,
+          uuid: inPluginUUID
+        }));
+      };
+
+      websocket.onmessage = function(evt) {
+        try {
+          const data = JSON.parse(evt.data);
+          const event = data.event;
+          const context = data.context;
+          const action = data.action;
+
+          if (event === 'willAppear') {
+            const inst = {
+              action,
+              context,
+              settings: (data.payload && data.payload.settings) ? data.payload.settings : {}
+            };
+            activeInstances.set(context, inst);
+            pollTelemetry();
+          } else if (event === 'willDisappear') {
+            activeInstances.delete(context);
+          } else if (event === 'didReceiveSettings') {
+            const inst = activeInstances.get(context);
+            if (inst) {
+              inst.settings = (data.payload && data.payload.settings) ? data.payload.settings : {};
+              renderInstance(inst);
+            }
+          } else if (event === 'keyUp') {
+            const inst = activeInstances.get(context);
+            if (inst) {
+              // Interactive Key Tap Cycling
+              if (inst.action === 'com.foxden.infaux.gpu' && latestData && latestData.gpus && latestData.gpus.length > 1) {
+                const gpus = latestData.gpus;
+                const currentGpu = getSelectedGpu(inst, latestData);
+                let curIdx = gpus.findIndex(g => g.id === (currentGpu ? currentGpu.id : ''));
+                let nextIdx = (curIdx + 1) % gpus.length;
+                inst.settings = inst.settings || {};
+                inst.settings.gpuId = gpus[nextIdx].id;
+                saveInstanceSettings(inst);
+                renderInstance(inst);
+                return;
+              }
+
+              if (inst.action === 'com.foxden.infaux.net' && latestData && latestData.network && latestData.network.availableAdapters) {
+                const validAdapters = latestData.network.availableAdapters.filter(a =>
+                  !a.description.includes('WAN Miniport') &&
+                  !a.name.includes('Npcap') &&
+                  !a.name.includes('QoS')
+                );
+                const options = ['auto', ...validAdapters.map(a => a.id)];
+                let cur = (inst.settings && inst.settings.adapterId) ? inst.settings.adapterId : 'auto';
+                let curIdx = options.indexOf(cur);
+                if (curIdx === -1) curIdx = 0;
+                let nextIdx = (curIdx + 1) % options.length;
+                inst.settings = inst.settings || {};
+                inst.settings.adapterId = options[nextIdx];
+                saveInstanceSettings(inst);
+                renderInstance(inst);
+                return;
+              }
+
+              pollTelemetry();
+            }
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      };
+    };
+  </script>
+</body>
+</html>

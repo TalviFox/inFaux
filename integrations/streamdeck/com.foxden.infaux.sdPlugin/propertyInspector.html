@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>inFaux Settings</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 14px 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 12px;
+      color: #cbd5e1;
+      background-color: #1e212b;
+    }
+    .sdpi-item {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 14px;
+    }
+    .sdpi-heading {
+      font-size: 11px;
+      font-weight: 700;
+      color: #38bdf8;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 6px;
+    }
+    .sdpi-select {
+      background-color: #12151f;
+      color: #f8fafc;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.15s ease;
+    }
+    .sdpi-select:focus {
+      border-color: #00e5ff;
+    }
+    .sdpi-note {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 6px;
+      line-height: 1.45;
+    }
+    .footer-bar {
+      margin-top: 18px;
+      padding-top: 10px;
+      border-top: 1px solid #2d3748;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #64748b;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 7px;
+      border-radius: 9999px;
+      font-size: 10.5px;
+      font-weight: 600;
+      background: #12151f;
+      border: 1px solid #334155;
+      color: #4ade80;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4ade80;
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- GPU Picker Section -->
+  <div id="gpuContainer" class="sdpi-item" style="display:none;">
+    <div class="sdpi-heading">Target Graphics Card</div>
+    <select id="gpuSelect" class="sdpi-select">
+      <option value="auto">Auto (Primary / Discrete)</option>
+    </select>
+    <div class="sdpi-note">Select which GPU this key monitors. You can also tap the physical key on your Stream Deck to cycle GPUs on the fly!</div>
+  </div>
+
+  <!-- Network Picker Section -->
+  <div id="netContainer" class="sdpi-item" style="display:none;">
+    <div class="sdpi-heading">Target Network Adapter</div>
+    <select id="netSelect" class="sdpi-select">
+      <option value="auto">Auto (Highest Traffic)</option>
+    </select>
+    <div class="sdpi-note">Select which network interface this key monitors. You can also tap the physical key on your Stream Deck to cycle adapters on the fly!</div>
+  </div>
+
+  <!-- Footer Status -->
+  <div class="footer-bar">
+    <span>inFaux Telemetry Server</span>
+    <span id="apiStatus" class="status-badge"><span class="status-dot"></span>Connected</span>
+  </div>
+
+  <script>
+    let websocket = null;
+    let uuid = null;
+    let actionInfo = null;
+    let settings = {};
+
+    window.connectElgatoStreamDeckSocket = function(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) {
+      uuid = inPropertyInspectorUUID;
+      try {
+        actionInfo = JSON.parse(inActionInfo);
+        settings = (actionInfo.payload && actionInfo.payload.settings) ? actionInfo.payload.settings : {};
+      } catch (e) {
+        settings = {};
+      }
+
+      websocket = new WebSocket('ws://127.0.0.1:' + inPort);
+
+      websocket.onopen = function() {
+        websocket.send(JSON.stringify({
+          event: inRegisterEvent,
+          uuid: inPropertyInspectorUUID
+        }));
+        initUI();
+      };
+
+      websocket.onmessage = function(evt) {
+        try {
+          const data = JSON.parse(evt.data);
+          if (data.event === 'didReceiveSettings') {
+            settings = (data.payload && data.payload.settings) ? data.payload.settings : {};
+            applySettingsToUI();
+          }
+        } catch (e) {}
+      };
+    };
+
+    async function initUI() {
+      const action = actionInfo ? actionInfo.action : '';
+      if (action === 'com.foxden.infaux.gpu') {
+        document.getElementById('gpuContainer').style.display = 'flex';
+      } else if (action === 'com.foxden.infaux.net') {
+        document.getElementById('netContainer').style.display = 'flex';
+      }
+
+      try {
+        const res = await fetch('http://127.0.0.1:8765/api/v1/summary', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+
+          // Populate GPUs
+          if (action === 'com.foxden.infaux.gpu' && data.gpus) {
+            const select = document.getElementById('gpuSelect');
+            select.innerHTML = '<option value="auto">Auto (Primary / Discrete)</option>';
+            data.gpus.forEach((gpu, idx) => {
+              const opt = document.createElement('option');
+              opt.value = gpu.id;
+              const type = gpu.isDiscrete ? 'Discrete' : 'APU/iGPU';
+              opt.innerText = `[${idx}] ${gpu.name} (${type})`;
+              select.appendChild(opt);
+            });
+          }
+
+          // Populate Network Adapters
+          if (action === 'com.foxden.infaux.net' && data.network && data.network.availableAdapters) {
+            const select = document.getElementById('netSelect');
+            select.innerHTML = '<option value="auto">Auto (Highest Traffic)</option>';
+            const cleanAdapters = data.network.availableAdapters.filter(a =>
+              !a.description.includes('WAN Miniport') &&
+              !a.name.includes('Npcap') &&
+              !a.name.includes('QoS')
+            );
+            cleanAdapters.forEach(a => {
+              const opt = document.createElement('option');
+              opt.value = a.id;
+              opt.innerText = `${a.name} — ${a.description || a.type}`;
+              select.appendChild(opt);
+            });
+          }
+        }
+      } catch (err) {
+        const badge = document.getElementById('apiStatus');
+        badge.innerHTML = '<span class="status-dot" style="background:#f87171"></span>Offline';
+        badge.style.color = '#f87171';
+      }
+
+      applySettingsToUI();
+    }
+
+    function applySettingsToUI() {
+      if (settings.gpuId) {
+        const select = document.getElementById('gpuSelect');
+        if (select) select.value = settings.gpuId;
+      }
+      if (settings.adapterId) {
+        const select = document.getElementById('netSelect');
+        if (select) select.value = settings.adapterId;
+      }
+    }
+
+    document.getElementById('gpuSelect').addEventListener('change', function(e) {
+      settings.gpuId = e.target.value;
+      saveSettings();
+    });
+
+    document.getElementById('netSelect').addEventListener('change', function(e) {
+      settings.adapterId = e.target.value;
+      saveSettings();
+    });
+
+    function saveSettings() {
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.send(JSON.stringify({
+          event: 'setSettings',
+          context: uuid,
+          payload: settings
+        }));
+      }
+    }
+  </script>
+</body>
+</html>

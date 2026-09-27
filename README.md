@@ -103,7 +103,20 @@ Built-in local HTTP + WebSocket server powered by ASP.NET Core Kestrel on `http:
 
 ---
 
-### 5. Dynamic Numeric System Tray Icon
+### 5. Official Elgato Stream Deck Companion Suite (Built-In LCM)
+* **Real-Time Physical Hardware Gauges:** Dynamic canvas-rendered gauges for **CPU**, **GPU**, **RAM**, and **Network** with live wattage, thermal color grading, usage percentages, and progress bars.
+* **Multi-GPU & Multi-Network Support:**
+  * **Property Inspector Dropdown:** Easily choose which specific GPU (`RTX 3080 Ti`, `Intel UHD 770`, APUs) or network adapter (`Ethernet`, `Wi-Fi`) each key monitors.
+  * **Physical Tap-to-Cycle:** Tap the physical key on your Stream Deck to instantly cycle through available GPUs or network interfaces on the fly.
+* **Zero-Config Lifecycle Management (LCM):** 
+  * Built straight into the inFaux **Settings** tab.
+  * **1-Click Install:** Drops the plugin directly into `%APPDATA%\Elgato\StreamDeck\Plugins\` with zero web searches, zero manual file copying, and zero marketplace accounts.
+  * **1-Click Repair / Update & Clean Uninstall:** One-click management with version auditing.
+* Also distributed as a standalone, double-click installable package: [`com.foxden.infaux.streamDeckPlugin`](integrations/streamdeck/).
+
+---
+
+### 6. Dynamic Numeric System Tray Icon
 * Draws live, readable temperature numbers (e.g. `42°` or `68°`) directly onto your Windows system tray icon using GDI+ pixel fonts.
 * **Customizable Target:** Choose between CPU Package Temp, Primary GPU Temp, or Highest (CPU/GPU) auto-tracking.
 * **Intelligent Thermal Color-Coding:**
@@ -114,7 +127,7 @@ Built-in local HTTP + WebSocket server powered by ASP.NET Core Kestrel on `http:
 
 ---
 
-### 6. Zero-UAC Lifecycle & Companion Scripts
+### 7. Zero-UAC Lifecycle & Companion Scripts
 * **Standard User Autostart:** Registers with Windows Task Scheduler using standard user permissions—starts on boot with **0 UAC prompts**.
 * **Zero-Elevation Installer (`install.ps1`):** Installs cleanly into `%LOCALAPPDATA%\Programs\inFaux`, sets up shortcuts, registers in Windows *Installed Apps* (Add or Remove Programs), and validates SHA-256 hashes.
 * **Cryptographic Auditor (`verify.ps1`):** Automatically downloads and verifies your local `inFaux.exe` against official GitHub Release SHA-256 checksums.
@@ -278,4 +291,5 @@ Every feature, script, and build is actively dogfooded, tested, and run on my ow
 
 ---
 
-*Copyright © FoxDen Software. Distributed under the PolyForm Noncommercial License 1.0.0.*
+*Copyright © FoxDen Software. Distributed under the PolyForm Noncommercial License 1.0.0.*  
+*Elgato and Stream Deck are registered trademarks of Corsair Memory, Inc. inFaux is an independent open-source project and is not affiliated with, endorsed by, or sponsored by Corsair or Elgato.*

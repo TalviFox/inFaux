@@ -432,7 +432,7 @@ namespace InFox.Models.Sensors
         public double? AdditiveThermalDeltaC { get; set; }
 
         [JsonPropertyName("note")]
-        public string Note { get; set; } = "Mathematically extrapolated via convective dissipation slope (P -> 0W).";
+        public string Note { get; set; } = "Real-time chassis ambient floor, estimated from component diode baselines and passive cooling decay curves.";
 
         [JsonIgnore]
         public string DisplayText => IsVirtualMachine

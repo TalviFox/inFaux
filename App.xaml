@@ -3,6 +3,26 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
+        <!-- Dynamic Theme Brushes (Default: Red Fox) -->
+        <SolidColorBrush x:Key="PrimaryAccentBrush" Color="#FF6B35"/>
+        <SolidColorBrush x:Key="PrimaryAccentHoverBrush" Color="#FF8A50"/>
+        <SolidColorBrush x:Key="AccentSubtleBrush" Color="#2E1A12"/>
+        <SolidColorBrush x:Key="AccentBorderBrush" Color="#7C2D12"/>
+        <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#080B11"/>
+        <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="#0C1017"/>
+        <SolidColorBrush x:Key="CardBackgroundBrush" Color="#0F141C"/>
+        <SolidColorBrush x:Key="CardBackgroundHoverBrush" Color="#141B26"/>
+        <SolidColorBrush x:Key="CardBorderBrush" Color="#1E293B"/>
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#F8FAFC"/>
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#94A3B8"/>
+        <SolidColorBrush x:Key="TextMutedBrush" Color="#64748B"/>
+        <SolidColorBrush x:Key="WindowForegroundBrush" Color="#ECEFF4"/>
+        <SolidColorBrush x:Key="ProgressBarTrackBrush" Color="#1E293B"/>
+        <SolidColorBrush x:Key="ControlBackgroundBrush" Color="#141B26"/>
+        <SolidColorBrush x:Key="ControlBorderBrush" Color="#222C3D"/>
+        <SolidColorBrush x:Key="ToggleThumbBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="PrimaryAccentForegroundBrush" Color="#FFFFFF"/>
+
         <!-- Modern Sleek Dark ScrollBar Styles -->
         <Style x:Key="ScrollBarTrackRepeatButton" TargetType="{x:Type RepeatButton}">
             <Setter Property="OverridesDefaultStyle" Value="True"/>
@@ -30,10 +50,10 @@
                                 Margin="1,0"/>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ThumbBorder" Property="Background" Value="#FF6B35"/>
+                                <Setter TargetName="ThumbBorder" Property="Background" Value="{DynamicResource PrimaryAccentBrush}"/>
                             </Trigger>
                             <Trigger Property="IsDragging" Value="True">
-                                <Setter TargetName="ThumbBorder" Property="Background" Value="#FF8A50"/>
+                                <Setter TargetName="ThumbBorder" Property="Background" Value="{DynamicResource PrimaryAccentHoverBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -53,10 +73,10 @@
                                 Margin="0,1"/>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ThumbBorder" Property="Background" Value="#FF6B35"/>
+                                <Setter TargetName="ThumbBorder" Property="Background" Value="{DynamicResource PrimaryAccentBrush}"/>
                             </Trigger>
                             <Trigger Property="IsDragging" Value="True">
-                                <Setter TargetName="ThumbBorder" Property="Background" Value="#FF8A50"/>
+                                <Setter TargetName="ThumbBorder" Property="Background" Value="{DynamicResource PrimaryAccentHoverBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

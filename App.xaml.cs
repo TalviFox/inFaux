@@ -52,6 +52,16 @@ namespace InFox
 
             LoggingService.Instance.Info("App", $"=== Starting inFaux {UpdateService.Instance.GetCurrentVersionString()} (FoxDen Software) ===");
 
+            // 1.5. Initialize Active Fox Theme
+            try
+            {
+                ThemeService.Initialize(ConfigManager.Instance.Config.Theme);
+            }
+            catch (Exception ex)
+            {
+                LoggingService.Instance.Warning("Theme", $"Failed to initialize theme: {ex.Message}");
+            }
+
             // 2. Initialize Telemetry Engine
             try
             {
@@ -87,8 +97,8 @@ namespace InFox
             // 5. Create Main Dashboard Window
             _mainWindow = new MainWindow();
 
-            // Check command line arguments: if launched with --minimized or via autostart, don't show window immediately
-            bool startMinimized = false;
+            // Check command line arguments or config: if launched with --minimized or MinimizeOnStartup is set, don't show window immediately
+            bool startMinimized = ConfigManager.Instance.Config.MinimizeOnStartup;
             foreach (var arg in e.Args)
             {
                 if (arg.Equals("--minimized", StringComparison.OrdinalIgnoreCase) ||

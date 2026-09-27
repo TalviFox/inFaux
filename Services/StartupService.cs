@@ -52,7 +52,7 @@ namespace InFox.Services
             }
         }
 
-        public static bool SetStartup(bool enable)
+        public static bool SetStartup(bool enable, bool? minimize = null)
         {
             RemoveLegacyRegistry();
 
@@ -98,7 +98,10 @@ namespace InFox.Services
                     td.Settings.StartWhenAvailable = true;
                     td.Settings.MultipleInstances = TaskInstancesPolicy.IgnoreNew;
 
-                    td.Actions.Add(new ExecAction(exePath, null, workingDirectory));
+                    bool startMin = minimize ?? ConfigManager.Instance.Config.MinimizeOnStartup;
+                    string? arguments = startMin ? "--minimized" : null;
+
+                    td.Actions.Add(new ExecAction(exePath, arguments, workingDirectory));
 
                     ts.RootFolder.RegisterTaskDefinition(
                         TaskName,
@@ -108,7 +111,7 @@ namespace InFox.Services
                         null,
                         TaskLogonType.InteractiveToken);
 
-                    LoggingService.Instance.Info("Startup", "Successfully registered user-level scheduled task for inFaux.");
+                    LoggingService.Instance.Info("Startup", $"Successfully registered user-level scheduled task for inFaux (minimized: {startMin}).");
                     return true;
                 }
                 else
@@ -126,6 +129,19 @@ namespace InFox.Services
             {
                 LoggingService.Instance.Error("Startup", $"Failed to update scheduled task: {ex.Message}", ex);
                 return false;
+            }
+        }
+
+        public static void UpdateStartupArguments(bool minimize)
+        {
+            try
+            {
+                if (!IsStartupEnabled()) return;
+                SetStartup(true, minimize);
+            }
+            catch (Exception ex)
+            {
+                LoggingService.Instance.Warning("Startup", $"Failed to update startup arguments: {ex.Message}");
             }
         }
 

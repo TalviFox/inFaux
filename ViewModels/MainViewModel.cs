@@ -210,7 +210,118 @@ namespace InFox.ViewModels
             get => StartupService.IsStartupEnabled();
             set
             {
-                StartupService.SetStartup(value);
+                StartupService.SetStartup(value, MinimizeOnStartup);
+                OnPropertyChanged();
+            }
+        }
+
+        public bool MinimizeOnStartup
+        {
+            get => Config.MinimizeOnStartup;
+            set
+            {
+                if (Config.MinimizeOnStartup != value)
+                {
+                    ConfigManager.Instance.UpdateConfig(c => c.MinimizeOnStartup = value);
+                    OnPropertyChanged();
+                    StartupService.UpdateStartupArguments(value);
+                }
+            }
+        }
+
+        public bool CheckForUpdates
+        {
+            get => Config.CheckForUpdates;
+            set
+            {
+                if (Config.CheckForUpdates != value)
+                {
+                    ConfigManager.Instance.UpdateConfig(c => c.CheckForUpdates = value);
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public string LocalExecutableHash => UpdateService.Instance.GetLocalExecutableHash();
+
+        public IReadOnlyList<FoxThemeDefinition> AvailableThemes => ThemeService.AvailableThemes;
+
+        public FoxThemeDefinition CurrentTheme => ThemeService.CurrentTheme;
+
+        public string SelectedThemeId
+        {
+            get => Config.Theme;
+            set
+            {
+                if (Config.Theme != value)
+                {
+                    ConfigManager.Instance.UpdateConfig(c => c.Theme = value);
+                    ThemeService.ApplyTheme(value);
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(CurrentTheme));
+                    OnPropertyChanged(nameof(AvailableThemes));
+                    OnPropertyChanged(nameof(IsArcticFoxSelected));
+                    OnPropertyChanged(nameof(ArcticVariantVisibility));
+                    OnPropertyChanged(nameof(IsSilverFoxSelected));
+                    OnPropertyChanged(nameof(SilverVariantVisibility));
+                }
+            }
+        }
+
+        public bool IsArcticFoxSelected => string.Equals(SelectedThemeId, "ArcticFox", StringComparison.OrdinalIgnoreCase);
+        public System.Windows.Visibility ArcticVariantVisibility => IsArcticFoxSelected ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+
+        public bool ArcticFoxLightMode
+        {
+            get => Config.ArcticFoxLightMode;
+            set
+            {
+                if (Config.ArcticFoxLightMode != value)
+                {
+                    ConfigManager.Instance.UpdateConfig(c => c.ArcticFoxLightMode = value);
+                    ThemeService.ApplyTheme(SelectedThemeId, arcticLightMode: value);
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(ArcticCoatModeName));
+                    OnPropertyChanged(nameof(CurrentTheme));
+                }
+            }
+        }
+
+        public string ArcticCoatModeName => ArcticFoxLightMode ? "Blizzard Snow (Light)" : "Midnight Glacial (Dark)";
+
+        public bool IsSilverFoxSelected => string.Equals(SelectedThemeId, "SilverFox", StringComparison.OrdinalIgnoreCase);
+        public System.Windows.Visibility SilverVariantVisibility => IsSilverFoxSelected ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+
+        public bool SilverFoxOledMode
+        {
+            get => Config.SilverFoxOledMode;
+            set
+            {
+                if (Config.SilverFoxOledMode != value)
+                {
+                    ConfigManager.Instance.UpdateConfig(c => c.SilverFoxOledMode = value);
+                    ThemeService.ApplyTheme(SelectedThemeId, silverOledMode: value);
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(SilverCoatModeName));
+                    OnPropertyChanged(nameof(CurrentTheme));
+                }
+            }
+        }
+
+        public string SilverCoatModeName => SilverFoxOledMode ? "OLED Midnight (True Black)" : "Stealth Slate (Standard)";
+
+        public void SelectTheme(string themeId)
+        {
+            SelectedThemeId = themeId;
+        }
+
+        private string _updateStatusText = "Up to date";
+        public string UpdateStatusText
+        {
+            get => _updateStatusText;
+            set
+            {
+                _updateStatusText = value;
                 OnPropertyChanged();
             }
         }
@@ -347,6 +458,24 @@ namespace InFox.ViewModels
             _dispatcher = System.Windows.Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
             _summary = TelemetryEngine.Instance.CurrentSummary;
             TelemetryEngine.Instance.TelemetryUpdated += OnTelemetryUpdated;
+
+            UpdateService.Instance.UpdateCheckCompleted += (status) =>
+            {
+                _dispatcher.InvokeAsync(() =>
+                {
+                    UpdateStatusText = status;
+                });
+            };
+
+            ThemeService.ThemeChanged += (theme) =>
+            {
+                _dispatcher.InvokeAsync(() =>
+                {
+                    OnPropertyChanged(nameof(CurrentTheme));
+                    OnPropertyChanged(nameof(AvailableThemes));
+                    OnPropertyChanged(nameof(SelectedThemeId));
+                });
+            };
         }
 
         private void OnTelemetryUpdated(SystemSummary summary, System.Collections.Generic.IReadOnlyList<SensorMetric> metrics)
@@ -449,6 +578,54 @@ namespace InFox.ViewModels
                     target.Insert(insertIndex, incoming);
                 }
             }
+        }
+
+        // Stream Deck Lifecycle Management (LCM)
+        public StreamDeckPluginStatus StreamDeckStatus => StreamDeckService.GetStatus();
+        public string? InstalledStreamDeckVersion => StreamDeckService.GetInstalledVersion();
+        public string BundledStreamDeckVersion => StreamDeckService.BundledVersion;
+        public bool IsStreamDeckDetected => StreamDeckService.IsStreamDeckInstalled();
+        public bool IsStreamDeckPluginInstalled => StreamDeckStatus == StreamDeckPluginStatus.InstalledUpToDate || StreamDeckStatus == StreamDeckPluginStatus.UpdateAvailable;
+        public bool HasStreamDeckUpdate => StreamDeckStatus == StreamDeckPluginStatus.UpdateAvailable;
+        public System.Windows.Visibility StreamDeckUninstallVisibility => IsStreamDeckPluginInstalled ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+
+        public string StreamDeckStatusBadge => StreamDeckStatus switch
+        {
+            StreamDeckPluginStatus.InstalledUpToDate => $"Active (v{InstalledStreamDeckVersion}) • Up to Date",
+            StreamDeckPluginStatus.UpdateAvailable => $"Update Available (v{BundledStreamDeckVersion})",
+            StreamDeckPluginStatus.NotInstalled => "Not Installed • Ready to Deploy",
+            StreamDeckPluginStatus.StreamDeckNotDetected => "Elgato Software Not Detected",
+            _ => "Unknown"
+        };
+
+        public string StreamDeckStatusColor => StreamDeckStatus switch
+        {
+            StreamDeckPluginStatus.InstalledUpToDate => "#10B981", // Emerald
+            StreamDeckPluginStatus.UpdateAvailable => "#00E5FF",   // Cyan
+            StreamDeckPluginStatus.NotInstalled => "#F59E0B",       // Amber
+            StreamDeckPluginStatus.StreamDeckNotDetected => "#94A3B8", // Slate
+            _ => "#94A3B8"
+        };
+
+        public string StreamDeckActionButtonText => StreamDeckStatus switch
+        {
+            StreamDeckPluginStatus.UpdateAvailable => "Update Stream Deck Plugin",
+            StreamDeckPluginStatus.InstalledUpToDate => "Reinstall / Repair Plugin",
+            _ => "Install Stream Deck Plugin"
+        };
+
+        public void RefreshStreamDeckState()
+        {
+            OnPropertyChanged(nameof(StreamDeckStatus));
+            OnPropertyChanged(nameof(InstalledStreamDeckVersion));
+            OnPropertyChanged(nameof(BundledStreamDeckVersion));
+            OnPropertyChanged(nameof(IsStreamDeckDetected));
+            OnPropertyChanged(nameof(IsStreamDeckPluginInstalled));
+            OnPropertyChanged(nameof(HasStreamDeckUpdate));
+            OnPropertyChanged(nameof(StreamDeckUninstallVisibility));
+            OnPropertyChanged(nameof(StreamDeckStatusBadge));
+            OnPropertyChanged(nameof(StreamDeckStatusColor));
+            OnPropertyChanged(nameof(StreamDeckActionButtonText));
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
