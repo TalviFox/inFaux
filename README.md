@@ -103,10 +103,10 @@ Built-in local HTTP + WebSocket server powered by ASP.NET Core Kestrel on `http:
 
 ---
 
-### 5. Official Elgato Stream Deck Companion Suite (Built-In LCM)
+### 5. Stream Deck Companion Suite (Built-In LCM)
 * **Real-Time Physical Hardware Gauges:** Dynamic canvas-rendered gauges for **CPU**, **GPU**, **RAM**, and **Network** with live wattage, thermal color grading, usage percentages, and progress bars.
 * **Multi-GPU & Multi-Network Support:**
-  * **Property Inspector Dropdown:** Easily choose which specific GPU (`RTX 3080 Ti`, `Intel UHD 770`, APUs) or network adapter (`Ethernet`, `Wi-Fi`) each key monitors.
+  * **Property Inspector Dropdown:** Easily choose which specific GPU (discrete cards, integrated APUs/iGPUs) or network adapter (Ethernet, Wi-Fi) each key monitors.
   * **Physical Tap-to-Cycle:** Tap the physical key on your Stream Deck to instantly cycle through available GPUs or network interfaces on the fly.
 * **Zero-Config Lifecycle Management (LCM):** 
   * Built straight into the inFaux **Settings** tab.
