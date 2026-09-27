@@ -1,0 +1,98 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>inFaux.ico</ApplicationIcon>
+    <AssemblyName>inFaux</AssemblyName>
+    <RootNamespace>InFox</RootNamespace>
+    <Product>inFaux</Product>
+    <Company>FoxDen Software</Company>
+    <Authors>FoxDen Software</Authors>
+    <Version>1.0.0</Version>
+    <Description>Modern, native, lean hardware monitor and open telemetry server for Windows. Real telemetry. Faux drivers.</Description>
+    <Copyright>Copyright (c) FoxDen Software</Copyright>
+    <SatelliteResourceLanguages>en-US</SatelliteResourceLanguages>
+    <!-- True 100% Standalone Single-File (Embeds all native WPF & C++ runtime DLLs inside inFaux.exe) -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+  </PropertyGroup>
+
+  <!-- Embed branding images as WPF Application Resources -->
+  <ItemGroup>
+    <Resource Include="inFaux_IHS.png" />
+    <Resource Include="inFaux.ico" />
+  </ItemGroup>
+
+  <!-- Framework reference for embedded ASP.NET Core Kestrel minimal API & WebSockets -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TaskScheduler" Version="2.11.0" />
+  </ItemGroup>
+
+  <!-- Exclude backup and reference folders from compilation -->
+  <ItemGroup>
+    <Compile Remove="old-working\**" />
+    <None Remove="old-working\**" />
+    <Page Remove="old-working\**" />
+    <ApplicationDefinition Remove="old-working\**" />
+    <Compile Remove="WireFox Example Code\**" />
+    <None Remove="WireFox Example Code\**" />
+  </ItemGroup>
+
+</Project>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
