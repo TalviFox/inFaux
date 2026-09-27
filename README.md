@@ -13,7 +13,6 @@
 <p align="center">
   <a href="https://github.com/TalviFox/inFaux"><img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-blue.svg" alt="Platform" /></a>
   <a href="https://dotnet.microsoft.com/"><img src="https://img.shields.io/badge/.NET-10.0%20(Self--Contained)-purple.svg" alt="Runtime" /></a>
-  <a href="https://github.com/TalviFox/inFaux"><img src="https://img.shields.io/badge/CPU%20Usage-~0.1%25-brightgreen.svg" alt="CPU Impact" /></a>
   <a href="https://github.com/TalviFox/inFaux"><img src="https://img.shields.io/badge/RAM-~115%20MB-brightgreen.svg" alt="RAM Footprint" /></a>
   <a href="https://github.com/TalviFox/inFaux"><img src="https://img.shields.io/badge/Background%20Processes-0-success.svg" alt="Background Processes" /></a>
   <a href="https://github.com/TalviFox/inFaux"><img src="https://img.shields.io/badge/Kernel%20Drivers-0%20(100%25%20Driverless)-success.svg" alt="Driverless" /></a>
