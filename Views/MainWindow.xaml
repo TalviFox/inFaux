@@ -1044,7 +1044,7 @@
 
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Text="Elgato Stream Deck Companion Plugin" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="Deploy official dynamic hardware gauges directly onto your physical Stream Deck keys. Live CPU and GPU wattage, thermal color grading, and load progress bars. 100% zero-driver, zero-config." Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0" LineHeight="17"/>
+                                        <TextBlock Text="Deploy native inFaux companion gauges directly onto your physical Stream Deck keys. Live CPU and GPU wattage, thermal color grading, and load progress bars. 100% zero-driver, zero-config." Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0" LineHeight="17"/>
                                     </StackPanel>
 
                                     <!-- Status Badge Pill -->

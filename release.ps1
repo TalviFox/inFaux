@@ -284,9 +284,9 @@ ${tripleBt}
 - **100% Zero-Driver Architecture:** Runs completely as standard user (`asInvoker`) with **0 UAC prompts**, 0 kernel drivers (`.sys`), and passes Windows 11 Core Isolation / Memory Integrity without flags.
 - **The Thermodynamic Observer:** Per-core thermal flux simulation using Newton's cooling laws, dynamic Joule heating, and passive chassis baselines.
 - **Curated Multi-View Dashboard:** Instant glanceable metric cards with 60-second rolling sparklines for CPU, GPU, RAM, Storage, and Network, plus deep per-component drilldown views.
-- **Built-In Elgato Stream Deck Companion (Zero-Config LCM):**
+- **Built-In Stream Deck Companion (Zero-Config LCM):**
   - Live CPU wattage, GPU wattage, RAM usage, and Network throughput gauges directly on your Stream Deck.
-  - Multi-GPU (`RTX 3080 Ti`, `Intel UHD 770`, APUs) and Multi-Network adapter dropdown picker + physical tap-to-cycle!
+  - Multi-GPU (discrete cards, integrated APUs/iGPUs) and Multi-Network adapter dropdown picker + physical tap-to-cycle!
   - 1-Click install, repair, and uninstall directly from the inFaux **Settings** tab.
 - **Embedded Kestrel REST & WebSocket API:** Open port `8765` for Home Assistant, custom widgets, or LAN monitoring without shared memory limits or paywalls.
 - **Dynamic GDI+ Numeric Tray Badge:** Renders live temperature numbers directly onto your Windows notification tray icon with thermal color-coding.

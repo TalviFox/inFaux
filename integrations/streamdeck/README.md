@@ -1,4 +1,4 @@
-# inFaux — Official Stream Deck Companion Plugin
+# inFaux — Stream Deck Companion Plugin
 
 > Zero-config, real-time hardware telemetry gauges on your physical Elgato Stream Deck, powered natively by [inFaux](https://github.com/TalviFox/inFaux).
 

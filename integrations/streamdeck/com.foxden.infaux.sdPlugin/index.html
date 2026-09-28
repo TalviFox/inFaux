@@ -362,8 +362,52 @@
       }
     }
 
+    let telWs = null;
+    let reconnectTimer = null;
+
+    function connectTelemetryWebSocket() {
+      if (telWs && (telWs.readyState === WebSocket.OPEN || telWs.readyState === WebSocket.CONNECTING)) {
+        return;
+      }
+
+      try {
+        telWs = new WebSocket('ws://127.0.0.1:8765/api/v1/stream');
+
+        telWs.onmessage = function(evt) {
+          try {
+            latestData = JSON.parse(evt.data);
+            for (const inst of activeInstances.values()) {
+              renderInstance(inst);
+            }
+          } catch (e) {}
+        };
+
+        telWs.onopen = function() {
+          if (reconnectTimer) {
+            clearTimeout(reconnectTimer);
+            reconnectTimer = null;
+          }
+        };
+
+        telWs.onerror = function() {};
+
+        telWs.onclose = function() {
+          telWs = null;
+          if (!reconnectTimer) {
+            reconnectTimer = setTimeout(connectTelemetryWebSocket, 1500);
+          }
+        };
+      } catch (err) {
+        telWs = null;
+        if (!reconnectTimer) {
+          reconnectTimer = setTimeout(connectTelemetryWebSocket, 1500);
+        }
+      }
+    }
+
     async function pollTelemetry() {
       if (activeInstances.size === 0) return;
+      if (telWs && telWs.readyState === WebSocket.OPEN) return;
       if (isFetching) return;
       isFetching = true;
 
@@ -385,7 +429,9 @@
       }
     }
 
-    setInterval(pollTelemetry, 1000);
+    connectTelemetryWebSocket();
+    setInterval(pollTelemetry, 250);
+
 
     window.connectElgatoStreamDeckSocket = function(inPort, inPluginUUID, inRegisterEvent, inInfo, inActionInfo) {
       pluginUUID = inPluginUUID;
