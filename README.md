@@ -37,7 +37,6 @@ For the last 15 years, the PC hardware monitoring world has been split into two 
 **inFaux** ("info") bridges the void:
 * **Single-Process Executable (`inFaux.exe`):** Zero installers required, zero zombie background helpers, zero telemetry phoning home. Runs strictly as a standard non-elevated user (`asInvoker`) with **zero UAC prompts**. (It even displays a gentle notice if you accidentally launch it elevated!)
 * **100% Driverless Architecture:** Zero third-party hardware monitor libraries, zero kernel drivers, and zero vulnerability warnings. Fully compatible with Windows 11 Core Isolation, Memory Integrity (HVCI), and Defender.
-* **0.1% CPU & ~115 MB RAM:** Native compiled .NET 10 with pure Win32, PDH, DXGI, NVML, and ADL user-mode APIs.
 * **Human-First Curated Dashboard:** Clean, responsive, dark-mode dashboard with instant component drilldowns, a live all-sensors table, and deep thermal calibration controls.
 * **Embedded Open API:** A local REST and WebSocket server out-of-the-box on `http://127.0.0.1:8765` for Stream Deck, Rainmeter, Home Assistant, or custom status displays.
 
