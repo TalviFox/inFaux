@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Primary SEO Meta Tags -->
+  <title>inFaux | Real Telemetry. Faux Drivers. Zero-Driver Hardware Monitor for Windows</title>
+  <meta name="title" content="inFaux | Real Telemetry. Faux Drivers. Zero-Driver Hardware Monitor for Windows">
+  <meta name="description" content="Driverless, zero-install, zero-privilege hardware monitor & open telemetry server for Windows 10 & 11. Real-time Newtonian thermodynamic modeling, per-core flux, and embedded WebSockets without UAC prompts.">
+  <meta name="keywords" content="inFaux, hardware monitor Windows, zero driver hardware monitor, CPU temperature without UAC, driverless telemetry, VM CPU temperature, thermodynamic observer, Stream Deck hardware monitor, local telemetry API">
+  <meta name="author" content="FoxDen Software">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#080B11">
+  <link rel="canonical" href="https://infaux.foxdensoftware.dev/">
+
+  <!-- Open Graph / Facebook / Discord -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://infaux.foxdensoftware.dev/">
+  <meta property="og:title" content="inFaux | Real Telemetry. Faux Drivers.">
+  <meta property="og:description" content="Driverless, zero-install, zero-privilege hardware monitor & open telemetry server for Windows 10 & 11. Zero Ring-0 drivers, zero UAC prompts, VM-friendly.">
+  <meta property="og:image" content="https://infaux.foxdensoftware.dev/assets/inFaux_IHS.png">
+
+  <!-- Twitter / X -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://infaux.foxdensoftware.dev/">
+  <meta property="twitter:title" content="inFaux | Real Telemetry. Faux Drivers.">
+  <meta property="twitter:description" content="Driverless hardware monitor & open telemetry server for Windows. Zero UAC prompts, VM-friendly, embedded REST & WebSockets.">
+  <meta property="twitter:image" content="https://infaux.foxdensoftware.dev/assets/inFaux_IHS.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+  <link rel="icon" type="image/png" href="assets/inFaux_IHS.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css?v=1.1">
+
+  <!-- Schema.org JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "inFaux",
+    "operatingSystem": "Windows 10, Windows 11",
+    "applicationCategory": "UtilitiesApplication",
+    "description": "Zero-driver, zero-privilege hardware telemetry server and real-time thermodynamic observer for Windows.",
+    "license": "https://polyformproject.org/licenses/noncommercial/1.0.0",
+    "url": "https://infaux.foxdensoftware.dev/",
+    "downloadUrl": "https://github.com/TalviFox/inFaux/releases",
+    "softwareVersion": "1.0.0",
+    "author": {
+      "@type": "Organization",
+      "name": "FoxDen Software",
+      "url": "https://github.com/TalviFox"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+</head>
+<body>
+
+  <!-- Mobile Notice Banner -->
+  <aside class="mobile-notice-banner" id="mobile-notice" aria-label="Desktop application notice" style="display: none;">
+    <div class="container mobile-notice-inner">
+      <div class="mobile-notice-content">
+        <span class="mobile-notice-badge">Windows 10 &amp; 11</span>
+        <p class="mobile-notice-message">
+          <strong>Visiting from mobile?</strong> inFaux is built exclusively for Windows PCs. Feel free to copy the install script to run on your PC!
+        </p>
+      </div>
+      <div class="mobile-notice-actions">
+        <a href="https://github.com/TalviFox/inFaux/releases/latest" class="btn-mobile-action btn-mobile-dl" id="mobile-download-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span>Get inFaux</span>
+        </a>
+        <button class="btn-copy btn-mobile-action btn-mobile-copy" data-target="site-url-hidden" id="mobile-copy-btn" aria-label="Copy page link">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          <span>Copy Link</span>
+        </button>
+        <button class="mobile-notice-close" id="mobile-notice-close" aria-label="Dismiss notice">&times;</button>
+      </div>
+    </div>
+    <span id="site-url-hidden" style="display:none;">https://infaux.foxdensoftware.dev/</span>
+  </aside>
+
+  <!-- Site Header & Navigation -->
+  <header class="site-header">
+    <div class="container site-nav">
+      <a href="#" class="nav-brand" id="nav-brand">
+        <span class="brand-text">in<span>Faux</span></span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#features" class="nav-link">Features</a></li>
+        <li><a href="#showcase" class="nav-link">Showcase</a></li>
+        <li><a href="#comparison" class="nav-link">Why Zero-Driver</a></li>
+        <li><a href="#api" class="nav-link">Telemetry API</a></li>
+        <li><a href="#install" class="nav-link">Install</a></li>
+        <li><a href="#faq" class="nav-link">FAQ</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="https://github.com/TalviFox/inFaux" target="_blank" rel="noopener noreferrer" class="btn-github" id="nav-github-btn" title="View Source on GitHub">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          <span>GitHub</span>
+        </a>
+        <a href="https://github.com/TalviFox/inFaux/releases/latest" class="btn-nav-download" id="nav-download-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span>Download</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="container">
+        <!-- Floating CPU IHS Chip hovering over ground shadow -->
+        <div class="hero-logo-container" title="inFaux: Real Telemetry. Faux Drivers. 🦊">
+          <img src="assets/inFaux_IHS.png" alt="inFaux IHS Logo" class="hero-logo">
+          <div class="hero-logo-shadow"></div>
+        </div>
+
+        <h1 class="hero-brand-heading">
+          <span class="brand-in">in</span><span class="brand-faux">Faux</span>
+          <span class="brand-pronounce">("info")</span>
+          <span class="hero-tagline">Real telemetry. Faux drivers.</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          The driverless, zero-install, zero-privilege hardware monitor and open telemetry server for Windows 10 &amp; 11. Real-time Newtonian thermodynamic modeling, per-core silicon flux, and embedded WebSockets without a single UAC prompt.
+        </p>
+
+        <div class="hero-actions">
+          <div class="hero-btn-row">
+            <a href="https://github.com/TalviFox/inFaux/releases/latest" class="btn-primary" id="hero-download-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span>Download inFaux <span class="release-version-tag">v1.0.0</span></span>
+            </a>
+            <a href="#showcase" class="btn-secondary" id="hero-explore-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+              <span>Explore Dashboard</span>
+            </a>
+          </div>
+
+          <!-- Wide, un-truncated 1-line PowerShell install box -->
+          <div class="terminal-command-box" title="Click button to copy install command">
+            <span class="terminal-prefix">PS &gt;</span>
+            <code class="terminal-code" id="ps-install-code">irm https://raw.githubusercontent.com/TalviFox/inFaux/main/install.ps1 | iex</code>
+            <button class="btn-copy" data-target="ps-install-code" id="hero-copy-btn" aria-label="Copy PowerShell command">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span>Copy</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="hero-badges-row">
+          <div class="badge-item"><span class="badge-dot"></span> 100% User-Mode (Zero UAC)</div>
+          <div class="badge-item"><span class="badge-dot"></span> Thermodynamic Observer</div>
+          <div class="badge-item"><span class="badge-dot green"></span> Embedded Kestrel Server (:8765)</div>
+          <div class="badge-item"><span class="badge-dot"></span> Stream Deck Companion Suite</div>
+          <div class="badge-item"><span class="badge-dot green"></span> Virtual Machine &amp; Cloud Ready</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section" id="features">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label">Why inFaux</span>
+          <h2 class="section-title">Built for Speed, Privacy, and Precision</h2>
+          <p class="section-desc">No sketchy kernel drivers, no background telemetry trackers, and no UAC popups. Just clean, native hardware monitoring.</p>
+        </div>
+
+        <div class="features-grid">
+          <!-- Feature 1 -->
+          <div class="feature-card">
+            <div class="feature-icon-wrap">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <h3 class="feature-title">Zero Drivers, Zero Elevation</h3>
+            <p class="feature-desc">Runs as a standard user app (<code>asInvoker</code>). No sketchy kernel drivers, no UAC popups on startup, and zero risk of tripping anti-cheat or Windows Defender Core Isolation.</p>
+            <div class="feature-pills">
+              <span class="feature-pill">No Admin Rights</span>
+              <span class="feature-pill">0 UAC Prompts</span>
+              <span class="feature-pill">Anti-Cheat Safe</span>
+            </div>
+          </div>
+
+          <!-- Feature 2 -->
+          <div class="feature-card">
+            <div class="feature-icon-wrap">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg>
+            </div>
+            <h3 class="feature-title">Smart Thermal Modeling</h3>
+            <p class="feature-desc">Instead of raw sensor jitter that sends your cooler fans into panic mode, inFaux uses real thermodynamic physics to model actual CPU package heat and per-core temps smoothly.</p>
+            <div class="feature-pills">
+              <span class="feature-pill">Per-Core Temps</span>
+              <span class="feature-pill">Physics-Based</span>
+              <span class="feature-pill">No Fan Hunting</span>
+            </div>
+          </div>
+
+          <!-- Feature 3 -->
+          <div class="feature-card">
+            <div class="feature-icon-wrap">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            </div>
+            <h3 class="feature-title">Local Telemetry API</h3>
+            <p class="feature-desc">A built-in local web server streams live hardware stats over JSON and WebSockets on port <code>8765</code>. Connect Rainmeter, custom dashboards, or Home Assistant in seconds.</p>
+            <div class="feature-pills">
+              <span class="feature-pill">REST /summary</span>
+              <span class="feature-pill">WebSockets</span>
+              <span class="feature-pill">Localhost :8765</span>
+            </div>
+          </div>
+
+          <!-- Feature 4 -->
+          <div class="feature-card">
+            <div class="feature-icon-wrap">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            </div>
+            <h3 class="feature-title">Stream Deck Plugin</h3>
+            <p class="feature-desc">Comes with a companion plugin with live, smooth dials for CPU, GPU, RAM, and Network. Tap any dial to cycle multi-GPU stats, with 1-click install right from Settings.</p>
+            <div class="feature-pills">
+              <span class="feature-pill">Live Gauges</span>
+              <span class="feature-pill">Tap-to-Cycle</span>
+              <span class="feature-pill">1-Click Install</span>
+            </div>
+          </div>
+
+          <!-- Feature 5 -->
+          <div class="feature-card">
+            <div class="feature-icon-wrap">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            </div>
+            <h3 class="feature-title">Works Inside VMs</h3>
+            <p class="feature-desc">Legacy monitors crash or show blank screens inside virtual machines because hypervisors block kernel drivers. Since inFaux runs 100% in user-mode, it just works.</p>
+            <div class="feature-pills">
+              <span class="feature-pill">VM Friendly</span>
+              <span class="feature-pill">Hyper-V / Proxmox</span>
+              <span class="feature-pill">No Crashes</span>
+            </div>
+          </div>
+
+          <!-- Feature 6 -->
+          <div class="feature-card">
+            <div class="feature-icon-wrap">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            </div>
+            <h3 class="feature-title">Live System Tray Badge</h3>
+            <p class="feature-desc">Displays your live CPU or GPU temperature directly on your Windows taskbar tray icon with color-coded alerts and essentially zero CPU overhead.</p>
+            <div class="feature-pills">
+              <span class="feature-pill">Live Tray Temp</span>
+              <span class="feature-pill">Color Alerts</span>
+              <span class="feature-pill">0% CPU Waste</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Showcase / Screenshot Gallery Section -->
+    <section class="showcase-section" id="showcase">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label">Interface &amp; Showcase</span>
+          <h2 class="section-title">Visual Elegance Powered by WPF</h2>
+          <p class="section-desc">Hardware-accelerated dark mode dashboard with 60-second rolling sparklines and multi-GPU monitoring.</p>
+        </div>
+
+        <div class="showcase-tabs">
+          <button class="showcase-tab active" data-showcase="dashboard" id="tab-dashboard">Dashboard Overview</button>
+          <button class="showcase-tab" data-showcase="flux" id="tab-flux">Per-Core Silicon Flux (Per Core Temp Calculation)</button>
+          <button class="showcase-tab" data-showcase="streamdeck" id="tab-streamdeck">Stream Deck Companion</button>
+        </div>
+
+        <div class="showcase-display">
+          <div class="showcase-img-wrap" id="showcase-img-wrap" title="Click to view full resolution">
+            <img src="assets/screenshots/inFaux-Main-Screen.png" alt="inFaux Native Dashboard" class="showcase-img" id="showcase-main-img">
+          </div>
+
+          <div class="showcase-caption" id="showcase-caption">
+            inFaux Native Dashboard — Real-time CPU, GPU, Memory, Network, and NVMe SMART thermals with zero kernel drivers.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Architecture & Comparison Section (Clean Checkmarks vs Crosses) -->
+    <section class="comparison-section" id="comparison">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label">Architectural Paradigm</span>
+          <h2 class="section-title">The Driverless Telemetry Advantage</h2>
+          <p class="section-desc">Why modern Windows systems, games, and virtual environments demand user-mode telemetry.</p>
+        </div>
+
+        <div class="comparison-table-wrap">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Capability / Architectural Standard</th>
+                <th>inFaux (FoxDen Software)</th>
+                <th>Traditional Tools (HWiNFO / HWMonitor)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Windows Security Privilege</strong></td>
+                <td><span class="status-badge good"><span class="status-icon">✓</span> asInvoker (Standard User)</span></td>
+                <td><span class="status-badge bad"><span class="status-icon">✗</span> Administrator (Requires Elevation)</span></td>
+              </tr>
+              <tr>
+                <td><strong>Kernel Driver Dependency</strong></td>
+                <td><span class="status-badge good"><span class="status-icon">✓</span> Zero Drivers (100% User-Mode)</span></td>
+                <td><span class="status-badge bad"><span class="status-icon">✗</span> Ring-0 .sys Kernel Driver</span></td>
+              </tr>
+              <tr>
+                <td><strong>UAC Prompts on Startup</strong></td>
+                <td><span class="status-badge good"><span class="status-icon">✓</span> 0 Prompts (Silent Task Startup)</span></td>
+                <td><span class="status-badge bad"><span class="status-icon">✗</span> Requires UAC Confirmation</span></td>
+              </tr>
+              <tr>
+                <td><strong>Virtual Machine (VM) Compatibility</strong></td>
+                <td><span class="status-badge good"><span class="status-icon">✓</span> Full (Virtual Workload ΔT Model)</span></td>
+                <td><span class="status-badge bad"><span class="status-icon">✗</span> Fails / Driver Load Blocked</span></td>
+              </tr>
+              <tr>
+                <td><strong>Anti-Cheat / Vanguard Compatibility</strong></td>
+                <td><span class="status-badge good"><span class="status-icon">✓</span> 100% Clean (Zero Driver Footprint)</span></td>
+                <td><span class="status-badge bad"><span class="status-icon">✗</span> Blocked / Heuristic Flags</span></td>
+              </tr>
+              <tr>
+                <td><strong>Open Local Telemetry API</strong></td>
+                <td><span class="status-badge good"><span class="status-icon">✓</span> Built-in REST &amp; WebSockets (:8765)</span></td>
+                <td><span class="status-badge bad"><span class="status-icon">✗</span> Proprietary / Shared Memory Only</span></td>
+              </tr>
+              <tr>
+                <td><strong>Installation Footprint</strong></td>
+                <td><span class="status-badge good"><span class="status-icon">✓</span> Portable Single File or 1-Line IEX</span></td>
+                <td><span class="status-badge bad"><span class="status-icon">✗</span> Heavy Installer + Driver Registration</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Telemetry API Playground Section -->
+    <section class="api-section" id="api">
+      <div class="container">
+        <div class="api-box">
+          <div class="api-info">
+            <span class="section-label">Embedded Kestrel Server</span>
+            <h3>Open Telemetry on Port 8765</h3>
+            <p>
+              Every instance of inFaux embeds a high-performance ASP.NET Core Kestrel web server. Stream live hardware metrics to custom web dashboards, Rainmeter, Elgato Stream Decks, or Home Assistant over standard JSON.
+            </p>
+
+            <div class="api-endpoints-list">
+              <div class="api-endpoint-item">
+                <span class="endpoint-method get">GET</span>
+                <code>/api/v1/summary</code>
+                <span style="margin-left: auto; color: var(--text-muted); font-size: 0.75rem;">Full JSON Hardware Snapshot</span>
+              </div>
+              <div class="api-endpoint-item">
+                <span class="endpoint-method get">GET</span>
+                <code>/api/v1/sensors</code>
+                <span style="margin-left: auto; color: var(--text-muted); font-size: 0.75rem;">Flat Sensor Channels List</span>
+              </div>
+              <div class="api-endpoint-item">
+                <span class="endpoint-method ws">WS</span>
+                <code>/api/v1/stream</code>
+                <span style="margin-left: auto; color: var(--text-muted); font-size: 0.75rem;">60Hz WebSocket Real-time Feed</span>
+              </div>
+              <div class="api-endpoint-item">
+                <span class="endpoint-method get">GET</span>
+                <code>/api/v1/health</code>
+                <span style="margin-left: auto; color: var(--text-muted); font-size: 0.75rem;">Daemon Health Status</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="api-terminal-wrap">
+            <pre class="api-code-terminal"><code>{
+  "timestamp": "2026-09-27T14:55:00Z",
+  "cpu": {
+    "name": "AMD Ryzen 7 5825U",
+    "tempC": 36.0,
+    "loadPercent": 5.0,
+    "powerWatts": 16.0,
+    "cores": [
+      { "id": 0, "clockMhz": 1840, "tempC": 36 },
+      { "id": 1, "clockMhz": 1840, "tempC": 35 }
+    ]
+  },
+  "chassis": {
+    "isVirtualMachine": true,
+    "additiveThermalDeltaC": 6.0,
+    "displayText": "VM Thermal Impact: +6°C ΔT"
+  },
+  "gpus": [
+    {
+      "name": "Integrated APU",
+      "tempC": 32.0,
+      "powerWatts": 1.5
+    }
+  ]
+}</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Installation & Verification Section -->
+    <section class="install-section" id="install">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label">Fast Deployment</span>
+          <h2 class="section-title">Fast Deployment. Zero Hassle.</h2>
+          <p class="section-desc">Run standalone as a portable executable or install via PowerShell in seconds.</p>
+        </div>
+
+        <div style="max-width: 860px; margin: 0 auto;">
+          <!-- Wide, clean terminal install box -->
+          <div class="terminal-command-box" style="margin-bottom: 24px;">
+            <span class="terminal-prefix">PS &gt;</span>
+            <code class="terminal-code" id="install-guide-code">irm https://raw.githubusercontent.com/TalviFox/inFaux/main/install.ps1 | iex</code>
+            <button class="btn-copy" data-target="install-guide-code" id="install-copy-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span>Copy</span>
+            </button>
+          </div>
+
+          <div style="background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-lg); padding: 24px;">
+            <h4 style="font-size: 1.1rem; margin-bottom: 12px; color: var(--brand-accent);">Cryptographic SHA-256 Verification</h4>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 14px;">
+              Verify binary integrity locally before running. inFaux also includes an integrated runtime cryptographic audit feature:
+            </p>
+            <div class="terminal-command-box" style="background: #04070e; border-color: var(--border-subtle);">
+              <span class="terminal-prefix">PS &gt;</span>
+              <code class="terminal-code" id="hash-verify-code">Get-FileHash .\inFaux.exe -Algorithm SHA256</code>
+              <button class="btn-copy" data-target="hash-verify-code" id="hash-copy-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span>Copy</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section" id="faq">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label">Frequently Asked Questions</span>
+          <h2 class="section-title">Everything You Need to Know</h2>
+        </div>
+
+        <div class="faq-list">
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>How does inFaux calculate temperatures without a kernel driver?</span>
+              <span class="faq-chevron">▼</span>
+            </button>
+            <div class="faq-answer">
+              inFaux utilizes the <strong>Thermodynamic Observer</strong> pattern. It derives real-time ambient baseline temperatures from hardware diodes accessible via read-only user-mode IOCTLs (such as GPU and NVMe SMART controllers). It then reads live per-core clock frequencies and loads via native Windows Performance Data Helper (PDH) counters, calculating dynamic CMOS wattage and solving Newton's law of cooling using asymmetrical thermal low-pass filters.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Why does inFaux work inside virtual machines when other tools crash?</span>
+              <span class="faq-chevron">▼</span>
+            </button>
+            <div class="faq-answer">
+              Traditional monitoring utilities try to load a Ring-0 kernel driver to query hardware Model-Specific Registers (MSRs). Hypervisors intentionally strip and block these instructions, causing legacy monitors to crash or display blank values. Because inFaux is 100% user-mode, it runs cleanly on top of virtual performance counters, computing the exact thermal impact (ΔT) that the virtual workload contributes to the host CPU.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Will inFaux trigger anti-cheat software (like Vanguard or Easy Anti-Cheat)?</span>
+              <span class="faq-chevron">▼</span>
+            </button>
+            <div class="faq-answer">
+              No. Anti-cheat engines routinely block or flag vulnerable Ring-0 drivers (like WinRing0 or older CPU-Z drivers) because they can be exploited for kernel code execution. inFaux runs strictly as a standard user process (<code>asInvoker</code>) and contains zero kernel drivers or injection DLLs, making it completely invisible and safe for gaming.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>How do I install the Elgato Stream Deck companion plugin?</span>
+              <span class="faq-chevron">▼</span>
+            </button>
+            <div class="faq-answer">
+              inFaux features a built-in <strong>Lifecycle Manager (LCM)</strong> directly in the Settings menu. Simply open inFaux, navigate to the Settings tab, and click <strong>Install Stream Deck Plugin</strong>. inFaux extracts and configures the companion plugin into your Stream Deck profile with zero manual file copying.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Can I uninstall inFaux completely?</span>
+              <span class="faq-chevron">▼</span>
+            </button>
+            <div class="faq-answer">
+              Yes. Run <code>irm https://raw.githubusercontent.com/TalviFox/inFaux/main/uninstall.ps1 | iex</code> in PowerShell, or click Uninstall in Windows Installed Apps. Because inFaux leaves no kernel drivers or registry system services behind, uninstallation is instantaneous and 100% clean.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Lightbox Modal -->
+  <div class="lightbox-modal" id="lightbox-modal">
+    <div class="lightbox-content">
+      <span class="lightbox-close" id="lightbox-close">&times;</span>
+      <img src="" alt="Zoomed Screenshot" class="lightbox-img" id="lightbox-img">
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <h4>in<span>Faux</span></h4>
+          <p>Real telemetry. Faux drivers. Modern, native, driverless hardware monitor and telemetry server for Windows.</p>
+        </div>
+
+        <div class="footer-links">
+          <div class="footer-col">
+            <h5>Ecosystem</h5>
+            <ul>
+              <li><a href="https://github.com/TalviFox/inFaux" target="_blank" rel="noopener noreferrer">inFaux on GitHub</a></li>
+              <li><a href="https://wirefox.foxdensoftware.dev/" target="_blank" rel="noopener noreferrer">WireFox VPN Roaming</a></li>
+              <li><a href="https://github.com/TalviFox" target="_blank" rel="noopener noreferrer">FoxDen Software</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h5>Community</h5>
+            <ul>
+              <li><a href="https://github.com/TalviFox/inFaux/releases" target="_blank" rel="noopener noreferrer">Releases</a></li>
+              <li><a href="https://github.com/TalviFox/inFaux/issues" target="_blank" rel="noopener noreferrer">Issue Tracker</a></li>
+              <li><a href="https://github.com/TalviFox/inFaux/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">PolyForm Noncommercial 1.0.0</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>&copy; 2026 FoxDen Software. Licensed under PolyForm Noncommercial License 1.0.0.</div>
+        <div>Windows is a registered trademark of Microsoft Corp. Stream Deck is a registered trademark of Corsair / Elgato Systems.</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
+</body>
+</html>
