@@ -127,6 +127,7 @@ section[id] {
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+  position: relative;
 }
 
 .mobile-notice-content {
@@ -1099,6 +1100,30 @@ section[id] {
 }
 
 @media (max-width: 640px) {
+  .mobile-notice-banner {
+    padding: 10px 0;
+  }
+  .mobile-notice-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    position: relative;
+    padding-right: 32px; /* clearance for close button */
+  }
+  .mobile-notice-close {
+    position: absolute;
+    top: -2px;
+    right: 0;
+  }
+  .mobile-notice-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .btn-mobile-action {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
   .hero-brand-heading {
     font-size: 2.2rem;
   }
