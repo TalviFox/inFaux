@@ -59,6 +59,27 @@
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
         </Style>
 
+        <!-- Global ToolTip Style -->
+        <Style TargetType="ToolTip">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#475569"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="HasDropShadow" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter Content="{TemplateBinding Content}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Custom TabControl Style -->
         <Style TargetType="TabItem">
             <Setter Property="Background" Value="Transparent"/>
@@ -207,6 +228,62 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Primary Accent Button Style -->
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource PrimaryAccentBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryAccentForegroundBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource PrimaryAccentHoverBrush}"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Opacity" Value="0.85"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Ghost Button Style -->
+        <Style x:Key="GhostButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Dynamic TextBox Style -->
         <Style x:Key="DarkTextBox" TargetType="TextBox">
             <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
@@ -294,6 +371,7 @@
                                               HorizontalAlignment="Left"
                                               TextElement.Foreground="{DynamicResource TextPrimaryBrush}"/>
                             <Popup x:Name="Popup" 
+                                   PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
                                    Placement="Bottom" 
                                    IsOpen="{TemplateBinding IsDropDownOpen}" 
                                    AllowsTransparency="True" 
@@ -420,7 +498,7 @@
                         ToolTip="{Binding Summary.Chassis.Note}">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="🌡️ " FontSize="12" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding Summary.Chassis.DisplayText, FallbackValue='Estimating...'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryAccentBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Summary.Chassis.DisplayText, FallbackValue='Estimating...'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryAccentBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                         <TextBlock Text=" ℹ️" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" Margin="4,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
@@ -485,6 +563,7 @@
                                                 <TextBlock Text="{Binding Summary.Cpu.TempC, StringFormat={}{0:F0}, TargetNullValue='--', FallbackValue='--'}" Style="{StaticResource MetricValueText}" Foreground="{DynamicResource PrimaryAccentBrush}"/>
                                                 <TextBlock Text=" °C" FontSize="16" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Bottom" Margin="2,0,0,4"/>
                                             </StackPanel>
+                                            <TextBlock Text="{Binding Summary.Cpu.VrmTempC, StringFormat={}VRM: {0:F0}°C, TargetNullValue='VRM: --', FallbackValue='VRM: --'}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
                                         </StackPanel>
 
                                         <!-- Load -->
@@ -494,6 +573,7 @@
                                                 <TextBlock Text="{Binding Summary.Cpu.LoadPercent, StringFormat={}{0:F1}}" Style="{StaticResource MetricValueText}"/>
                                                 <TextBlock Text=" %" FontSize="16" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Bottom" Margin="2,0,0,4"/>
                                             </StackPanel>
+                                            <TextBlock Text="{Binding Summary.Cpu.CoreCount, StringFormat={}{0} Logical Cores, FallbackValue='-- Cores'}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
                                         </StackPanel>
 
                                         <!-- Power -->
@@ -502,6 +582,35 @@
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="{Binding Summary.Cpu.PowerWatts, StringFormat={}{0:F1}, TargetNullValue='--', FallbackValue='--'}" Style="{StaticResource MetricValueText}" Foreground="#FBBF24"/>
                                                 <TextBlock Text=" W" FontSize="16" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Bottom" Margin="2,0,0,4"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Summary.Cpu.ClockGhz, StringFormat={}{0:F2} GHz, TargetNullValue='-- GHz', FallbackValue='-- GHz'}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
+                                                <Viewbox Width="12" Height="12" Margin="5,0,0,0" VerticalAlignment="Center" ToolTip="Active CPU Turbo / Precision Boost">
+                                                    <Viewbox.Style>
+                                                        <Style TargetType="Viewbox">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Summary.Cpu.IsBoost}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Viewbox.Style>
+                                                    <Canvas Width="16" Height="16">
+                                                        <!-- Top Outlet Flange -->
+                                                        <Line X1="14.8" Y1="1.2" X2="14.8" Y2="5.5" Stroke="{DynamicResource PrimaryAccentBrush}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                                        <!-- Snail Body -->
+                                                        <Path Stroke="{DynamicResource PrimaryAccentBrush}" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                                              Data="M 14.8,2 L 7.5,2 C 3.8,2 1.5,4.8 1.5,8.8 C 1.5,12.8 4.2,15 8.2,15 C 12.2,15 14.8,12.5 14.8,9 L 14.8,5 L 10.5,5 C 9.2,5 8.2,6 8.2,7.5"/>
+                                                        <!-- Wheel Bore Rim -->
+                                                        <Ellipse Canvas.Left="4.8" Canvas.Top="5.8" Width="6.4" Height="6.4" Stroke="{DynamicResource PrimaryAccentBrush}" StrokeThickness="1.0"/>
+                                                        <!-- Center Turbine Hub -->
+                                                        <Ellipse Canvas.Left="7.0" Canvas.Top="8.0" Width="2.0" Height="2.0" Fill="{DynamicResource PrimaryAccentBrush}"/>
+                                                        <!-- Swirl Vanes (6-Blade) -->
+                                                        <Path Stroke="{DynamicResource PrimaryAccentBrush}" StrokeThickness="1.1" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                              Data="M 8,8 C 7.5,7 7.8,6.2 8,5.8 M 8.9,8.5 C 9.8,8.2 10.4,8.7 10.8,9 M 8.9,9.5 C 9.4,10.3 9,11 8.7,11.4 M 8,10 C 7.5,10.8 6.9,10.6 6.5,10.2 M 7.1,9.5 C 6.3,9.7 5.8,9.2 5.4,9 M 7.1,8.5 C 6.8,7.8 7.3,7 7.5,6.6"/>
+                                                    </Canvas>
+                                                </Viewbox>
                                             </StackPanel>
                                         </StackPanel>
                                     </Grid>
@@ -567,24 +676,53 @@
                                             <TextBlock Text="{Binding CurrentGpu.HotspotDisplayText, FallbackValue='Hotspot: --'}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
                                         </StackPanel>
 
-                                        <!-- Load -->
+                                        <!-- Load & Clock -->
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Text="CORE LOAD" Style="{StaticResource SubLabel}"/>
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="{Binding CurrentGpu.LoadPercent, StringFormat={}{0:F1}, TargetNullValue='0.0', FallbackValue='0.0'}" Style="{StaticResource MetricValueText}"/>
                                                 <TextBlock Text=" %" FontSize="16" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Bottom" Margin="2,0,0,4"/>
                                             </StackPanel>
-                                            <TextBlock Text="{Binding CurrentGpu.FanDisplayText, FallbackValue='Fan: N/A'}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding CurrentGpu.SubLoadDisplayText, FallbackValue=''}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
+                                                <!-- Active GPU Boost Turbo Vector Indicator (Design 2: Snout with 6-blade swirl turbine) -->
+                                                <Viewbox Width="12" Height="12" Margin="5,0,0,0" VerticalAlignment="Center" ToolTip="Active GPU Boost / Dynamic Precision Frequency Scaling">
+                                                    <Viewbox.Style>
+                                                        <Style TargetType="Viewbox">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding CurrentGpu.IsBoost}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Viewbox.Style>
+                                                    <Canvas Width="16" Height="16">
+                                                        <!-- Top Outlet Flange -->
+                                                        <Line X1="14.8" Y1="1.2" X2="14.8" Y2="5.5" Stroke="{DynamicResource PrimaryAccentBrush}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                                        <!-- Snail Body -->
+                                                        <Path Stroke="{DynamicResource PrimaryAccentBrush}" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                                              Data="M 14.8,2 L 7.5,2 C 3.8,2 1.5,4.8 1.5,8.8 C 1.5,12.8 4.2,15 8.2,15 C 12.2,15 14.8,12.5 14.8,9 L 14.8,5 L 10.5,5 C 9.2,5 8.2,6 8.2,7.5"/>
+                                                        <!-- Wheel Bore Rim -->
+                                                        <Ellipse Canvas.Left="4.8" Canvas.Top="5.8" Width="6.4" Height="6.4" Stroke="{DynamicResource PrimaryAccentBrush}" StrokeThickness="1.0"/>
+                                                        <!-- Center Turbine Hub -->
+                                                        <Ellipse Canvas.Left="7.0" Canvas.Top="8.0" Width="2.0" Height="2.0" Fill="{DynamicResource PrimaryAccentBrush}"/>
+                                                        <!-- Swirl Vanes (6-Blade) -->
+                                                        <Path Stroke="{DynamicResource PrimaryAccentBrush}" StrokeThickness="1.1" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                              Data="M 8,8 C 7.5,7 7.8,6.2 8,5.8 M 8.9,8.5 C 9.8,8.2 10.4,8.7 10.8,9 M 8.9,9.5 C 9.4,10.3 9,11 8.7,11.4 M 8,10 C 7.5,10.8 6.9,10.6 6.5,10.2 M 7.1,9.5 C 6.3,9.7 5.8,9.2 5.4,9 M 7.1,8.5 C 6.8,7.8 7.3,7 7.5,6.6"/>
+                                                    </Canvas>
+                                                </Viewbox>
+                                            </StackPanel>
                                         </StackPanel>
 
-                                        <!-- Power / VRAM -->
+                                        <!-- Power / VRAM & Fan -->
                                         <StackPanel Grid.Column="2">
                                             <TextBlock Text="{Binding CurrentGpu.PowerLabel, FallbackValue='BOARD POWER'}" Style="{StaticResource SubLabel}"/>
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="{Binding CurrentGpu.PowerWatts, StringFormat={}{0:F1}, TargetNullValue='--', FallbackValue='--'}" Style="{StaticResource MetricValueText}" Foreground="#FBBF24"/>
                                                 <TextBlock Text=" W" FontSize="16" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Bottom" Margin="2,0,0,4"/>
                                             </StackPanel>
-                                            <TextBlock Text="{Binding CurrentGpu.VramUsedGb, StringFormat={}VRAM: {0:F1} GB, TargetNullValue='VRAM: --', FallbackValue='VRAM: --'}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
+                                            <TextBlock Text="{Binding CurrentGpu.SubPowerDisplayText, FallbackValue='VRAM: --'}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
                                         </StackPanel>
                                     </Grid>
                                     <ProgressBar Value="{Binding CurrentGpu.LoadPercent, Mode=OneWay, FallbackValue=0}" Maximum="100" Height="4" Background="{DynamicResource ProgressBarTrackBrush}" Foreground="{DynamicResource PrimaryAccentBrush}" BorderThickness="0"/>
@@ -622,12 +760,12 @@
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Text="UTILIZATION" Style="{StaticResource SubLabel}"/>
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding Summary.Memory.Percent, StringFormat={}{0:F0}}" Style="{StaticResource MetricValueText}" Foreground="#A855F7"/>
+                                                <TextBlock Text="{Binding Summary.Memory.Percent, StringFormat={}{0:F0}}" Style="{StaticResource MetricValueText}" Foreground="{DynamicResource PrimaryAccentBrush}"/>
                                                 <TextBlock Text=" %" FontSize="16" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Bottom" Margin="2,0,0,4"/>
                                             </StackPanel>
                                         </StackPanel>
                                     </Grid>
-                                    <ProgressBar Value="{Binding Summary.Memory.Percent, Mode=OneWay}" Maximum="100" Height="4" Background="{DynamicResource ProgressBarTrackBrush}" Foreground="#A855F7" BorderThickness="0"/>
+                                    <ProgressBar Value="{Binding Summary.Memory.Percent, Mode=OneWay}" Maximum="100" Height="4" Background="{DynamicResource ProgressBarTrackBrush}" Foreground="{DynamicResource PrimaryAccentBrush}" BorderThickness="0"/>
                                 </StackPanel>
                             </Border>
 
@@ -668,9 +806,15 @@
                                             </StackPanel>
                                         </StackPanel>
 
-                                        <StackPanel Grid.Column="2" Visibility="{Binding BatteryVisibility}">
-                                            <TextBlock Text="BATTERY" Style="{StaticResource SubLabel}"/>
+                                        <StackPanel Grid.Column="2" Visibility="{Binding BatteryVisibility}" ToolTip="{Binding Summary.Battery.FullStatusTooltip}" Cursor="Help">
                                             <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="BATTERY" Style="{StaticResource SubLabel}"/>
+                                                <Border Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="4,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Summary.Battery.ShortStatusText}" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                </Border>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                <TextBlock Text="{Binding Summary.Battery.StatusIcon}" FontSize="15" FontFamily="Segoe UI Emoji, Segoe UI Symbol, Segoe UI" VerticalAlignment="Center" Margin="0,0,5,2"/>
                                                 <TextBlock Text="{Binding Summary.Battery.DisplayPercent, FallbackValue='--%'}" Style="{StaticResource MetricValueText}"/>
                                             </StackPanel>
                                         </StackPanel>
@@ -679,7 +823,7 @@
                             </Border>
 
                             <!-- STORAGE VOLUMES (CLICKABLE) -->
-                            <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource MetricCard}" Cursor="Hand" MouseDown="OnStorageCardClick" ToolTip="Click to view full SMART drive diagnostics">
+                            <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource MetricCard}" Cursor="Hand" MouseDown="OnStorageCardClick" ToolTip="Click to view full drive diagnostics &amp; hardware attributes">
                                 <StackPanel>
                                     <Grid Margin="0,0,0,8">
                                         <TextBlock Text="STORAGE VOLUMES &amp; DRIVES" Style="{StaticResource CardHeader}"/>
@@ -764,6 +908,90 @@
                             <!-- CPU DETAIL: PER-CORE BREAKDOWN (P-Cores and E-Cores) -->
                             <Border Style="{StaticResource StaticCard}" Visibility="{Binding CpuDetailVisibility}">
                                 <StackPanel>
+                                    <!-- PROCHOT / MOUNTING FAILURE WARNING BANNER -->
+                                    <Border Background="#450A0A" BorderBrush="#DC2626" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,14" Visibility="{Binding ThrottlingDivergenceVisibility}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="⚠️" FontSize="20" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="HARDWARE PROCHOT / MOUNTING FAILURE DETECTED" FontWeight="Bold" Foreground="#FCA5A5" FontSize="13"/>
+                                                <TextBlock Text="Compute workload is high but processor clocks have cratered to base/sub-base frequencies. Check cooler mounting tension, thermal paste contact, or AIO pump status." Foreground="#F87171" FontSize="11.5" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- TIM LIFECYCLE & PASTE DIAGNOSTICS CARD -->
+                                    <Border Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,14"
+                                            ToolTip="Tracks thermal paste degradation and pump-out. (Note: $20 boutique paste still won't fix a 253W boost spike or uneven mounting pressure, but we can track it anyway!)">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="THERMAL INTERFACE MATERIAL (TIM) DIAGNOSTICS" Style="{StaticResource SubLabel}"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <TextBlock Text="{Binding Summary.Cpu.TimProfile}" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                                    <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Summary.Cpu.TimStatus}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryAccentBrush}"/>
+                                                    </Border>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <StackPanel Margin="0,0,20,0" HorizontalAlignment="Right">
+                                                    <TextBlock Text="ESTIMATED HEALTH" Style="{StaticResource SubLabel}" HorizontalAlignment="Right"/>
+                                                    <TextBlock Text="{Binding Summary.Cpu.TimHealthPercent, StringFormat={}{0:F0}%, FallbackValue='100%'}" FontWeight="Bold" Foreground="#10B981" FontFamily="Consolas" HorizontalAlignment="Right"/>
+                                                </StackPanel>
+                                                <StackPanel HorizontalAlignment="Right">
+                                                    <TextBlock Text="APPLICATION AGE" Style="{StaticResource SubLabel}" HorizontalAlignment="Right"/>
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                        <TextBlock Text="{Binding TimAgeDisplay}" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                                        <Button Content="Set Today" Click="OnMarkTimAppliedTodayClick" Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource PrimaryAccentBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1" FontSize="10" FontWeight="SemiBold" Padding="6,2" Margin="8,0,0,0" Cursor="Hand" VerticalAlignment="Center">
+                                                            <Button.Resources>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="CornerRadius" Value="4"/>
+                                                                </Style>
+                                                            </Button.Resources>
+                                                        </Button>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- MOTHERBOARD & VRM POWER-STAGE CARD -->
+                                    <Border Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,14"
+                                            ToolTip="Motherboard VRM power delivery telemetry (ACPI thermal zone or estimated power-stage model).">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="MOTHERBOARD &amp; POWER DELIVERY" Style="{StaticResource SubLabel}"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <TextBlock Text="{Binding Summary.Motherboard.Model}" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                                    <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Summary.Cpu.VrmSource}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryAccentBrush}"/>
+                                                    </Border>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <StackPanel Margin="0,0,20,0" HorizontalAlignment="Right">
+                                                    <TextBlock Text="VRM / MOSFET TEMP" Style="{StaticResource SubLabel}" HorizontalAlignment="Right"/>
+                                                    <TextBlock Text="{Binding Summary.Cpu.VrmTempC, StringFormat={}{0:F0}°C, TargetNullValue='-- °C', FallbackValue='-- °C'}" FontWeight="Bold" Foreground="{DynamicResource PrimaryAccentBrush}" FontFamily="Consolas" FontSize="13" HorizontalAlignment="Right"/>
+                                                </StackPanel>
+                                                <StackPanel HorizontalAlignment="Right">
+                                                    <TextBlock Text="MANUFACTURER" Style="{StaticResource SubLabel}" HorizontalAlignment="Right"/>
+                                                    <TextBlock Text="{Binding Summary.Motherboard.Manufacturer}" TextWrapping="NoWrap" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
                                     <TextBlock Text="PER-CORE BREAKDOWN &amp; DIGITAL THERMAL SENSORS" Style="{StaticResource CardHeader}" Margin="0,0,0,14"/>
                                     <ItemsControl ItemsSource="{Binding Summary.Cpu.Cores}">
                                         <ItemsControl.ItemsPanel>
@@ -773,14 +1001,78 @@
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Border Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6" Width="230">
+                                                <Border Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="6" Width="230" ToolTip="{Binding Description}">
                                                     <StackPanel>
                                                         <Grid>
-                                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                                <Border Margin="6,0,0,0" Padding="4,1" CornerRadius="3" VerticalAlignment="Center" ToolTip="{Binding Description}">
+                                                                    <Border.Style>
+                                                                        <Style TargetType="Border">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding Type}" Value="P">
+                                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                                    <Setter Property="Background" Value="#1E3A8A"/>
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding Type}" Value="Core">
+                                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                                    <Setter Property="Background" Value="#1E3A8A"/>
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding Type}" Value="HT">
+                                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                                    <Setter Property="Background" Value="#312E81"/>
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding Type}" Value="SMT">
+                                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                                    <Setter Property="Background" Value="#312E81"/>
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding Type}" Value="E">
+                                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                                    <Setter Property="Background" Value="#134E4A"/>
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding Type}" Value="C">
+                                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                                    <Setter Property="Background" Value="#701A75"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Border.Style>
+                                                                    <TextBlock Text="{Binding Type}" FontSize="9" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                                                                </Border>
+                                                            </StackPanel>
                                                             <TextBlock Text="{Binding TempC, StringFormat={}{0:F0}°C, TargetNullValue='-- °C', FallbackValue='--'}" Foreground="{DynamicResource PrimaryAccentBrush}" FontFamily="Consolas" FontWeight="Bold" HorizontalAlignment="Right"/>
                                                         </Grid>
                                                         <Grid Margin="0,4,0,6">
-                                                            <TextBlock Text="{Binding ClockMhz, StringFormat={}{0:F0} MHz, TargetNullValue='-- MHz', FallbackValue=''}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="Consolas"/>
+                                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding ClockMhz, StringFormat={}{0:F0} MHz, TargetNullValue='-- MHz', FallbackValue=''}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="Consolas"/>
+                                                                <Viewbox Width="11" Height="11" Margin="5,0,0,0" VerticalAlignment="Center" ToolTip="Core Hardware Boost Active">
+                                                                    <Viewbox.Style>
+                                                                        <Style TargetType="Viewbox">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsBoost}" Value="True">
+                                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Viewbox.Style>
+                                                                    <Canvas Width="16" Height="16">
+                                                                        <!-- Top Outlet Flange -->
+                                                                        <Line X1="14.8" Y1="1.2" X2="14.8" Y2="5.5" Stroke="{DynamicResource PrimaryAccentBrush}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                                                        <!-- Snail Body -->
+                                                                        <Path Stroke="{DynamicResource PrimaryAccentBrush}" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                                                              Data="M 14.8,2 L 7.5,2 C 3.8,2 1.5,4.8 1.5,8.8 C 1.5,12.8 4.2,15 8.2,15 C 12.2,15 14.8,12.5 14.8,9 L 14.8,5 L 10.5,5 C 9.2,5 8.2,6 8.2,7.5"/>
+                                                                        <!-- Wheel Bore Rim -->
+                                                                        <Ellipse Canvas.Left="4.8" Canvas.Top="5.8" Width="6.4" Height="6.4" Stroke="{DynamicResource PrimaryAccentBrush}" StrokeThickness="1.0"/>
+                                                                        <!-- Center Turbine Hub -->
+                                                                        <Ellipse Canvas.Left="7.0" Canvas.Top="8.0" Width="2.0" Height="2.0" Fill="{DynamicResource PrimaryAccentBrush}"/>
+                                                                        <!-- Swirl Vanes (6-Blade) -->
+                                                                        <Path Stroke="{DynamicResource PrimaryAccentBrush}" StrokeThickness="1.1" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                                              Data="M 8,8 C 7.5,7 7.8,6.2 8,5.8 M 8.9,8.5 C 9.8,8.2 10.4,8.7 10.8,9 M 8.9,9.5 C 9.4,10.3 9,11 8.7,11.4 M 8,10 C 7.5,10.8 6.9,10.6 6.5,10.2 M 7.1,9.5 C 6.3,9.7 5.8,9.2 5.4,9 M 7.1,8.5 C 6.8,7.8 7.3,7 7.5,6.6"/>
+                                                                    </Canvas>
+                                                                </Viewbox>
+                                                            </StackPanel>
                                                             <TextBlock Text="{Binding LoadPercent, StringFormat={}{0:F0}%, TargetNullValue='0%', FallbackValue='0%'}" FontSize="12" Foreground="{DynamicResource PrimaryAccentBrush}" FontFamily="Consolas" HorizontalAlignment="Right"/>
                                                         </Grid>
                                                         <ProgressBar Value="{Binding LoadPercent, Mode=OneWay, FallbackValue=0}" Maximum="100" Height="4" Background="{DynamicResource ProgressBarTrackBrush}" Foreground="{DynamicResource PrimaryAccentBrush}" BorderThickness="0"/>
@@ -792,10 +1084,10 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- STORAGE DETAIL: PHYSICAL DRIVES & SMART ATTRIBUTES -->
+                            <!-- STORAGE DETAIL: PHYSICAL DRIVES & HARDWARE ATTRIBUTES -->
                             <Border Style="{StaticResource StaticCard}" Visibility="{Binding StorageDetailVisibility}">
                                 <StackPanel>
-                                    <TextBlock Text="PHYSICAL DRIVES &amp; USER-MODE SMART ATTRIBUTES" Style="{StaticResource CardHeader}" Margin="0,0,0,14"/>
+                                    <TextBlock Text="PHYSICAL DRIVES &amp; HARDWARE ATTRIBUTES" Style="{StaticResource CardHeader}" Margin="0,0,0,14"/>
                                     <ItemsControl ItemsSource="{Binding Summary.Storage}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
@@ -827,26 +1119,26 @@
                                                             </StackPanel>
                                                         </Grid>
 
-                                                        <!-- SMART Attributes Grid -->
+                                                        <!-- Hardware Attributes Grid -->
                                                         <Grid Grid.Row="1" Margin="0,12,0,12">
                                                             <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto" MinWidth="130"/>
                                                                 <ColumnDefinition Width="*"/>
-                                                                <ColumnDefinition Width="*"/>
-                                                                <ColumnDefinition Width="*"/>
-                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto" MinWidth="140"/>
+                                                                <ColumnDefinition Width="Auto" MinWidth="110"/>
                                                             </Grid.ColumnDefinitions>
 
-                                                            <StackPanel Grid.Column="0">
+                                                            <StackPanel Grid.Column="0" Margin="0,0,16,0">
                                                                 <TextBlock Text="FIRMWARE REVISION" Style="{StaticResource SubLabel}"/>
                                                                 <TextBlock Text="{Binding FirmwareRevision, TargetNullValue='N/A', FallbackValue='N/A'}" Foreground="{DynamicResource TextPrimaryBrush}" FontFamily="Consolas" FontWeight="SemiBold"/>
                                                             </StackPanel>
 
-                                                            <StackPanel Grid.Column="1">
+                                                            <StackPanel Grid.Column="1" Margin="0,0,20,0">
                                                                 <TextBlock Text="SERIAL NUMBER" Style="{StaticResource SubLabel}"/>
-                                                                <TextBlock Text="{Binding SerialNumber, TargetNullValue='N/A', FallbackValue='N/A'}" Foreground="{DynamicResource TextPrimaryBrush}" FontFamily="Consolas" FontWeight="SemiBold"/>
+                                                                <TextBlock Text="{Binding SerialNumber, TargetNullValue='N/A', FallbackValue='N/A'}" ToolTip="{Binding SerialNumber}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}" FontFamily="Consolas" FontWeight="SemiBold"/>
                                                             </StackPanel>
 
-                                                            <StackPanel Grid.Column="2">
+                                                            <StackPanel Grid.Column="2" Margin="0,0,16,0">
                                                                 <TextBlock Text="TRIM STATUS" Style="{StaticResource SubLabel}"/>
                                                                 <TextBlock Text="{Binding TrimStatus, TargetNullValue='Active'}" Foreground="#34D399" FontWeight="SemiBold"/>
                                                             </StackPanel>
@@ -900,7 +1192,10 @@
                             <!-- DETAIL SENSORS TABLE -->
                             <Border Style="{StaticResource StaticCard}">
                                 <StackPanel>
-                                    <TextBlock Text="RAW TELEMETRY CHANNELS &amp; REGISTERS" Style="{StaticResource CardHeader}" Margin="0,0,0,10"/>
+                                    <Grid Margin="0,0,0,10">
+                                        <TextBlock Text="ALL SENSOR CHANNELS" Style="{StaticResource CardHeader}" VerticalAlignment="Center"/>
+                                        <Button Content="↺ Reset Min/Max" Click="OnResetMinMaxClick" Style="{StaticResource ActionButton}" HorizontalAlignment="Right" Padding="8,3" FontSize="11"/>
+                                    </Grid>
                                     <DataGrid ItemsSource="{Binding DetailMetrics}" AutoGenerateColumns="False" IsReadOnly="True"
                                               Background="{DynamicResource CardBackgroundBrush}" RowBackground="{DynamicResource CardBackgroundBrush}" AlternatingRowBackground="{DynamicResource ControlBackgroundBrush}"
                                               BorderBrush="{DynamicResource CardBorderBrush}" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource CardBorderBrush}"
@@ -919,9 +1214,9 @@
                                             <DataGridTextColumn Header="Hardware" Binding="{Binding HardwareName}" Width="220"/>
                                             <DataGridTextColumn Header="Sensor" Binding="{Binding Name}" Width="260"/>
                                             <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="100"/>
-                                            <DataGridTextColumn Header="Value" Binding="{Binding Formatted}" Width="140" FontFamily="Consolas"/>
-                                            <DataGridTextColumn Header="Min" Binding="{Binding Min, StringFormat={}{0:F1}}" Width="90" FontFamily="Consolas"/>
-                                            <DataGridTextColumn Header="Max" Binding="{Binding Max, StringFormat={}{0:F1}}" Width="90" FontFamily="Consolas"/>
+                                            <DataGridTextColumn Header="Value" Binding="{Binding Formatted}" Width="130" FontFamily="Consolas"/>
+                                            <DataGridTextColumn Header="Min" Binding="{Binding FormattedMin}" Width="100" FontFamily="Consolas"/>
+                                            <DataGridTextColumn Header="Max" Binding="{Binding FormattedMax}" Width="100" FontFamily="Consolas"/>
                                         </DataGrid.Columns>
                                     </DataGrid>
                                 </StackPanel>
@@ -940,7 +1235,10 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="Complete hierarchical list of detected hardware sensors and channels:" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,10"/>
+                    <Grid Grid.Row="0" Margin="0,0,0,10">
+                        <TextBlock Text="Complete hierarchical list of detected hardware sensors and channels:" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        <Button Content="↺ Reset Min/Max" Click="OnResetMinMaxClick" Style="{StaticResource ActionButton}" HorizontalAlignment="Right" Padding="8,3" FontSize="11"/>
+                    </Grid>
 
                     <DataGrid Grid.Row="1" ItemsSource="{Binding AllMetrics}" AutoGenerateColumns="False" IsReadOnly="True"
                               Background="{DynamicResource CardBackgroundBrush}" RowBackground="{DynamicResource CardBackgroundBrush}" AlternatingRowBackground="{DynamicResource ControlBackgroundBrush}"
@@ -962,8 +1260,8 @@
                             <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="100"/>
                             <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="100"/>
                             <DataGridTextColumn Header="Current" Binding="{Binding Formatted}" Width="120" FontFamily="Consolas"/>
-                            <DataGridTextColumn Header="Min" Binding="{Binding Min, StringFormat={}{0:F1}}" Width="90" FontFamily="Consolas"/>
-                            <DataGridTextColumn Header="Max" Binding="{Binding Max, StringFormat={}{0:F1}}" Width="90" FontFamily="Consolas"/>
+                            <DataGridTextColumn Header="Min" Binding="{Binding FormattedMin}" Width="100" FontFamily="Consolas"/>
+                            <DataGridTextColumn Header="Max" Binding="{Binding FormattedMax}" Width="100" FontFamily="Consolas"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -972,7 +1270,7 @@
             <!-- TAB 3: SETTINGS -->
             <TabItem Header="Settings">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="0,10" MaxWidth="800" HorizontalAlignment="Left">
+                    <StackPanel Margin="24,10,24,60" MaxWidth="920" HorizontalAlignment="Center">
 
                         <!-- Page Title Header (Inspired by WireFox) -->
                         <StackPanel Margin="0,4,0,20">
@@ -1229,11 +1527,342 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Group 2: Hardware Polling & Tray Monitor -->
+                        <!-- Group 2: Physical Environment & Thermal Calibration -->
                         <Grid Margin="0,0,0,8">
-                            <TextBlock Text="Hardware Polling &amp; Tray Monitor" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="Physical Environment &amp; Thermal Calibration" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                             <Border HorizontalAlignment="Right" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="10,3">
-                                <TextBlock Text="⏱ Live Hardware Probes" FontSize="11" Foreground="#34D399" FontWeight="SemiBold"/>
+                                <TextBlock Text="⚡ Thermal Engine" FontSize="11" Foreground="#FBBF24" FontWeight="SemiBold"/>
+                            </Border>
+                        </Grid>
+
+                        <Border Style="{StaticResource StaticCard}" Margin="0,0,0,22">
+                            <StackPanel>
+                                <!-- Chassis Enclosure -->
+                                <Grid Margin="0,4" Background="Transparent" ToolTip="Calibrates thermal airflow baseline. Desktops model open internal air circulation, while laptops model compact enclosure heat dissipation.">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="260"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                        <TextBlock Text="Chassis Enclosure Form Factor" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                        <TextBlock Text="{Binding ChassisProfileSubLabel, FallbackValue='Calibrate internal case airflow and heat dissipation.'}" Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" SelectedValue="{Binding ChassisProfile}" SelectedValuePath="Tag" IsEnabled="{Binding IsPhysicalMachine}" ToolTip="{Binding ChassisProfileTooltip}" Style="{StaticResource DarkComboBox}">
+                                        <ComboBoxItem Content="Auto (Hardware Detected)" Tag="Auto"/>
+                                        <ComboBoxItem Content="Laptop (Mobile Enclosure)" Tag="Laptop"/>
+                                        <ComboBoxItem Content="Desktop (Tower Enclosure)" Tag="Desktop"/>
+                                    </ComboBox>
+                                </Grid>
+
+                                <!-- Divider -->
+                                <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,12"/>
+
+                                <!-- In-Case Chassis Air Thermometer (BTHome / BLE) -->
+                                <Grid Margin="0,4" Background="Transparent" ToolTip="Listen passively for a wireless thermometer placed inside your PC case cavity. Overrides simulated chassis heat buildup with physical in-case air temperature.">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="In-Case Air Thermometer (BTHome / BLE)" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                            <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding BleChassisStatusBadge}" FontSize="10.5" Foreground="{Binding BleChassisStatusColor}" FontWeight="SemiBold"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="Capture real internal case air temperature from an in-case Bluetooth thermometer." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
+                                        <TextBlock FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap">
+                                            <Run Text="{Binding BleChassisMainText, Mode=OneWay}" Foreground="{DynamicResource BleTextBrush}"/>
+                                            <Run Text="{Binding BleChassisRssiText, Mode=OneWay}" Foreground="{Binding BleChassisRssiColor}" FontWeight="SemiBold"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <Grid Margin="0,0,0,6">
+                                            <TextBlock Text="Enable Listener" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                            <CheckBox IsChecked="{Binding EnableBleChassis}" Style="{StaticResource ToggleSwitch}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <StackPanel Visibility="{Binding BleChassisSelectorVisibility}">
+                                            <ComboBox ItemsSource="{Binding BleChassisSensorChoices}"
+                                                      SelectedValue="{Binding BleChassisSensorMac}"
+                                                      SelectedValuePath="Mac"
+                                                      Style="{StaticResource DarkComboBox}"
+                                                      MaxDropDownHeight="220"
+                                                      Loaded="OnComboBoxLoaded"
+                                                      PreviewMouseLeftButtonDown="OnComboBoxPreviewMouseDown"
+                                                      PreviewKeyDown="OnComboBoxPreviewKeyDown"
+                                                      DropDownOpened="OnComboBoxDropDownOpened"
+                                                      ToolTip="Select the wireless thermometer placed inside your PC case cavity.">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource TextPrimaryBrush}" FontFamily="Consolas, Segoe UI" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Divider -->
+                                <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,12"/>
+
+                                <!-- Room Ambient Calibration Tool -->
+                                <Grid Margin="0,4" Background="Transparent" ToolTip="Calibrates ambient room temperature baseline. Match this to your room thermometer so your idle temperature is accurate.">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="Room Ambient Calibration" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                            <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Summary.Chassis.EstimatedAmbientDisplay, FallbackValue='71.6 °F (22.0 °C)'}" FontSize="10.5" Foreground="#34D399" FontWeight="SemiBold"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="Calibrate estimated room ambient against your physical room temperature." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <Grid Grid.Column="1" VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="65"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Slider Grid.Column="0" Minimum="-10" Maximum="10" Value="{Binding RoomAmbientOffsetC}" SmallChange="0.5" LargeChange="1.0" IsSnapToTickEnabled="True" TickFrequency="0.5" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding RoomAmbientOffsetDisplay}" Foreground="#34D399" FontWeight="SemiBold" FontFamily="Consolas" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                    </Grid>
+                                </Grid>
+
+                                <!-- Divider -->
+                                <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,12"/>
+
+                                <!-- Wireless Room Thermometer (BTHome / BLE) -->
+                                <Grid Margin="0,4" Background="Transparent" ToolTip="Listen passively for nearby open-standard BTHome and BLE wireless thermometers (Shelly BLU, Xiaomi, ATC/PVVX, ESPHome). Replaces thermal estimation with live physical room temperature.">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="Wireless Room Thermometer (BTHome / BLE)" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                            <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding BleAmbientStatusBadge}" FontSize="10.5" Foreground="{Binding BleAmbientStatusColor}" FontWeight="SemiBold"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="Passively capture real room temperature from local Bluetooth beacons." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
+                                        <TextBlock FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap">
+                                            <Run Text="{Binding BleAmbientMainText, Mode=OneWay}" Foreground="{DynamicResource BleTextBrush}"/>
+                                            <Run Text="{Binding BleAmbientRssiText, Mode=OneWay}" Foreground="{Binding BleAmbientRssiColor}" FontWeight="SemiBold"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <Grid Margin="0,0,0,6">
+                                            <TextBlock Text="Enable Listener" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                            <CheckBox IsChecked="{Binding EnableBleAmbient}" Style="{StaticResource ToggleSwitch}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <StackPanel Visibility="{Binding BleSensorSelectorVisibility}">
+                                            <ComboBox ItemsSource="{Binding BleSensorChoices}"
+                                                      SelectedValue="{Binding BleAmbientSensorMac}"
+                                                      SelectedValuePath="Mac"
+                                                      Style="{StaticResource DarkComboBox}"
+                                                      MaxDropDownHeight="220"
+                                                      Loaded="OnComboBoxLoaded"
+                                                      PreviewMouseLeftButtonDown="OnComboBoxPreviewMouseDown"
+                                                      PreviewKeyDown="OnComboBoxPreviewKeyDown"
+                                                      DropDownOpened="OnComboBoxDropDownOpened"
+                                                      ToolTip="Select a discovered beacon by its physical MAC address, or keep Auto.">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource TextPrimaryBrush}" FontFamily="Consolas, Segoe UI" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Divider -->
+                                <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,12"/>
+
+                                <!-- Cooler Profile -->
+                                <Grid Margin="0,4" Background="Transparent" ToolTip="Selects cooling type and heat capacity (Liquid AIOs absorb initial heat bursts, while Air Coolers react faster to transient load changes).">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="260"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                        <TextBlock Text="Cooler Hardware Profile" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                        <TextBlock Text="Cooler type and thermal capacity (Liquid AIO, Tower Air, Stock)." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" SelectedValue="{Binding CoolerProfile}" SelectedValuePath="Tag" Style="{StaticResource DarkComboBox}">
+                                        <ComboBoxItem Content="Auto (Balanced Desktop)" Tag="Auto"/>
+                                        <ComboBoxItem Content="Liquid AIO (240mm - 360mm+)" Tag="AIO"/>
+                                        <ComboBoxItem Content="Tower Air (Dual / Single Tower)" Tag="TowerAir"/>
+                                        <ComboBoxItem Content="Compact / Stock / Laptop" Tag="Compact"/>
+                                    </ComboBox>
+                                </Grid>
+
+                                <!-- Divider -->
+                                <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,12"/>
+
+                                <!-- Post-Radiator / Cooler Exhaust Thermometer (BTHome / BLE) -->
+                                <Grid Margin="0,4" Background="Transparent" ToolTip="Listen passively for a wireless thermometer placed at radiator or cooler exhaust airflow. Measures live radiator ΔT cooling efficiency.">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="290"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="Post-Radiator Exhaust (BTHome / BLE)" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                            <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding BleRadiatorStatusBadge}" FontSize="10.5" Foreground="{Binding BleRadiatorStatusColor}" FontWeight="SemiBold"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="Measure exhaust air temperature and compute real-time radiator thermal delta (ΔT)." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
+                                        <TextBlock Text="{Binding BleRadiatorStatusText}" FontSize="11" Foreground="{Binding BleRadiatorStatusColor}" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <Grid Margin="0,0,0,6">
+                                            <TextBlock Text="Enable Listener" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                            <CheckBox IsChecked="{Binding EnableBleRadiator}" Style="{StaticResource ToggleSwitch}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <StackPanel Visibility="{Binding BleRadiatorSelectorVisibility}">
+                                            <ComboBox ItemsSource="{Binding BleRadiatorSensorChoices}"
+                                                      SelectedValue="{Binding BleRadiatorSensorMac}"
+                                                      SelectedValuePath="Mac"
+                                                      Style="{StaticResource DarkComboBox}"
+                                                      MaxDropDownHeight="220"
+                                                      Loaded="OnComboBoxLoaded"
+                                                      PreviewMouseLeftButtonDown="OnComboBoxPreviewMouseDown"
+                                                      PreviewKeyDown="OnComboBoxPreviewKeyDown"
+                                                      DropDownOpened="OnComboBoxDropDownOpened"
+                                                      ToolTip="Select the wireless thermometer placed at your radiator exhaust.">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource TextPrimaryBrush}" FontFamily="Consolas, Segoe UI" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Divider -->
+                                <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,12"/>
+
+                                <!-- Step 4: Thermal Interface Material (TIM) Profile Selection -->
+                                <Grid Margin="0,4" Background="Transparent" ToolTip="Compound lifecycle model. (Warning: Premium $20 boutique thermal paste is not a substitute for proper AIO mounting torque or removing the plastic peel!)">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="260"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                        <TextBlock Text="Thermal Interface Material (TIM)" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                        <TextBlock Text="Thermal paste conductivity and estimated service life." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" SelectedValue="{Binding SelectedTimProfile}" SelectedValuePath="Tag" Style="{StaticResource DarkComboBox}" MaxDropDownHeight="320"
+                                              ToolTip="Compound lifecycle model. (Warning: Premium thermal paste is not a substitute for proper AIO mounting torque!)">
+                                        <ComboBoxItem Content="Standard OEM / Stock Paste" Tag="Auto"/>
+                                        <ComboBoxItem Content="Arctic MX-6" Tag="Arctic_MX6"/>
+                                        <ComboBoxItem Content="Arctic MX-4" Tag="Arctic_MX4"/>
+                                        <ComboBoxItem Content="Noctua NT-H2" Tag="Noctua_NTH2"/>
+                                        <ComboBoxItem Content="Noctua NT-H1" Tag="Noctua_NTH1"/>
+                                        <ComboBoxItem Content="Thermal Grizzly Kryonaut" Tag="Kryonaut"/>
+                                        <ComboBoxItem Content="Thermal Grizzly Kryonaut Extreme" Tag="Kryonaut_Extreme"/>
+                                        <ComboBoxItem Content="Thermal Grizzly Hydronaut / Aeronaut" Tag="Hydronaut"/>
+                                        <ComboBoxItem Content="Thermalright TF Series (TF7/TF8/TF9)" Tag="Thermalright_TF"/>
+                                        <ComboBoxItem Content="Kingpin Cooling KPx" Tag="Kingpin_KPx"/>
+                                        <ComboBoxItem Content="Gelid GC-Extreme" Tag="Gelid_GC"/>
+                                        <ComboBoxItem Content="Corsair TM30 / XTM50 / XTM70" Tag="Corsair_TM"/>
+                                        <ComboBoxItem Content="Prolimatech PK-3" Tag="Prolimatech_PK3"/>
+                                        <ComboBoxItem Content="Honeywell PTM7950 (Phase Change)" Tag="PTM7950"/>
+                                        <ComboBoxItem Content="Thermal Grizzly PhaseSheet PTM" Tag="PhaseSheet_PTM"/>
+                                        <ComboBoxItem Content="Liquid Metal (Conductonaut)" Tag="LiquidMetal"/>
+                                        <ComboBoxItem Content="Coollaboratory Liquid Ultra / Pro" Tag="Coollaboratory_Liquid"/>
+                                    </ComboBox>
+                                </Grid>
+
+                                <!-- Divider -->
+                                <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,12"/>
+
+                                <!-- TIM Application Date -->
+                                <Grid Margin="0,4" Background="Transparent" ToolTip="Tracks paste service life, silicone oil bleed, and pump-out dryout over time. Click [Today] to reset when you repaste.">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="260"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                        <TextBlock Text="Paste Application Date" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                        <TextBlock Text="Set date when cooler was installed/repasted to track service life (YYYY-MM-DD)." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <Grid Grid.Column="1" VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0" Text="{Binding TimAppliedDateString, UpdateSourceTrigger=LostFocus}" Style="{StaticResource DarkTextBox}" FontFamily="Consolas" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                        <Button Grid.Column="1" Content="Today" Click="OnMarkTimAppliedTodayClick" Background="{DynamicResource ControlBackgroundBrush}" Foreground="{DynamicResource PrimaryAccentBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" FontSize="11" FontWeight="SemiBold" Padding="8,5" Margin="0,0,4,0" Cursor="Hand" VerticalAlignment="Center">
+                                            <Button.Resources>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="CornerRadius" Value="6"/>
+                                                </Style>
+                                            </Button.Resources>
+                                        </Button>
+                                        <Button Grid.Column="2" Content="Clear" Click="OnClearTimAppliedDateClick" Background="{DynamicResource ControlBackgroundBrush}" Foreground="{DynamicResource TextMutedBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" FontSize="11" Padding="8,5" Cursor="Hand" VerticalAlignment="Center">
+                                            <Button.Resources>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="CornerRadius" Value="6"/>
+                                                </Style>
+                                            </Button.Resources>
+                                        </Button>
+                                    </Grid>
+                                </Grid>
+
+                                <!-- Divider -->
+                                <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,12"/>
+
+                                <!-- CPU Power / TDP Target -->
+                                <Grid Margin="0,4" Background="Transparent" ToolTip="Custom CPU package power limit in watts. Leave at 0 to automatically detect from CPU model.">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="130"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                        <TextBlock Text="CPU Power / TDP Target (Watts)" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                        <TextBlock Text="Package power limit (0 = Auto-detect from CPU model)." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <TextBox Grid.Column="1" Text="{Binding CpuTdpOverrideWatts, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource DarkTextBox}"/>
+                                </Grid>
+
+                                <!-- Divider -->
+                                <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,12"/>
+
+                                <!-- Thermal Calibration Offset (Fine-Tuning) -->
+                                <Grid Margin="0,4" Background="Transparent" ToolTip="Fine-tuning adjustment slider. Apply after setting chassis, ambient, and cooler options.">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="260"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                        <TextBlock Text="Thermal Calibration Offset (Fine-Tuning)" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                        <TextBlock Text="Apply a fine-tuning offset if needed to match your specific hardware." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <Grid Grid.Column="1" VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="65"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Slider Grid.Column="0" Minimum="-15" Maximum="15" Value="{Binding CpuThermalOffset}" SmallChange="0.5" LargeChange="1.0" IsSnapToTickEnabled="True" TickFrequency="0.5" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding CpuThermalOffsetDisplay}" Foreground="{DynamicResource PrimaryAccentBrush}" FontWeight="SemiBold" FontFamily="Consolas" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                    </Grid>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Group 3: Hardware Polling & Telemetry Server -->
+                        <Grid Margin="0,0,0,8">
+                            <TextBlock Text="Hardware Polling &amp; Telemetry Server" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                            <Border HorizontalAlignment="Right" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="10,3">
+                                <TextBlock Text="⏱ Live Probes &amp; API" FontSize="11" Foreground="#34D399" FontWeight="SemiBold"/>
                             </Border>
                         </Grid>
 
@@ -1259,13 +1888,17 @@
                                 <Grid Margin="0,4">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="260"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Margin="0,0,16,0">
                                         <TextBlock Text="Tray Icon Sensor Badge" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
                                         <TextBlock Text="Select which temperature metric is drawn on the tray icon." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
                                     </StackPanel>
-                                    <ComboBox Grid.Column="1" SelectedValue="{Binding TraySensorTarget}" SelectedValuePath="Tag" Style="{StaticResource DarkComboBox}">
+                                    <ComboBox Grid.Column="1" SelectedValue="{Binding TraySensorTarget}" SelectedValuePath="Tag" Style="{StaticResource DarkComboBox}"
+                                              Loaded="OnComboBoxLoaded"
+                                              PreviewMouseLeftButtonDown="OnComboBoxPreviewMouseDown"
+                                              PreviewKeyDown="OnComboBoxPreviewKeyDown"
+                                              DropDownOpened="OnComboBoxDropDownOpened">
                                         <ComboBoxItem Content="CPU Package Temp" Tag="cpu_temp"/>
                                         <ComboBoxItem Content="Primary GPU Temp" Tag="gpu_temp"/>
                                         <ComboBoxItem Content="Highest (CPU or GPU)" Tag="auto_max_temp"/>
@@ -1279,106 +1912,28 @@
                                 <Grid Margin="0,4">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="260"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Margin="0,0,16,0">
                                         <TextBlock Text="Active Network Adapter" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
                                         <TextBlock Text="Select which network interface to monitor on the dashboard." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
                                     </StackPanel>
-                                    <ComboBox Grid.Column="1" SelectedValue="{Binding PreferredNetworkAdapter}" SelectedValuePath="Tag" Style="{StaticResource DarkComboBox}">
-                                        <ComboBoxItem Content="Auto (Highest Traffic)" Tag="Auto"/>
-                                        <ComboBoxItem Content="Wi-Fi (Intel AX210 / Wireless)" Tag="Wi-Fi 3"/>
-                                        <ComboBoxItem Content="vEthernet (Hyper-V Switch)" Tag="vEthernet (Default Switch)"/>
+                                    <ComboBox Grid.Column="1" 
+                                              ItemsSource="{Binding NetworkAdapterChoices}"
+                                              SelectedValue="{Binding PreferredNetworkAdapter}" 
+                                              SelectedValuePath="Id" 
+                                              Style="{StaticResource DarkComboBox}"
+                                              MaxDropDownHeight="220"
+                                              Loaded="OnComboBoxLoaded"
+                                              PreviewMouseLeftButtonDown="OnComboBoxPreviewMouseDown"
+                                              PreviewKeyDown="OnComboBoxPreviewKeyDown"
+                                              DropDownOpened="OnComboBoxDropDownOpened">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
                                     </ComboBox>
-                                </Grid>
-
-                                <!-- Divider -->
-                                <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,12"/>
-
-                                <!-- Chassis Enclosure -->
-                                <Grid Margin="0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="220"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
-                                        <TextBlock Text="Chassis Enclosure Form Factor" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
-                                        <TextBlock Text="{Binding ChassisProfileSubLabel, FallbackValue='Calibrates the zero-driver thermodynamic air cavity solver.'}" Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                    <ComboBox Grid.Column="1" SelectedValue="{Binding ChassisProfile}" SelectedValuePath="Tag" IsEnabled="{Binding IsPhysicalMachine}" ToolTip="{Binding ChassisProfileTooltip}" Style="{StaticResource DarkComboBox}">
-                                        <ComboBoxItem Content="Auto (Hardware Detected)" Tag="Auto"/>
-                                        <ComboBoxItem Content="Laptop (Mobile Enclosure)" Tag="Laptop"/>
-                                        <ComboBoxItem Content="Desktop (Tower Enclosure)" Tag="Desktop"/>
-                                    </ComboBox>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Group 3: CPU Thermal & Cooler Tuning -->
-                        <Grid Margin="0,0,0,8">
-                            <TextBlock Text="CPU Thermal &amp; Cooler Tuning" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                            <Border HorizontalAlignment="Right" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="10,3">
-                                <TextBlock Text="⚡ Joule Heating Model" FontSize="11" Foreground="#FBBF24" FontWeight="SemiBold"/>
-                            </Border>
-                        </Grid>
-
-                        <Border Style="{StaticResource StaticCard}" Margin="0,0,0,22">
-                            <StackPanel>
-                                <!-- Cooler Profile -->
-                                <Grid Margin="0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="220"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
-                                        <TextBlock Text="Cooler Profile" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
-                                        <TextBlock Text="Scales thermal dissipation rate and cold plate resistance." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                    <ComboBox Grid.Column="1" SelectedValue="{Binding CoolerProfile}" SelectedValuePath="Tag" Style="{StaticResource DarkComboBox}">
-                                        <ComboBoxItem Content="Auto (Balanced Desktop)" Tag="Auto"/>
-                                        <ComboBoxItem Content="Liquid AIO (240mm - 360mm+)" Tag="AIO"/>
-                                        <ComboBoxItem Content="Tower Air (Dual / Single Tower)" Tag="TowerAir"/>
-                                        <ComboBoxItem Content="Compact / Stock / Laptop" Tag="Compact"/>
-                                    </ComboBox>
-                                </Grid>
-
-                                <!-- Divider -->
-                                <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,12"/>
-
-                                <!-- Thermal Calibration Offset -->
-                                <Grid Margin="0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="220"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
-                                        <TextBlock Text="Thermal Calibration Offset" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
-                                        <TextBlock Text="Fine-tune modeled die temperatures against physical hardware." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                    <Grid Grid.Column="1" VerticalAlignment="Center">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="65"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Slider Grid.Column="0" Minimum="-15" Maximum="15" Value="{Binding CpuThermalOffset}" SmallChange="0.5" LargeChange="1.0" IsSnapToTickEnabled="True" TickFrequency="0.5" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding CpuThermalOffsetDisplay}" Foreground="{DynamicResource PrimaryAccentBrush}" FontWeight="SemiBold" FontFamily="Consolas" VerticalAlignment="Center" HorizontalAlignment="Right"/>
-                                    </Grid>
-                                </Grid>
-
-                                <!-- Divider -->
-                                <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,12"/>
-
-                                <!-- CPU Power / TDP Target -->
-                                <Grid Margin="0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="130"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
-                                        <TextBlock Text="CPU Power / TDP Target (Watts)" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
-                                        <TextBlock Text="Custom package power target for Joule heating (0 = Auto)." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                    <TextBox Grid.Column="1" Text="{Binding CpuTdpOverrideWatts, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource DarkTextBox}"/>
                                 </Grid>
 
                                 <!-- Divider -->
@@ -1521,5 +2076,77 @@
                 <TextBlock Text="Local Telemetry • Zero Bloat" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
             </Grid>
         </Border>
+
+        <!-- In-App Modern Themed Modal Dialog Overlay -->
+        <Grid x:Name="InAppModalOverlay" Grid.Row="0" Grid.RowSpan="4" Panel.ZIndex="1000" Visibility="Collapsed">
+            <!-- Semi-transparent backdrop with click-to-dismiss support -->
+            <Border Background="#99000000" MouseDown="OnModalBackdropMouseDown"/>
+            
+            <!-- Centered Modern Dialog Card -->
+            <Border MaxWidth="520" MinWidth="420" Margin="24" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="{DynamicResource CardBackgroundBrush}" 
+                    BorderBrush="{DynamicResource PrimaryAccentBrush}" 
+                    BorderThickness="1.5" 
+                    CornerRadius="12" 
+                    Padding="24">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" ShadowDepth="6" Direction="270" Opacity="0.6" Color="#000000"/>
+                </Border.Effect>
+                <StackPanel>
+                    <!-- Header with Icon & Title & Close (X) -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <!-- Themed Icon Container -->
+                        <Border x:Name="ModalIconContainer" Grid.Column="0" Width="38" Height="38" CornerRadius="8" 
+                                Background="{DynamicResource AccentSubtleBrush}" BorderBrush="{DynamicResource AccentBorderBrush}" 
+                                BorderThickness="1" Margin="0,0,12,0" VerticalAlignment="Center">
+                            <TextBlock x:Name="ModalIconText" Text="ℹ️" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        
+                        <!-- Title & Subtitle -->
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock x:Name="ModalTitleText" Text="Dialog Title" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock x:Name="ModalSubtitleText" Text="Dialog Subtitle" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Visibility="Collapsed"/>
+                        </StackPanel>
+                        
+                        <!-- Top-Right Close Button -->
+                        <Button Grid.Column="2" Content="✕" Width="28" Height="28" Style="{StaticResource GhostButton}" 
+                                Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" Padding="0" Click="OnModalCloseClick" VerticalAlignment="Top"/>
+                    </Grid>
+
+                    <!-- Divider -->
+                    <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,0,0,14"/>
+
+                    <!-- Message Body -->
+                    <TextBlock x:Name="ModalMessageText" Text="Dialog message body..." FontSize="12.5" LineHeight="18" 
+                               Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,14"/>
+
+                    <!-- Optional Monospaced Details / Hash Card -->
+                    <Border x:Name="ModalDetailsCard" Visibility="Collapsed" Background="{DynamicResource ControlBackgroundBrush}" 
+                            BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,16">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,6">
+                                <TextBlock x:Name="ModalDetailsHeader" Text="Details" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryAccentBrush}"/>
+                                <Button x:Name="ModalCopyButton" Content="Copy" Style="{StaticResource GhostButton}" HorizontalAlignment="Right" Padding="8,2" FontSize="10.5" Click="OnModalCopyClick"/>
+                            </Grid>
+                            <TextBox x:Name="ModalDetailsBox" IsReadOnly="True" BorderThickness="0" Background="Transparent" 
+                                     Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="Consolas, JetBrains Mono, monospace" 
+                                     FontSize="11" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" MaxHeight="140"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Action Buttons -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+                        <Button x:Name="ModalSecondaryButton" Content="Cancel" Style="{StaticResource GhostButton}" MinWidth="90" Margin="0,0,10,0" Click="OnModalSecondaryClick" Visibility="Collapsed"/>
+                        <Button x:Name="ModalPrimaryButton" Content="OK" Style="{StaticResource PrimaryButton}" MinWidth="100" Click="OnModalPrimaryClick"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

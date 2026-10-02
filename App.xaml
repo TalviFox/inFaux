@@ -22,6 +22,13 @@
         <SolidColorBrush x:Key="ControlBorderBrush" Color="#222C3D"/>
         <SolidColorBrush x:Key="ToggleThumbBrush" Color="#FFFFFF"/>
         <SolidColorBrush x:Key="PrimaryAccentForegroundBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BleTextBrush" Color="#38BDF8"/>
+
+        <!-- Dynamic System Selection Brushes (Overwritten by ThemeService on theme switch) -->
+        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#2E1A12"/>
+        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#141B26"/>
+        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#FF6B35"/>
+        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="#94A3B8"/>
 
         <!-- Modern Sleek Dark ScrollBar Styles -->
         <Style x:Key="ScrollBarTrackRepeatButton" TargetType="{x:Type RepeatButton}">
@@ -131,13 +138,63 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Dark selection brushes for DataGrid rows -->
+        <!-- Modern DataGrid Row Styling -->
         <Style TargetType="{x:Type DataGridRow}">
-            <Style.Resources>
-                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#1E293B"/>
-                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#141B26"/>
-                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#FF6B35"/>
-            </Style.Resources>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource CardBackgroundHoverBrush}"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccentSubtleBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource PrimaryAccentBrush}"/>
+                </Trigger>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="IsSelected" Value="True"/>
+                        <Condition Property="Selector.IsSelectionActive" Value="False"/>
+                    </MultiTrigger.Conditions>
+                    <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                </MultiTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Modern DataGrid Cell Styling -->
+        <Style TargetType="{x:Type DataGridCell}">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DataGridCell}">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="{DynamicResource PrimaryAccentBrush}"/>
+                </Trigger>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="IsSelected" Value="True"/>
+                        <Condition Property="Selector.IsSelectionActive" Value="False"/>
+                    </MultiTrigger.Conditions>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                </MultiTrigger>
+            </Style.Triggers>
         </Style>
     </Application.Resources>
 </Application>

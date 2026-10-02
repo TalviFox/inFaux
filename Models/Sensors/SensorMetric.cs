@@ -59,6 +59,7 @@ namespace InFox.Models.Sensors
                 {
                     _min = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(FormattedMin));
                 }
             }
         }
@@ -73,6 +74,7 @@ namespace InFox.Models.Sensors
                 {
                     _max = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(FormattedMax));
                 }
             }
         }
@@ -82,6 +84,12 @@ namespace InFox.Models.Sensors
 
         [JsonPropertyName("formatted")]
         public string Formatted => FormatValue(Value, Type, Unit);
+
+        [JsonPropertyName("formattedMin")]
+        public string FormattedMin => FormatValue(Min, Type, Unit);
+
+        [JsonPropertyName("formattedMax")]
+        public string FormattedMax => FormatValue(Max, Type, Unit);
 
         [JsonPropertyName("updatedAt")]
         public DateTime UpdatedAt

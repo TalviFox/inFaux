@@ -61,25 +61,34 @@ For the last 15 years, the PC hardware monitoring world has been split into two 
 
 ---
 
-### 2. The Thermodynamic Observer, Per-Core Flux & Room Ambient Estimation
-* **The Problem:** Modern CPUs only expose raw Digital Thermal Sensors (DTS) and package wattage via Ring-0 MSRs (`0x19C` / `0x611`). Windows 11 Defender blocks legacy kernel drivers by default, causing traditional tools to fail without compromising core isolation. Furthermore, real physical silicon temps fluctuate in sub-millisecond bursts that raw diode polling aliases and distorts.
+### 2. The Thermodynamic Observer & Safe Physics Modeling
+* **Why this exists:** Microsoft Windows does not allow regular user-mode applications to read raw CPU thermal diodes without installing Ring-0 kernel drivers (`.sys`). Legacy tools rely on vulnerable drivers (like `WinRing0.sys`) that trip Windows Defender and trigger Memory Integrity (HVCI) warnings.
 * **The inFaux Solution:**
-  * *Technical Designation:* **Non-Invasive Asymmetric Lumped-Capacitance Thermal State Estimator with Per-Core Dynamic Thermal Flux**
-    > **What that actually means in plain English:**  
-    > Instead of needing a dangerous kernel driver to poke Ring-0 registers, inFaux applies Newtonian thermodynamics. It models your processor, cooler, and chassis as a connected physical system:
-    > * **Non-Invasive:** Runs 100% in user space (`asInvoker`) without kernel drivers (`WinRing0.sys`), UAC prompts, or Core Isolation conflicts.
-    > * **Asymmetric Lumped-Capacitance:** Treats the copper Integrated Heat Spreader (IHS) and cooler cold plate like a thermal battery. Solid copper absorbs heat rapidly when a thread spikes ($\tau_{\text{rise}} = 1.8\text{s}$), but dissipates it much slower as heat sinks bleed wattage into the air ($\tau_{\text{fall}} = 3.5\text{s}$).
-    > * **Thermal State Estimator:** Continuously solves differential cooling equations anchored to real chassis thermal baselines (NVMe & GPU diodes) rather than wildly oscillating on noisy sub-millisecond diode blips.
-    > * **Per-Core Dynamic Thermal Flux:** Acknowledges that modern CPUs don't heat up uniformly—a core boosting to 5 GHz under heavy load generates localized Joule heat blooming within its specific CCX / P-core cluster before conducting across the substrate.
-  * *Chassis-Anchored Boundary Conditions:* Continuously derives ambient floor temperature ($T_{\text{ambient}}$) from passive chassis hardware (NVMe & GPU diode baselines).
-  * *Chassis Cavity & Room Ambient Estimation:* Extrapolates chassis cavity enclosure air temperature and mathematically solves for estimated room ambient temperature via convective dissipation slope ($P \to 0\text{W}$), displayed in real time in both °C and °F.
-  * *CMOS Dynamic Power Extrapolation:* Calculates live dynamic wattage ($P_{\text{dynamic}} \propto f^2 \cdot \text{load} \cdot \text{TDP}$) via native Win32 PDH per-core frequencies.
-  * *Newtonian Thermal Mass Diffusion:* Solves heat absorption and dissipation across the copper Integrated Heat Spreader (IHS) and cooler cold plate using an asymmetric first-order IIR low-pass filter ($\tau_{\text{rise}} = 1.8\text{s}$, $\tau_{\text{fall}} = 3.5\text{s}$).
-  * *Per-Core Thermal Flux Modeling:* Models localized thermal gradients across physical core pairs (e.g. Zen CCX / Intel P-core clusters) factoring in individual core loads and clock boost states.
+  Instead of risking your system stability with kernel drivers, inFaux uses real Newtonian physics:
+  * **Real Hardware Baselines:** Continuously reads safe, user-mode diode temperatures from your GPU and NVMe SSD controllers to establish the true thermal floor of your PC chassis.
+  * **Copper Heat Spreader Simulation:** Treats your CPU's integrated heat spreader (IHS) and cooler cold plate like a real thermal mass. Solid copper heats up quickly when a core spikes under heavy load, and dissipates heat gradually into the cooler fins.
+  * **Per-Core Temperature Gradients:** Models localized heat blooms across individual cores and clusters based on live clock frequencies and workloads from native Windows performance counters.
+  * **Zero Elevation, Zero Lag:** Runs 100% in user space (`asInvoker`) with zero UAC prompts, zero background services, and zero fan-hunting jitter.
+  * **Honest Telemetry:** Real physical diode readings (GPU, NVMe, and Bluetooth beacons) are clearly marked with `[📡 Measured]`, while thermodynamic CPU numbers are transparently tagged `[Estimated]`.
 
 ---
 
-### 3. Intelligent Multi-GPU & APU Support
+### 3. Wireless Bluetooth Environmental Telemetry (BTHome v2)
+* **Passive Windows BLE Listener:** inFaux passively listens for Bluetooth Low Energy (BLE) environmental beacons without needing pairing, dongles, USB bridges, or third-party background software (yes, Windows can do this).
+* **Plug & Play Hardware Support:** Supports all open **BTHome v2** format thermometers, including:
+  * **Shelly BLU H&T** (native, official out-of-the-box BTHome v2)
+  * ThermoBeacon / Qingping beacons
+  * Custom ESP32 / ESPHome / Arduino temperature beacons
+  * Xiaomi / Tuya thermometers (flashed with open BTHome v2 firmware)
+* **Multi-Zone Monitoring:**
+  * **Room Ambient:** Monitor your actual office or room temperature and humidity.
+  * **In-Case Air:** Place a thermometer inside your case to measure real internal ambient air.
+  * **Radiator Exhaust:** Measure liquid cooler exhaust air to compute radiator delta-T ($\Delta T$) efficiency.
+* **Upgrades Estimations to Measured Data:** When a sensor is detected, inFaux automatically upgrades its estimated room/case calculations to 100% real measured physical readings (`[📡 Measured]`).
+
+---
+
+### 4. Intelligent Multi-GPU & APU Support
 * **Multi-GPU Architecture:** Automatically enumerates and tracks all graphics adapters simultaneously (discrete GPUs and integrated APUs).
 * **Vendor-Native User-Mode Probes:**
   * **NVIDIA NVML (`nvml.dll`):** Direct interop with official NVIDIA Management Library in `System32` for core/memory clocks, power wattage, fan speed %, VRAM, and diode / hotspot temps.
@@ -90,7 +99,7 @@ For the last 15 years, the PC hardware monitoring world has been split into two 
 
 ---
 
-### 4. Embedded Read-Only Open API (Port 8765)
+### 5. Embedded Read-Only Open API (Port 8765)
 Built-in local HTTP + WebSocket server powered by ASP.NET Core Kestrel on `http://127.0.0.1:8765`:
 * `GET /` — Root overview with API manifest and version.
 * `GET /api/v1/summary` — Clean JSON snapshot of curated system telemetry.
@@ -102,11 +111,13 @@ Built-in local HTTP + WebSocket server powered by ASP.NET Core Kestrel on `http:
 
 ---
 
-### 5. Stream Deck Companion Suite (Built-In LCM)
-* **Real-Time Physical Hardware Gauges:** Dynamic canvas-rendered gauges for **CPU**, **GPU**, **RAM**, and **Network** with live wattage, thermal color grading, usage percentages, and progress bars.
-* **Multi-GPU & Multi-Network Support:**
-  * **Property Inspector Dropdown:** Easily choose which specific GPU (discrete cards, integrated APUs/iGPUs) or network adapter (Ethernet, Wi-Fi) each key monitors.
-  * **Physical Tap-to-Cycle:** Tap the physical key on your Stream Deck to instantly cycle through available GPUs or network interfaces on the fly.
+### 6. Stream Deck Companion Suite v1.1.0 (Built-In LCM)
+* **Real-Time Physical Hardware Gauges:** Dynamic canvas-rendered gauges for **CPU**, **GPU**, **RAM**, **Network**, and **BT Sensor** with live wattage, thermal color grading, usage percentages, and progress bars.
+* **Universal Key Renaming:** Rename the top header on ANY key directly from the Property Inspector (e.g. `GAMING`, `3080TI`, `OFFICE`, `ROOM`) without random text stomping in the middle of your button.
+* **Interactive Quick Tap:**
+  * **GPU / Net:** Tap the key to instantly cycle through multiple GPUs or network adapters.
+  * **BT Sensor:** Tap the key to toggle between live Temperature and Humidity on the fly!
+* **Coat Color Modes:** Choose between clean pure **Monochrome** (white on dark), **Theme Accent** (syncs with your Fox Coat theme), or **Reactive** (dynamic green/amber/red thermal alerts).
 * **Zero-Config Lifecycle Management (LCM):** 
   * Built straight into the inFaux **Settings** tab.
   * **1-Click Install:** Drops the plugin directly into `%APPDATA%\Elgato\StreamDeck\Plugins\` with zero web searches, zero manual file copying, and zero marketplace accounts.
@@ -115,7 +126,7 @@ Built-in local HTTP + WebSocket server powered by ASP.NET Core Kestrel on `http:
 
 ---
 
-### 6. Dynamic Numeric System Tray Icon
+### 7. Dynamic Numeric System Tray Icon
 * Draws live, readable temperature numbers (e.g. `42°` or `68°`) directly onto your Windows system tray icon using GDI+ pixel fonts.
 * **Customizable Target:** Choose between CPU Package Temp, Primary GPU Temp, or Highest (CPU/GPU) auto-tracking.
 * **Intelligent Thermal Color-Coding:**
@@ -126,7 +137,18 @@ Built-in local HTTP + WebSocket server powered by ASP.NET Core Kestrel on `http:
 
 ---
 
-### 7. Zero-UAC Lifecycle & Companion Scripts
+### 8. The Fox Coat Theme Engine
+Customize the appearance of inFaux and your Stream Deck to match your setup:
+* **Silver Fox (Stealth Platinum):** Sleek modern slate dark mode.
+* **Silver Fox OLED (Midnight):** True deep-black `#000000` background optimized for OLED displays.
+* **Red Fox (Classic Ember):** Vibrant fox-orange accents inspired by classic hardware tuning suites.
+* **Arctic Fox (Glacial Cyan - Dark):** Cool ice-blue cyber aesthetic.
+* **Arctic Fox Snow (High-Contrast Light):** Clean, crisp light mode for high-ambient lighting conditions.
+* **Fennec Fox (Desert Sand & Amber):** Warm golden-sand aesthetic.
+
+---
+
+### 9. Zero-UAC Lifecycle & Companion Scripts
 * **Standard User Autostart:** Registers with Windows Task Scheduler using standard user permissions—starts on boot with **0 UAC prompts**.
 * **Zero-Elevation Installer (`install.ps1`):** Installs cleanly into `%LOCALAPPDATA%\Programs\inFaux`, sets up shortcuts, registers in Windows *Installed Apps* (Add or Remove Programs), and validates SHA-256 hashes.
 * **Cryptographic Auditor (`verify.ps1`):** Automatically downloads and verifies your local `inFaux.exe` against official GitHub Release SHA-256 checksums.

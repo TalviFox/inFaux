@@ -18,6 +18,7 @@ namespace InFox.Engine.Harvesters
         public double? MemoryClockMhz { get; set; }
         public double? VramUsedGb { get; set; }
         public double? VramTotalGb { get; set; }
+        public bool IsBoost { get; set; }
     }
 
     /// <summary>
@@ -80,6 +81,9 @@ namespace InFox.Engine.Harvesters
 
         [DllImport("nvml.dll", EntryPoint = "nvmlDeviceGetClockInfo", CallingConvention = CallingConvention.Cdecl)]
         private static extern int nvmlDeviceGetClockInfo(IntPtr device, int clockType, out uint clockMhz);
+
+        [DllImport("nvml.dll", EntryPoint = "nvmlDeviceGetMaxClockInfo", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int nvmlDeviceGetMaxClockInfo(IntPtr device, int clockType, out uint clockMhz);
 
         #endregion
 
@@ -202,6 +206,27 @@ namespace InFox.Engine.Harvesters
                     if (nvmlDeviceGetClockInfo(targetDevice, 2, out uint memClock) == 0)
                     {
                         data.MemoryClockMhz = memClock;
+                    }
+
+                    uint maxClock = 0;
+                    if (nvmlDeviceGetMaxClockInfo(targetDevice, 0, out uint maxClk) == 0)
+                    {
+                        maxClock = maxClk;
+                    }
+
+                    // Boost evaluation:
+                    // Idle 2D clock is ~210 MHz. Under 3D load / FurMark / gaming, GPU boosts dynamically
+                    // into P0 state (>1350 MHz, scaling up toward max boost clock e.g. 2145 MHz).
+                    if (data.CoreClockMhz.HasValue)
+                    {
+                        if (maxClock > 0 && data.CoreClockMhz.Value >= (maxClock * 0.60))
+                        {
+                            data.IsBoost = true;
+                        }
+                        else if (data.CoreClockMhz.Value >= 1350 || ((data.LoadPercent ?? 0) > 30 && data.CoreClockMhz.Value >= 1000))
+                        {
+                            data.IsBoost = true;
+                        }
                     }
 
                     // Hotspot estimation if diode not directly exposed:

@@ -8,7 +8,8 @@ namespace InFox.Models.Sensors
         Storage,
         Network,
         Battery,
-        Motherboard
+        Motherboard,
+        Cooler
     }
 
     public enum MetricType

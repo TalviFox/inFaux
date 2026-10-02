@@ -3,6 +3,7 @@
     {
       "Icon": "icons/actionCpu",
       "Name": "CPU Monitor",
+      "PropertyInspectorPath": "propertyInspector.html",
       "States": [
         {
           "Image": "icons/actionCpu",
@@ -10,7 +11,8 @@
         }
       ],
       "Tooltip": "Live CPU Temperature, Load, and Power from inFaux",
-      "UUID": "com.foxden.infaux.cpu"
+      "UUID": "com.foxden.infaux.cpu",
+      "UserTitleEnabled": false
     },
     {
       "Icon": "icons/actionGpu",
@@ -23,11 +25,13 @@
         }
       ],
       "Tooltip": "Live GPU Temperature, Load, and Power from inFaux (Tap key to cycle GPUs)",
-      "UUID": "com.foxden.infaux.gpu"
+      "UUID": "com.foxden.infaux.gpu",
+      "UserTitleEnabled": false
     },
     {
       "Icon": "icons/actionRam",
       "Name": "RAM Monitor",
+      "PropertyInspectorPath": "propertyInspector.html",
       "States": [
         {
           "Image": "icons/actionRam",
@@ -35,7 +39,8 @@
         }
       ],
       "Tooltip": "Live RAM Usage and Percentage from inFaux",
-      "UUID": "com.foxden.infaux.ram"
+      "UUID": "com.foxden.infaux.ram",
+      "UserTitleEnabled": false
     },
     {
       "Icon": "icons/actionNet",
@@ -48,7 +53,22 @@
         }
       ],
       "Tooltip": "Live Network Upload / Download from inFaux (Tap key to cycle adapters)",
-      "UUID": "com.foxden.infaux.net"
+      "UUID": "com.foxden.infaux.net",
+      "UserTitleEnabled": false
+    },
+    {
+      "Icon": "icons/actionBt",
+      "Name": "BT Sensor Monitor",
+      "PropertyInspectorPath": "propertyInspector.html",
+      "States": [
+        {
+          "Image": "icons/actionBt",
+          "TitleAlignment": "middle"
+        }
+      ],
+      "Tooltip": "Live Wireless Bluetooth & Environmental Sensor (Room, Case, Radiator)",
+      "UUID": "com.foxden.infaux.btsensor",
+      "UserTitleEnabled": false
     }
   ],
   "Author": "FoxDen Software",
@@ -68,5 +88,5 @@
   "Software": {
     "MinimumVersion": "6.0"
   },
-  "Version": "1.0.0"
+  "Version": "1.1.0"
 }

@@ -14,6 +14,8 @@ namespace InFox.Engine.Harvesters
 
         private IntPtr _hPdhQuery = IntPtr.Zero;
         private readonly Dictionary<string, (IntPtr hRead, IntPtr hWrite)> _driveCounters = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, double> _driveThermals = new(StringComparer.OrdinalIgnoreCase);
+        private double _lastKnownChassisAir = 28.0;
 
         public Task InitializeAsync()
         {
@@ -184,6 +186,8 @@ namespace InFox.Engine.Harvesters
                 // If physical drive descriptors exist (from SMART probe), merge volume capacity & model names cleanly
                 if (summary.Storage != null && summary.Storage.Count > 0)
                 {
+                    summary.Storage.RemoveAll(d => d.BusType.Equals("USB", StringComparison.OrdinalIgnoreCase) || d.BusType.Equals("SD", StringComparison.OrdinalIgnoreCase));
+
                     // Map volume info to physical drive entries
                     for (int i = 0; i < summary.Storage.Count; i++)
                     {
@@ -204,49 +208,100 @@ namespace InFox.Engine.Harvesters
                             }
 
                             // If hardware diode query returned ERROR_INVALID_FUNCTION (common in stornvme on consumer drives),
-                            // apply Thermodynamic Observer: Chassis air temperature + active PDH I/O Joule dissipation
-                            if (!physDrive.TempC.HasValue)
+                            // apply Thermodynamic Observer: Chassis air temperature + drive-specific idle delta + active PDH I/O Joule dissipation
+                            if (physDrive.BusType.Equals("USB", StringComparison.OrdinalIgnoreCase))
                             {
-                                double baseTemp = (summary.Chassis != null && summary.Chassis.ChassisAirTempC > 0)
-                                    ? summary.Chassis.ChassisAirTempC + 2.5
-                                    : 38.0;
-                                double ioRise = Math.Min(16.0, (vol.ReadSpeedMBps + vol.WriteSpeedMBps) * 0.04);
-                                physDrive.TempC = Math.Round(baseTemp + ioRise, 0);
-                                physDrive.IsTempEstimated = true;
-                                physDrive.TempSource = "Thermodynamic Observer";
+                                physDrive.TempC = null;
+                                physDrive.IsTempEstimated = false;
+                                physDrive.TempSource = string.Empty;
                             }
-
-                            // Emit temperature metric (always static)
-                            string tempId = $"disk_{vol.DriveLetter[0]}_temp";
-                            recordHistory(tempId, physDrive.TempC.Value);
-
-                            metrics.Add(new SensorMetric
+                            else
                             {
-                                Id = tempId,
-                                Name = $"{vol.DriveLetter}: Temperature",
-                                HardwareId = $"disk_{vol.DriveLetter[0]}",
-                                HardwareName = physDrive.Name,
-                                Category = HardwareCategory.Storage,
-                                Type = MetricType.Temperature,
-                                Value = physDrive.TempC.Value,
-                                Unit = "°C"
-                            });
-
-                            // Update HardwareName for existing disk metrics to match rich name
-                            foreach (var m in metrics)
-                            {
-                                if (m.HardwareId == $"disk_{vol.DriveLetter[0]}")
+                                if (!physDrive.TempC.HasValue || physDrive.IsTempEstimated)
                                 {
-                                    m.HardwareName = physDrive.Name;
+                                    double chassisAir = (summary.Chassis != null && summary.Chassis.ChassisAirTempC > 0)
+                                        ? summary.Chassis.ChassisAirTempC
+                                        : (_lastKnownChassisAir > 0 ? _lastKnownChassisAir : 28.0);
+                                    _lastKnownChassisAir = chassisAir;
+
+                                    // Bus & Media type idle offset:
+                                    // NVMe M.2 controllers (PCIe 3.0/4.0/5.0) under heatsinks run ~8-11°C above case air.
+                                    // SATA 2.5" SSDs operate much cooler at ~2-4°C above case air.
+                                    // Mechanical HDDs run ~4-6°C above case air from spindle motor dissipation.
+                                    double idleOffset;
+                                    if (physDrive.BusType.Contains("NVMe", StringComparison.OrdinalIgnoreCase) || 
+                                        physDrive.BusType.Contains("PCIe", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        idleOffset = 9.0;
+                                    }
+                                    else if (physDrive.MediaType.Contains("Hard Disk", StringComparison.OrdinalIgnoreCase) || 
+                                             physDrive.MediaType.Contains("HDD", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        idleOffset = 5.0;
+                                    }
+                                    else // SATA SSD
+                                    {
+                                        idleOffset = 3.0;
+                                    }
+
+                                    // Dynamic I/O Joule dissipation (up to +18°C rise under sustained sequential read/write)
+                                    double ioRise = Math.Min(18.0, (vol.ReadSpeedMBps + vol.WriteSpeedMBps) * 0.05);
+                                    double targetTemp = chassisAir + idleOffset + ioRise;
+
+                                    // Smooth temperature changes with heatsink thermal mass inertia (asymmetric IIR filter)
+                                    string driveKey = !string.IsNullOrEmpty(physDrive.SerialNumber) ? physDrive.SerialNumber : (vol.DriveLetter ?? i.ToString());
+                                    if (!_driveThermals.TryGetValue(driveKey, out double currentTemp) || currentTemp <= 0)
+                                    {
+                                        currentTemp = targetTemp;
+                                    }
+                                    else
+                                    {
+                                        // Heating tau ~ 3s, Cooling tau ~ 10s (metal heatsink cools gradually)
+                                        double alpha = targetTemp > currentTemp ? 0.25 : 0.08;
+                                        currentTemp = (currentTemp * (1.0 - alpha)) + (targetTemp * alpha);
+                                    }
+                                    _driveThermals[driveKey] = currentTemp;
+
+                                    physDrive.TempC = Math.Round(currentTemp, 0);
+                                    physDrive.IsTempEstimated = true;
+                                    physDrive.TempSource = "Thermodynamic Observer";
+                                }
+
+                                if (physDrive.TempC.HasValue && !string.IsNullOrEmpty(vol.DriveLetter))
+                                {
+                                    // Emit temperature metric
+                                    string tempId = $"disk_{vol.DriveLetter[0]}_temp";
+                                    recordHistory(tempId, physDrive.TempC.Value);
+
+                                    metrics.Add(new SensorMetric
+                                    {
+                                        Id = tempId,
+                                        Name = $"{vol.DriveLetter}: Temperature",
+                                        HardwareId = $"disk_{vol.DriveLetter[0]}",
+                                        HardwareName = physDrive.Name,
+                                        Category = HardwareCategory.Storage,
+                                        Type = MetricType.Temperature,
+                                        Value = physDrive.TempC.Value,
+                                        Unit = "°C"
+                                    });
+
+                                    // Update HardwareName for existing disk metrics to match rich name
+                                    foreach (var m in metrics)
+                                    {
+                                        if (m.HardwareId == $"disk_{vol.DriveLetter[0]}")
+                                        {
+                                            m.HardwareName = physDrive.Name;
+                                        }
+                                    }
                                 }
                             }
                         }
-                        else if (volumeList.Count > 0)
+                        else
                         {
-                            physDrive.TotalGb = volumeList[0].TotalGb;
-                            physDrive.UsedGb = volumeList[0].UsedGb;
-                            physDrive.ReadSpeedMBps = volumeList[0].ReadSpeedMBps;
-                            physDrive.WriteSpeedMBps = volumeList[0].WriteSpeedMBps;
+                            physDrive.TotalGb = 0;
+                            physDrive.UsedGb = 0;
+                            physDrive.ReadSpeedMBps = 0;
+                            physDrive.WriteSpeedMBps = 0;
                         }
                     }
                 }

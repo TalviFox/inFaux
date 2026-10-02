@@ -17,6 +17,7 @@ namespace InFox.Engine
 
         private readonly List<ISensorHarvester> _harvesters = new();
         private readonly ConcurrentDictionary<string, MetricHistory> _historyBuffers = new();
+        private readonly ConcurrentDictionary<string, (double Min, double Max)> _minMaxBounds = new();
         private readonly object _stateLock = new();
 
         private SystemSummary _currentSummary = new();
@@ -54,11 +55,11 @@ namespace InFox.Engine
         {
             // Register harvesters in dependency order:
             // 1. HardwareMonitor probes physical hardware and builds core structures
-            // 2. StorageHarvester queries disk drive volumes
-            // 3. SystemHarvester provides native Win32/PDH telemetry to enrich any missing gaps
+            // 2. SystemHarvester provides native Win32/PDH telemetry and establishes chassis/ambient baseline
+            // 3. StorageHarvester queries disk drive volumes and applies storage thermodynamic modeling
             _harvesters.Add(new HardwareMonitorHarvester());
-            _harvesters.Add(new StorageHarvester());
             _harvesters.Add(new SystemHarvester());
+            _harvesters.Add(new StorageHarvester());
         }
 
         public Task StartAsync()
@@ -139,6 +140,20 @@ namespace InFox.Engine
             var nextSummary = new SystemSummary();
             var nextMetrics = new List<SensorMetric>();
 
+            // Enrich with active Fox Coat Theme metadata for Stream Deck and API consumers
+            try
+            {
+                var curTheme = ThemeService.CurrentTheme;
+                nextSummary.Theme.Id = curTheme.Id;
+                nextSummary.Theme.Name = curTheme.Name;
+                nextSummary.Theme.AccentHex = curTheme.AccentHex;
+                nextSummary.Theme.CardBgHex = $"#{curTheme.CardBackground.R:X2}{curTheme.CardBackground.G:X2}{curTheme.CardBackground.B:X2}";
+                nextSummary.Theme.BorderHex = $"#{curTheme.CardBorder.R:X2}{curTheme.CardBorder.G:X2}{curTheme.CardBorder.B:X2}";
+                nextSummary.Theme.IsOled = (curTheme.Id == "SilverFox" && curTheme.WindowBackground.R == 0 && curTheme.WindowBackground.G == 0 && curTheme.WindowBackground.B == 0);
+                nextSummary.Theme.IsLightMode = curTheme.IsLightMode;
+            }
+            catch { }
+
             foreach (var harvester in _harvesters)
             {
                 try
@@ -148,6 +163,21 @@ namespace InFox.Engine
                 catch (Exception ex)
                 {
                     LoggingService.Instance.Error("TelemetryEngine", $"Harvester '{harvester.Name}' failed in poll", ex);
+                }
+            }
+
+            // Track and update session Min/Max bounds for all sensor channels
+            foreach (var metric in nextMetrics)
+            {
+                if (!string.IsNullOrEmpty(metric.Id) && !double.IsNaN(metric.Value) && !double.IsInfinity(metric.Value))
+                {
+                    var bounds = _minMaxBounds.AddOrUpdate(
+                        metric.Id,
+                        _ => (metric.Value, metric.Value),
+                        (_, prev) => (Math.Min(prev.Min, metric.Value), Math.Max(prev.Max, metric.Value))
+                    );
+                    metric.Min = bounds.Min;
+                    metric.Max = bounds.Max;
                 }
             }
 
@@ -164,6 +194,11 @@ namespace InFox.Engine
         {
             var buffer = _historyBuffers.GetOrAdd(metricId, _ => new MetricHistory(60));
             buffer.Add(value);
+        }
+
+        public void ResetMinMax()
+        {
+            _minMaxBounds.Clear();
         }
 
         public double[] GetHistory(string metricId)

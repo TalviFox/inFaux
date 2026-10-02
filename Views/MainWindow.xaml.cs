@@ -5,9 +5,11 @@ using System.Drawing.Drawing2D;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using InFox.Engine;
 using InFox.Services;
 using InFox.ViewModels;
 
@@ -213,6 +215,103 @@ namespace InFox.Views
             });
         }
 
+        private Action? _onModalPrimaryAction;
+        private Action? _onModalSecondaryAction;
+
+        public void ShowInAppModal(
+            string title, 
+            string message, 
+            string icon = "ℹ️", 
+            string? details = null, 
+            string primaryButtonText = "OK", 
+            Action? onPrimary = null, 
+            string? secondaryButtonText = null, 
+            Action? onSecondary = null)
+        {
+            _onModalPrimaryAction = onPrimary;
+            _onModalSecondaryAction = onSecondary;
+
+            ModalTitleText.Text = title;
+            ModalMessageText.Text = message;
+            ModalIconText.Text = icon;
+
+            if (!string.IsNullOrWhiteSpace(details))
+            {
+                ModalDetailsBox.Text = details;
+                ModalDetailsCard.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                ModalDetailsBox.Text = string.Empty;
+                ModalDetailsCard.Visibility = Visibility.Collapsed;
+            }
+
+            ModalPrimaryButton.Content = primaryButtonText;
+
+            if (!string.IsNullOrWhiteSpace(secondaryButtonText))
+            {
+                ModalSecondaryButton.Content = secondaryButtonText;
+                ModalSecondaryButton.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                ModalSecondaryButton.Visibility = Visibility.Collapsed;
+            }
+
+            InAppModalOverlay.Visibility = Visibility.Visible;
+        }
+
+        public void HideInAppModal()
+        {
+            InAppModalOverlay.Visibility = Visibility.Collapsed;
+            _onModalPrimaryAction = null;
+            _onModalSecondaryAction = null;
+        }
+
+        private void OnModalBackdropMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            HideInAppModal();
+        }
+
+        private void OnModalCloseClick(object sender, RoutedEventArgs e)
+        {
+            HideInAppModal();
+        }
+
+        private void OnModalPrimaryClick(object sender, RoutedEventArgs e)
+        {
+            var action = _onModalPrimaryAction;
+            HideInAppModal();
+            action?.Invoke();
+        }
+
+        private void OnModalSecondaryClick(object sender, RoutedEventArgs e)
+        {
+            var action = _onModalSecondaryAction;
+            HideInAppModal();
+            action?.Invoke();
+        }
+
+        private void OnModalCopyClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(ModalDetailsBox.Text))
+                {
+                    System.Windows.Clipboard.SetText(ModalDetailsBox.Text);
+                    ModalCopyButton.Content = "✓ Copied!";
+                    var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+                    timer.Tick += (s, args) =>
+                    {
+                        ModalCopyButton.Content = "Copy";
+                        timer.Stop();
+                    };
+                    timer.Start();
+                }
+            }
+            catch { }
+        }
+
         private async void OnCheckForUpdatesClick(object sender, RoutedEventArgs e)
         {
             try
@@ -220,25 +319,35 @@ namespace InFox.Views
                 var release = await UpdateService.Instance.CheckForUpdatesAsync(isManual: true);
                 if (release != null)
                 {
-                    var result = System.Windows.MessageBox.Show(
-                        $"A new release is available: {release.TagName}\n\nWould you like inFaux to verify the cryptographic SHA-256 hash and update automatically?",
-                        "inFaux Update Available",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Information);
-
-                    if (result == MessageBoxResult.Yes)
-                    {
-                        await UpdateService.Instance.ExecuteUpdateAsync(release);
-                    }
+                    ShowInAppModal(
+                        title: "inFaux Update Available",
+                        message: $"A new official release is available: {release.TagName}\n\nWould you like inFaux to verify the cryptographic SHA-256 hash and update automatically?",
+                        icon: "🚀",
+                        details: $"Target Tag: {release.TagName}\nPublished: {release.PublishedAt?.ToString("g") ?? "N/A"}",
+                        primaryButtonText: "Update Now",
+                        onPrimary: async () =>
+                        {
+                            await UpdateService.Instance.ExecuteUpdateAsync(release);
+                        },
+                        secondaryButtonText: "Later");
                 }
                 else
                 {
-                    System.Windows.MessageBox.Show("inFaux is up to date!", "Update Check", MessageBoxButton.OK, MessageBoxImage.Information);
+                    ShowInAppModal(
+                        title: "Update Check",
+                        message: "inFaux is up to date! You are running the latest official build.",
+                        icon: "✓",
+                        details: $"Current Version: v{UpdateService.Instance.GetCurrentVersionString()}\nSHA-256: {UpdateService.Instance.GetLocalExecutableHash()}",
+                        primaryButtonText: "OK");
                 }
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Update check failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowInAppModal(
+                    title: "Update Check Failed",
+                    message: $"Unable to check for updates:\n{ex.Message}",
+                    icon: "⚠️",
+                    primaryButtonText: "Close");
             }
         }
 
@@ -247,15 +356,23 @@ namespace InFox.Views
             try
             {
                 var audit = await UpdateService.Instance.AuditAgainstGitHubAsync();
-                System.Windows.MessageBox.Show(
-                    $"Status: {audit.Status}\n\nLocal Version: {audit.LocalVersion}\nLocal Hash:\n{audit.LocalHash}\n\nExpected Release Hash:\n{audit.ExpectedHash ?? "N/A"}\n\n{audit.Message}",
-                    "inFaux Cryptographic Integrity Audit",
-                    MessageBoxButton.OK,
-                    audit.Status == IntegrityStatus.OfficialLatest ? MessageBoxImage.Information : MessageBoxImage.Warning);
+                string icon = audit.Status == IntegrityStatus.OfficialLatest ? "🛡️" : "⚠️";
+                string details = $"Local Version: {audit.LocalVersion}\nLocal Hash:\n{audit.LocalHash}\n\nExpected Release Hash:\n{audit.ExpectedHash ?? "N/A"}";
+
+                ShowInAppModal(
+                    title: "Cryptographic Integrity Audit",
+                    message: $"Status: {audit.Status}\n\n{audit.Message}",
+                    icon: icon,
+                    details: details,
+                    primaryButtonText: "OK");
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Audit failed: {ex.Message}", "Audit Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowInAppModal(
+                    title: "Audit Error",
+                    message: $"Audit failed:\n{ex.Message}",
+                    icon: "⚠️",
+                    primaryButtonText: "Close");
             }
         }
 
@@ -286,48 +403,48 @@ namespace InFox.Views
 
         private void OnUninstallClick(object sender, RoutedEventArgs e)
         {
-            var confirm = System.Windows.MessageBox.Show(
-                "Are you sure you want to completely uninstall inFaux?\n\nThis will remove scheduled autostart tasks, Start Menu shortcuts, and application files.",
-                "inFaux Clean System Removal",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (confirm == MessageBoxResult.Yes)
-            {
-                try
+            ShowInAppModal(
+                title: "Clean System Removal",
+                message: "Are you sure you want to completely uninstall inFaux?\n\nThis will remove scheduled autostart tasks, Start Menu shortcuts, and application files.",
+                icon: "⚠️",
+                primaryButtonText: "Uninstall inFaux",
+                onPrimary: () =>
                 {
-                    string? exePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
-                    string appDir = !string.IsNullOrEmpty(exePath) ? (Path.GetDirectoryName(exePath) ?? "") : AppDomain.CurrentDomain.BaseDirectory;
-                    string scriptPath = Path.Combine(appDir, "uninstall.ps1");
-
-                    if (!File.Exists(scriptPath))
+                    try
                     {
-                        string localPath = Path.Combine(Environment.CurrentDirectory, "uninstall.ps1");
-                        if (File.Exists(localPath)) scriptPath = localPath;
-                    }
+                        string? exePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
+                        string appDir = !string.IsNullOrEmpty(exePath) ? (Path.GetDirectoryName(exePath) ?? "") : AppDomain.CurrentDomain.BaseDirectory;
+                        string scriptPath = Path.Combine(appDir, "uninstall.ps1");
 
-                    if (File.Exists(scriptPath))
-                    {
-                        Process.Start(new ProcessStartInfo
+                        if (!File.Exists(scriptPath))
                         {
-                            FileName = "powershell.exe",
-                            Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\"",
-                            UseShellExecute = true
-                        });
-                        ExitApplication();
+                            string localPath = Path.Combine(Environment.CurrentDirectory, "uninstall.ps1");
+                            if (File.Exists(localPath)) scriptPath = localPath;
+                        }
+
+                        if (File.Exists(scriptPath))
+                        {
+                            Process.Start(new ProcessStartInfo
+                            {
+                                FileName = "powershell.exe",
+                                Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\"",
+                                UseShellExecute = true
+                            });
+                            ExitApplication();
+                        }
+                        else
+                        {
+                            // Portable cleanup fallback
+                            StartupService.SetStartup(false);
+                            ShowInAppModal("Clean Removal", "inFaux scheduled startup tasks have been cleanly removed.", "✓");
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        // Portable cleanup fallback
-                        StartupService.SetStartup(false);
-                        System.Windows.MessageBox.Show("inFaux scheduled startup tasks have been cleanly removed.", "inFaux Clean Removal", MessageBoxButton.OK, MessageBoxImage.Information);
+                        ShowInAppModal("Uninstall Error", $"Uninstallation error: {ex.Message}", "⚠️");
                     }
-                }
-                catch (Exception ex)
-                {
-                    System.Windows.MessageBox.Show($"Uninstallation error: {ex.Message}", "Uninstall Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
+                },
+                secondaryButtonText: "Cancel");
         }
 
         private void OnWebsiteClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -448,6 +565,81 @@ namespace InFox.Views
         private void OnOpenStreamDeckFolderClick(object sender, RoutedEventArgs e)
         {
             StreamDeckService.OpenPluginFolder();
+        }
+
+        private void OnMarkTimAppliedTodayClick(object sender, RoutedEventArgs e)
+        {
+            (DataContext as MainViewModel)?.MarkTimAppliedToday();
+        }
+
+        private void OnClearTimAppliedDateClick(object sender, RoutedEventArgs e)
+        {
+            (DataContext as MainViewModel)?.ClearTimAppliedDate();
+        }
+
+        private void OnComboBoxLoaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.ComboBox cb)
+            {
+                cb.ApplyTemplate();
+                AdjustComboBoxPopupPlacement(cb);
+            }
+        }
+
+        private void OnComboBoxPreviewMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (sender is System.Windows.Controls.ComboBox cb)
+            {
+                AdjustComboBoxPopupPlacement(cb);
+            }
+        }
+
+        private void OnComboBoxPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.F4 || e.Key == System.Windows.Input.Key.Down || e.Key == System.Windows.Input.Key.Space || e.Key == System.Windows.Input.Key.Enter)
+            {
+                AdjustComboBoxPopupPlacement(sender as System.Windows.Controls.ComboBox);
+            }
+        }
+
+        private void OnComboBoxDropDownOpened(object sender, EventArgs e)
+        {
+            AdjustComboBoxPopupPlacement(sender as System.Windows.Controls.ComboBox);
+        }
+
+        private void AdjustComboBoxPopupPlacement(System.Windows.Controls.ComboBox? cb)
+        {
+            if (cb == null) return;
+            if (cb.Template?.FindName("Popup", cb) is System.Windows.Controls.Primitives.Popup popup)
+            {
+                try
+                {
+                    var pointInWindow = cb.TranslatePoint(new System.Windows.Point(0, 0), this);
+                    double spaceBelow = ActualHeight - (pointInWindow.Y + cb.ActualHeight);
+                    double spaceAbove = pointInWindow.Y;
+
+                    // If space below is constrained and more space exists above, open upwards cleanly inside window
+                    if (spaceBelow < 220 && spaceAbove > spaceBelow)
+                    {
+                        popup.Placement = System.Windows.Controls.Primitives.PlacementMode.Top;
+                        popup.VerticalOffset = -4;
+                    }
+                    else
+                    {
+                        popup.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+                        popup.VerticalOffset = 0;
+                    }
+                }
+                catch
+                {
+                    popup.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+                }
+            }
+        }
+
+        private void OnResetMinMaxClick(object sender, RoutedEventArgs e)
+        {
+            TelemetryEngine.Instance.ResetMinMax();
         }
     }
 }

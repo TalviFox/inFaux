@@ -43,6 +43,15 @@ namespace InFox.Models.Sensors
         [JsonPropertyName("chassis")]
         public ChassisSummary Chassis { get; set; } = new();
 
+        [JsonPropertyName("bluetooth")]
+        public BluetoothSummary Bluetooth { get; set; } = new();
+
+        [JsonPropertyName("motherboard")]
+        public MotherboardSummary Motherboard { get; set; } = new();
+
+        [JsonPropertyName("theme")]
+        public ThemeSummary Theme { get; set; } = new();
+
         [JsonPropertyName("isVirtualMachine")]
         public bool IsVirtualMachine { get; set; }
     }
@@ -60,6 +69,15 @@ namespace InFox.Models.Sensors
 
         [JsonPropertyName("loadPercent")]
         public double? LoadPercent { get; set; }
+
+        [JsonPropertyName("isBoost")]
+        public bool IsBoost { get; set; }
+
+        [JsonPropertyName("type")]
+        public string? Type { get; set; }
+
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
     }
 
     public class CpuSummary
@@ -94,11 +112,38 @@ namespace InFox.Models.Sensors
         [JsonPropertyName("clockGhz")]
         public double? ClockGhz { get; set; }
 
+        [JsonPropertyName("isBoost")]
+        public bool IsBoost { get; set; }
+
         [JsonPropertyName("coreCount")]
         public int CoreCount { get; set; } = Environment.ProcessorCount;
 
         [JsonPropertyName("cores")]
         public List<CoreMetric> Cores { get; set; } = new();
+
+        [JsonPropertyName("isThrottlingDivergence")]
+        public bool IsThrottlingDivergence { get; set; }
+
+        [JsonPropertyName("timStatus")]
+        public string TimStatus { get; set; } = "Optimal";
+
+        [JsonPropertyName("timProfile")]
+        public string TimProfile { get; set; } = "Standard OEM Paste";
+
+        [JsonPropertyName("timAgeDays")]
+        public int? TimAgeDays { get; set; }
+
+        [JsonPropertyName("timServiceLifeDays")]
+        public int? TimServiceLifeDays { get; set; }
+
+        [JsonPropertyName("timHealthPercent")]
+        public double? TimHealthPercent { get; set; } = 100.0;
+
+        [JsonPropertyName("vrmTempC")]
+        public double? VrmTempC { get; set; }
+
+        [JsonPropertyName("vrmSource")]
+        public string VrmSource { get; set; } = "Modeled";
     }
 
     public class GpuSummary : System.ComponentModel.INotifyPropertyChanged
@@ -211,6 +256,36 @@ namespace InFox.Models.Sensors
 
         [JsonPropertyName("memoryClockMhz")]
         public double? MemoryClockMhz { get; set; }
+
+        [JsonPropertyName("isBoost")]
+        public bool IsBoost { get; set; }
+
+        [JsonIgnore]
+        public string SubLoadDisplayText
+        {
+            get
+            {
+                if (CoreClockMhz.HasValue && CoreClockMhz.Value > 0)
+                {
+                    return $"{CoreClockMhz.Value:F0} MHz";
+                }
+                return FanDisplayText;
+            }
+        }
+
+        [JsonIgnore]
+        public string SubPowerDisplayText
+        {
+            get
+            {
+                string vram = VramUsedGb.HasValue ? $"VRAM: {VramUsedGb.Value:F1} GB" : "VRAM: --";
+                if (CoreClockMhz.HasValue && CoreClockMhz.Value > 0)
+                {
+                    return $"{vram} • {FanDisplayText}";
+                }
+                return vram;
+            }
+        }
     }
 
     public class MemorySummary
@@ -299,8 +374,8 @@ namespace InFox.Models.Sensors
         public string TempTooltip
         {
             get => IsTempEstimated
-                ? "Modeled via Thermodynamic Observer (Chassis cavity baseline + active I/O Joule dissipation). Physical diode IOCTL returned ERROR_INVALID_FUNCTION from driver."
-                : "Hardware Diode (Read via IOCTL_STORAGE_QUERY_PROPERTY)";
+                ? "Estimated (Drive firmware does not report temperature)"
+                : "Hardware Sensor (SMART Diode)";
             set { }
         }
     }
@@ -309,6 +384,9 @@ namespace InFox.Models.Sensors
     {
         [JsonPropertyName("hasBattery")]
         public bool HasBattery { get; set; }
+
+        [JsonPropertyName("isPluggedIn")]
+        public bool IsPluggedIn { get; set; }
 
         [JsonPropertyName("isCharging")]
         public bool IsCharging { get; set; }
@@ -324,6 +402,58 @@ namespace InFox.Models.Sensors
 
         [JsonPropertyName("estimatedRuntimeMinutes")]
         public int? EstimatedRuntimeMinutes { get; set; }
+
+        [JsonIgnore]
+        public string StatusIcon
+        {
+            get
+            {
+                if (!HasBattery) return "";
+                if (IsCharging) return "⚡";
+                if (IsPluggedIn) return "🔌";
+                return "🔋";
+            }
+        }
+
+        [JsonIgnore]
+        public string ShortStatusText
+        {
+            get
+            {
+                if (!HasBattery) return "";
+                if (IsCharging) return "Charging";
+                if (IsPluggedIn) return "Plugged In";
+                if (EstimatedRuntimeMinutes.HasValue && EstimatedRuntimeMinutes.Value > 0)
+                {
+                    int mins = EstimatedRuntimeMinutes.Value;
+                    int h = mins / 60;
+                    int m = mins % 60;
+                    return h > 0 ? $"{h}h {m}m" : $"{m}m";
+                }
+                return "On Battery";
+            }
+        }
+
+        [JsonIgnore]
+        public string FullStatusTooltip
+        {
+            get
+            {
+                if (!HasBattery) return "No battery or UPS detected.";
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine("Power & Battery Status:");
+                sb.AppendLine(IsPluggedIn ? "• AC Power: Connected 🔌 (Utility / Wall)" : "• AC Power: Disconnected 🔋 (On Battery / Backup)");
+                sb.AppendLine(IsCharging ? "• Battery: Actively Charging ⚡" : (IsPluggedIn ? "• Battery: Idle / Conservation (Not Charging)" : "• Battery: Discharging"));
+                if (Percent.HasValue) sb.AppendLine($"• Current Level: {Percent.Value:F0}%");
+                if (EstimatedRuntimeMinutes.HasValue && EstimatedRuntimeMinutes.Value > 0)
+                {
+                    int h = EstimatedRuntimeMinutes.Value / 60;
+                    int m = EstimatedRuntimeMinutes.Value % 60;
+                    sb.AppendLine($"• Estimated Remaining: {h}h {m:D2}m");
+                }
+                return sb.ToString().TrimEnd();
+            }
+        }
     }
 
     public class NetworkSummary
@@ -419,6 +549,60 @@ namespace InFox.Models.Sensors
         [JsonPropertyName("estimatedAmbientTempF")]
         public double EstimatedAmbientTempF => Math.Round(EstimatedAmbientTempC * 9.0 / 5.0 + 32.0, 1);
 
+        [JsonPropertyName("isAmbientMeasured")]
+        public bool IsAmbientMeasured { get; set; }
+
+        [JsonPropertyName("ambientSensorName")]
+        public string? AmbientSensorName { get; set; }
+
+        [JsonPropertyName("ambientHumidityPercent")]
+        public double? AmbientHumidityPercent { get; set; }
+
+        [JsonIgnore]
+        public string EstimatedAmbientDisplay => IsAmbientMeasured
+            ? $"{EstimatedAmbientTempF:F1} °F ({EstimatedAmbientTempC:F1} °C) [📡 Measured]"
+            : $"{EstimatedAmbientTempF:F1} °F ({EstimatedAmbientTempC:F1} °C) [Estimated]";
+
+        [JsonPropertyName("isChassisAirMeasured")]
+        public bool IsChassisAirMeasured { get; set; }
+
+        [JsonPropertyName("chassisAirSensorName")]
+        public string? ChassisAirSensorName { get; set; }
+
+        [JsonPropertyName("chassisAirHumidityPercent")]
+        public double? ChassisAirHumidityPercent { get; set; }
+
+        [JsonIgnore]
+        public string ChassisAirDisplay => IsChassisAirMeasured
+            ? $"{ChassisAirTempF:F1} °F ({ChassisAirTempC:F1} °C) [📡 Measured]"
+            : $"{ChassisAirTempF:F1} °F ({ChassisAirTempC:F1} °C) [Estimated]";
+
+        [JsonPropertyName("radiatorExhaustTempC")]
+        public double? RadiatorExhaustTempC { get; set; }
+
+        [JsonPropertyName("radiatorExhaustTempF")]
+        public double? RadiatorExhaustTempF => RadiatorExhaustTempC.HasValue ? Math.Round(RadiatorExhaustTempC.Value * 9.0 / 5.0 + 32.0, 1) : null;
+
+        [JsonPropertyName("isRadiatorExhaustMeasured")]
+        public bool IsRadiatorExhaustMeasured { get; set; }
+
+        [JsonPropertyName("radiatorExhaustSensorName")]
+        public string? RadiatorExhaustSensorName { get; set; }
+
+        [JsonPropertyName("radiatorExhaustHumidityPercent")]
+        public double? RadiatorExhaustHumidityPercent { get; set; }
+
+        [JsonPropertyName("radiatorDeltaTC")]
+        public double? RadiatorDeltaTC { get; set; }
+
+        [JsonPropertyName("radiatorDeltaTF")]
+        public double? RadiatorDeltaTF => RadiatorDeltaTC.HasValue ? Math.Round(RadiatorDeltaTC.Value * 9.0 / 5.0, 1) : null;
+
+        [JsonIgnore]
+        public string RadiatorExhaustDisplay => RadiatorExhaustTempF.HasValue
+            ? $"{RadiatorExhaustTempF.Value:F1} °F ({RadiatorExhaustTempC!.Value:F1} °C) [ΔT +{RadiatorDeltaTF:F1} °F]"
+            : "Inactive";
+
         [JsonPropertyName("thermalResistanceCPerW")]
         public double ThermalResistanceCPerW { get; set; }
 
@@ -435,8 +619,115 @@ namespace InFox.Models.Sensors
         public string Note { get; set; } = "Real-time chassis ambient floor, estimated from component diode baselines and passive cooling decay curves.";
 
         [JsonIgnore]
-        public string DisplayText => IsVirtualMachine
-            ? $"VM Thermal Impact: +{(AdditiveThermalDeltaC ?? 0):F0}°C ΔT"
-            : $"Chassis Air: {ChassisAirTempC:F0}°C ({ChassisAirTempF:F0}°F) • Est. Room: {EstimatedAmbientTempF:F0}°F ({EstimatedAmbientTempC:F0}°C)";
+        public string DisplayText
+        {
+            get
+            {
+                if (IsVirtualMachine)
+                    return $"VM Thermal Impact: +{(AdditiveThermalDeltaC ?? 0):F0}°C ΔT";
+
+                string casePart = IsChassisAirMeasured
+                    ? $"Case: {ChassisAirTempF:F0}°F ({ChassisAirTempC:F0}°C) 📡"
+                    : $"Est. Case: {ChassisAirTempF:F0}°F ({ChassisAirTempC:F0}°C)";
+
+                string roomPart = IsAmbientMeasured
+                    ? $"Room: {EstimatedAmbientTempF:F0}°F ({EstimatedAmbientTempC:F0}°C) 📡"
+                    : $"Est. Room: {EstimatedAmbientTempF:F0}°F ({EstimatedAmbientTempC:F0}°C)";
+
+                string radPart = IsRadiatorExhaustMeasured && RadiatorExhaustTempF.HasValue
+                    ? $" • Rad: {RadiatorExhaustTempF.Value:F0}°F (ΔT +{RadiatorDeltaTF:F0}°F) 📡"
+                    : "";
+
+                return $"{casePart} • {roomPart}{radPart}";
+            }
+        }
+    }
+
+    public class MotherboardSummary
+    {
+        [JsonPropertyName("manufacturer")]
+        public string Manufacturer { get; set; } = string.Empty;
+
+        [JsonPropertyName("model")]
+        public string Model { get; set; } = string.Empty;
+
+        [JsonPropertyName("vrmTempC")]
+        public double? VrmTempC { get; set; }
+
+        [JsonPropertyName("isVrmModeled")]
+        public bool IsVrmModeled { get; set; } = true;
+    }
+
+    public class ThemeSummary
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = "SilverFox";
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = "Silver Fox";
+
+        [JsonPropertyName("accentHex")]
+        public string AccentHex { get; set; } = "#E2E8F0";
+
+        [JsonPropertyName("cardBgHex")]
+        public string CardBgHex { get; set; } = "#050505";
+
+        [JsonPropertyName("borderHex")]
+        public string BorderHex { get; set; } = "#1C1C1E";
+
+        [JsonPropertyName("isOled")]
+        public bool IsOled { get; set; } = true;
+
+        [JsonPropertyName("isLightMode")]
+        public bool IsLightMode { get; set; } = false;
+    }
+
+    public class BleSensorSnapshot
+    {
+        [JsonPropertyName("mac")]
+        public string Mac { get; set; } = string.Empty;
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = string.Empty;
+
+        [JsonPropertyName("tempC")]
+        public double TempC { get; set; }
+
+        [JsonPropertyName("tempF")]
+        public double TempF => Math.Round(TempC * 9.0 / 5.0 + 32.0, 1);
+
+        [JsonPropertyName("humidityPercent")]
+        public double? HumidityPercent { get; set; }
+
+        [JsonPropertyName("batteryPercent")]
+        public int? BatteryPercent { get; set; }
+
+        [JsonPropertyName("rssi")]
+        public short Rssi { get; set; }
+
+        [JsonPropertyName("lastSeenUtc")]
+        public DateTime LastSeenUtc { get; set; } = DateTime.UtcNow;
+
+        [JsonPropertyName("isFresh")]
+        public bool IsFresh => (DateTime.UtcNow - LastSeenUtc).TotalMinutes < 10;
+    }
+
+    public class BluetoothSummary
+    {
+        [JsonPropertyName("isSupported")]
+        public bool IsSupported { get; set; } = true;
+
+        [JsonPropertyName("isRunning")]
+        public bool IsRunning { get; set; }
+
+        [JsonPropertyName("ambient")]
+        public BleSensorSnapshot? Ambient { get; set; }
+
+        [JsonPropertyName("chassis")]
+        public BleSensorSnapshot? Chassis { get; set; }
+
+        [JsonPropertyName("radiator")]
+        public BleSensorSnapshot? Radiator { get; set; }
     }
 }
+

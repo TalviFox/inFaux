@@ -82,37 +82,61 @@ namespace InFox
                 LoggingService.Instance.Error("App", "Failed to start API Server", ex);
             }
 
-            // 4. Initialize System Tray Manager
+            // 3.5 Initialize Wireless BTHome BLE Room Sensor Service
             try
             {
-                TrayManager.Instance.Initialize();
-                TrayManager.Instance.OpenDashboardRequested += ShowDashboard;
-                TrayManager.Instance.ExitRequested += ExitApp;
+                BTHomeBleService.Instance.Initialize();
             }
             catch (Exception ex)
             {
-                LoggingService.Instance.Error("App", "Failed to initialize TrayManager", ex);
+                LoggingService.Instance.Warning("App", $"Failed to initialize BTHome BLE service: {ex.Message}");
             }
 
-            // 5. Create Main Dashboard Window
-            _mainWindow = new MainWindow();
-
-            // Check command line arguments or config: if launched with --minimized or MinimizeOnStartup is set, don't show window immediately
+            bool isHeadless = false;
             bool startMinimized = ConfigManager.Instance.Config.MinimizeOnStartup;
+
             foreach (var arg in e.Args)
             {
-                if (arg.Equals("--minimized", StringComparison.OrdinalIgnoreCase) ||
+                if (arg.Equals("--headless", StringComparison.OrdinalIgnoreCase) ||
+                    arg.Equals("-h", StringComparison.OrdinalIgnoreCase))
+                {
+                    isHeadless = true;
+                    startMinimized = true;
+                }
+                else if (arg.Equals("--minimized", StringComparison.OrdinalIgnoreCase) ||
                     arg.Equals("-m", StringComparison.OrdinalIgnoreCase) ||
+                    arg.Equals("--tray-only", StringComparison.OrdinalIgnoreCase) ||
                     arg.Equals("/min", StringComparison.OrdinalIgnoreCase))
                 {
                     startMinimized = true;
-                    break;
                 }
             }
 
-            if (!startMinimized)
+            // 4. Initialize System Tray Manager (unless running in pure headless mode)
+            if (!isHeadless)
             {
-                _mainWindow.Show();
+                try
+                {
+                    TrayManager.Instance.Initialize();
+                    TrayManager.Instance.OpenDashboardRequested += ShowDashboard;
+                    TrayManager.Instance.ExitRequested += ExitApp;
+                }
+                catch (Exception ex)
+                {
+                    LoggingService.Instance.Error("App", "Failed to initialize TrayManager", ex);
+                }
+
+                // 5. Create Main Dashboard Window
+                _mainWindow = new MainWindow();
+
+                if (!startMinimized)
+                {
+                    _mainWindow.Show();
+                }
+            }
+            else
+            {
+                LoggingService.Instance.Info("App", "Running in pure headless mode (API server only, UI/Tray suppressed).");
             }
 
             // 6. Background Update Check (Throttled to 24h)
@@ -166,6 +190,7 @@ namespace InFox
                 TrayManager.Instance.Dispose();
                 InFoxApiServer.Instance.Dispose();
                 TelemetryEngine.Instance.Dispose();
+                BTHomeBleService.Instance.Stop();
                 _singleInstanceMutex?.ReleaseMutex();
                 _singleInstanceMutex?.Dispose();
             }

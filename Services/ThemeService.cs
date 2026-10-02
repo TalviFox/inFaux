@@ -176,7 +176,7 @@ namespace InFox.Services
                     AccentHex = "#0284C7",
                     PrimaryAccent = (MediaColor)MediaColorConverter.ConvertFromString("#0284C7"),
                     PrimaryAccentHover = (MediaColor)MediaColorConverter.ConvertFromString("#0369A1"),
-                    AccentSubtle = (MediaColor)MediaColorConverter.ConvertFromString("#F0F9FF"),
+                    AccentSubtle = (MediaColor)MediaColorConverter.ConvertFromString("#E0F2FE"),
                     AccentBorder = (MediaColor)MediaColorConverter.ConvertFromString("#BAE6FD"),
                     WindowBackground = (MediaColor)MediaColorConverter.ConvertFromString("#F8FAFC"),
                     HeaderBackground = (MediaColor)MediaColorConverter.ConvertFromString("#FFFFFF"),
@@ -269,6 +269,18 @@ namespace InFox.Services
                 SetBrush(app.Resources, "ToggleThumbBrush", activeTheme.ToggleThumbChecked);
                 SetBrush(app.Resources, "PrimaryAccentForegroundBrush", activeTheme.PrimaryAccentForeground);
 
+                // Dynamic High-Contrast Bluetooth Telemetry Brush (Crisp cobalt blue in light mode, radiant cyan in dark)
+                MediaColor bleTextColor = activeTheme.IsLightMode
+                    ? (MediaColor)MediaColorConverter.ConvertFromString("#1D4ED8")
+                    : (MediaColor)MediaColorConverter.ConvertFromString("#38BDF8");
+                SetBrush(app.Resources, "BleTextBrush", bleTextColor);
+
+                // Dynamic System Selection Colors matching active Fox Coat theme
+                SetBrush(app.Resources, System.Windows.SystemColors.HighlightBrushKey, activeTheme.AccentSubtle);
+                SetBrush(app.Resources, System.Windows.SystemColors.HighlightTextBrushKey, activeTheme.PrimaryAccent);
+                SetBrush(app.Resources, System.Windows.SystemColors.InactiveSelectionHighlightBrushKey, activeTheme.ControlBackground);
+                SetBrush(app.Resources, System.Windows.SystemColors.InactiveSelectionHighlightTextBrushKey, activeTheme.TextSecondary);
+
                 ThemeChanged?.Invoke(activeTheme);
             };
 
@@ -282,7 +294,7 @@ namespace InFox.Services
             }
         }
 
-        private static void SetBrush(ResourceDictionary res, string key, MediaColor color)
+        private static void SetBrush(ResourceDictionary res, object key, MediaColor color)
         {
             var brush = new SolidColorBrush(color);
             brush.Freeze();

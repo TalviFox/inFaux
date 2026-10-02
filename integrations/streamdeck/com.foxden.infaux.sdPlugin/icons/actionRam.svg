@@ -1,9 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
-  <rect width="72" height="72" rx="14" fill="#161922"/>
-  <rect x="14" y="24" width="44" height="24" rx="3" fill="#202636" stroke="#e040fb" stroke-width="2.5"/>
-  <rect x="18" y="28" width="6" height="8" fill="#e040fb"/>
-  <rect x="27" y="28" width="6" height="8" fill="#e040fb"/>
-  <rect x="39" y="28" width="6" height="8" fill="#e040fb"/>
-  <rect x="48" y="28" width="6" height="8" fill="#e040fb"/>
-  <text x="36" y="60" fill="#e040fb" font-family="Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">RAM</text>
+  <defs>
+    <linearGradient id="bgRam" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#161b26"/>
+      <stop offset="100%" stop-color="#0f131c"/>
+    </linearGradient>
+  </defs>
+  <!-- Base Squircle (Inset by 1px so 1.5px stroke is never clipped by viewBox boundary) -->
+  <rect x="1" y="1" width="70" height="70" rx="15" fill="url(#bgRam)" stroke="#263147" stroke-width="1.5"/>
+  
+  <!-- Integrated Heat Spreader Top Spine / Lightbar -->
+  <path d="M16 20 L56 20 L58 24 L14 24 Z" fill="#243048" stroke="#94a3b8" stroke-width="1.2" stroke-linejoin="round"/>
+  
+  <!-- DIMM PCB Module with Clean Keyway Notch -->
+  <path d="M14 24 L58 24 L58 47 L38 47 L37 43 L34 43 L33 47 L14 47 Z" fill="#141a26" stroke="#cbd5e1" stroke-width="1.5" stroke-linejoin="round"/>
+  
+  <!-- Side Ejector Notch Indents (Motherboard latch slots) -->
+  <rect x="13.5" y="32" width="1.5" height="5" rx="0.5" fill="#0f131c"/>
+  <rect x="57" y="32" width="1.5" height="5" rx="0.5" fill="#0f131c"/>
+  
+  <!-- DRAM Silicon Memory ICs (Clean Minimal Packages) -->
+  <g fill="#1e293b" stroke="#ff6b35" stroke-width="1.2">
+    <rect x="17.5" y="28" width="6.5" height="13" rx="1"/>
+    <rect x="25.5" y="28" width="6.5" height="13" rx="1"/>
+    <rect x="40" y="28" width="6.5" height="13" rx="1"/>
+    <rect x="48" y="28" width="6.5" height="13" rx="1"/>
+  </g>
+  
+  <!-- DIMM Gold Finger Edge Connector Lip (White Substrate Space) -->
+  <path d="M14 47 L33 47 L34 43 L37 43 L38 47 L58 47 L58 51.5 L38 51.5 L37 47.5 L34 47.5 L33 51.5 L14 51.5 Z" fill="#cbd5e1"/>
+  
+  <!-- Gold Contact Fingers (Contained 100% inside the white connector space) -->
+  <path d="M17 47.8 L17 50.8 M19.5 47.8 L19.5 50.8 M22 47.8 L22 50.8 M24.5 47.8 L24.5 50.8 M27 47.8 L27 50.8 M29.5 47.8 L29.5 50.8 M32 47.8 L32 50.8" fill="none" stroke="#b45309" stroke-width="1.3" stroke-linecap="round"/>
+  <path d="M40 47.8 L40 50.8 M42.5 47.8 L42.5 50.8 M45 47.8 L45 50.8 M47.5 47.8 L47.5 50.8 M50 47.8 L50 50.8 M52.5 47.8 L52.5 50.8 M55 47.8 L55 50.8" fill="none" stroke="#b45309" stroke-width="1.3" stroke-linecap="round"/>
 </svg>

@@ -34,84 +34,279 @@
       ctx.closePath();
     }
 
-    function getTempColor(t) {
-      if (!t) return '#94a3b8';
-      if (t < 55) return '#4ade80';
-      if (t < 72) return '#38bdf8';
-      if (t < 82) return '#fbbf24';
-      return '#f87171';
+    function getMainStatColor(value, type, inst, theme) {
+      const mode = (inst && inst.settings && inst.settings.colorMode) ? inst.settings.colorMode : 'reactive';
+      if (mode === 'monochrome') {
+        return theme.textPrimary; // Pure clean white across ALL actions
+      }
+      if (mode === 'accent') {
+        return theme.accent; // Unified coat theme color across ALL actions
+      }
+
+      // Reactive dynamic alerts
+      if (type === 'temp') {
+        if (value == null) return theme.isLight ? '#64748b' : '#94a3b8';
+        if (theme.isLight) {
+          if (value < 55) return '#16a34a';
+          if (value < 72) return '#0284c7';
+          if (value < 82) return '#d97706';
+          return '#dc2626';
+        }
+        if (value < 55) return '#4ade80';
+        if (value < 72) return '#38bdf8';
+        if (value < 82) return '#fbbf24';
+        return '#f87171';
+      }
+
+      if (type === 'ram') {
+        if (value == null) return theme.isLight ? '#64748b' : '#94a3b8';
+        if (theme.isLight) {
+          if (value < 65) return '#16a34a';
+          if (value < 85) return '#d97706';
+          return '#dc2626';
+        }
+        if (value < 65) return '#4ade80';
+        if (value < 85) return '#fbbf24';
+        return '#f87171';
+      }
+
+      if (type === 'netDown') {
+        return theme.isLight ? '#16a34a' : '#4ade80';
+      }
+
+      if (type === 'netUp') {
+        return theme.isLight ? '#ea580c' : '#ff8a50';
+      }
+
+      return theme.textPrimary;
     }
 
-    function renderOffline(title) {
+    function getTempColor(t, isLight, isMonochrome, theme) {
+      return getMainStatColor(t, 'temp', { settings: { colorMode: isMonochrome ? 'monochrome' : 'reactive' } }, theme);
+    }
+
+    const THEMES = {
+      SilverFoxOled: {
+        id: 'SilverFoxOled',
+        name: 'Silver Fox (OLED Midnight)',
+        cardBg: '#000000',
+        border: '#1c1c1e',
+        header: '#ffffff',
+        accent: '#ffffff',
+        textPrimary: '#ffffff',
+        textSecondary: '#a1a1aa',
+        barTrack: '#141414',
+        isLight: false
+      },
+      SilverFox: {
+        id: 'SilverFox',
+        name: 'Silver Fox (Stealth Platinum)',
+        cardBg: '#111317',
+        border: '#22252d',
+        header: '#e2e8f0',
+        accent: '#ffffff',
+        textPrimary: '#f8fafc',
+        textSecondary: '#94a3b8',
+        barTrack: '#1e2024',
+        isLight: false
+      },
+      RedFox: {
+        id: 'RedFox',
+        name: 'Red Fox (Classic Ember)',
+        cardBg: '#0f141c',
+        border: '#1e293b',
+        header: '#ff6b35',
+        accent: '#ff8a50',
+        textPrimary: '#f8fafc',
+        textSecondary: '#94a3b8',
+        barTrack: '#2e1a12',
+        isLight: false
+      },
+      ArcticFox: {
+        id: 'ArcticFox',
+        name: 'Arctic Fox (Glacial Cyan)',
+        cardBg: '#0c1527',
+        border: '#1b2a45',
+        header: '#38bdf8',
+        accent: '#7dd3fc',
+        textPrimary: '#f8fafc',
+        textSecondary: '#94a3b8',
+        barTrack: '#0c243b',
+        isLight: false
+      },
+      ArcticFoxSnow: {
+        id: 'ArcticFoxSnow',
+        name: 'Arctic Fox (Winter Snow)',
+        cardBg: '#ffffff',
+        border: '#cbd5e1',
+        header: '#0284c7',
+        accent: '#0284c7',
+        textPrimary: '#0f172a',
+        textSecondary: '#64748b',
+        barTrack: '#e2e8f0',
+        isLight: true
+      },
+      FennecFox: {
+        id: 'FennecFox',
+        name: 'Fennec Fox (Desert Sand & Amber)',
+        cardBg: '#17130f',
+        border: '#2d251d',
+        header: '#f59e0b',
+        accent: '#fbbf24',
+        textPrimary: '#f8fafc',
+        textSecondary: '#94a3b8',
+        barTrack: '#2e2210',
+        isLight: false
+      }
+    };
+
+    function getEffectiveTheme(inst, data) {
+      if (inst && inst.settings && inst.settings.theme && inst.settings.theme !== 'auto') {
+        const override = THEMES[inst.settings.theme];
+        if (override) return override;
+      }
+
+      if (data && data.theme) {
+        const id = data.theme.id || '';
+        if (id.toLowerCase().includes('silver')) {
+          return data.theme.isOled ? THEMES.SilverFoxOled : THEMES.SilverFox;
+        }
+        if (id.toLowerCase().includes('red')) return THEMES.RedFox;
+        if (id.toLowerCase().includes('arctic')) {
+          return (data.theme.isLightMode || (data.theme.name && data.theme.name.toLowerCase().includes('snow')))
+            ? THEMES.ArcticFoxSnow
+            : THEMES.ArcticFox;
+        }
+        if (id.toLowerCase().includes('fennec')) return THEMES.FennecFox;
+      }
+
+      return THEMES.SilverFoxOled;
+    }
+
+    function renderOffline(title, theme) {
+      theme = theme || THEMES.SilverFoxOled;
       ctx.clearRect(0, 0, 144, 144);
-      ctx.fillStyle = '#161922';
+      ctx.fillStyle = theme.cardBg;
       roundRect(ctx, 4, 4, 136, 136, 16);
       ctx.fill();
-      ctx.strokeStyle = '#334155';
+      ctx.strokeStyle = theme.border;
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = theme.textSecondary;
       ctx.font = 'bold 20px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(title, 72, 36);
 
-      ctx.fillStyle = '#f87171';
+      ctx.fillStyle = theme.isLight ? '#dc2626' : '#f87171';
       ctx.font = 'bold 22px sans-serif';
       ctx.fillText('OFFLINE', 72, 82);
 
-      ctx.fillStyle = '#64748b';
+      ctx.fillStyle = theme.isLight ? '#94a3b8' : '#64748b';
       ctx.font = '14px sans-serif';
       ctx.fillText('Check inFaux', 72, 114);
 
       return canvas.toDataURL('image/png');
     }
 
+    function getCpuHeaderTitle(cpu, data) {
+      if (!cpu || !cpu.name) return 'CPU';
+      const name = cpu.name;
+
+      // 1. Intel Core i3/i5/i7/i9: e.g. "i9-12900K" -> "12900K"
+      const intelCore = name.match(/i[3579]-(\d+[A-Za-z]*)/i);
+      if (intelCore) return intelCore[1];
+
+      // 2. Intel Core Ultra: e.g. "Core Ultra 7 265K" -> "265K", "Ultra 9 285K" -> "285K"
+      const intelUltra = name.match(/Ultra\s*[3579]?\s*(\d+[A-Za-z]*)/i);
+      if (intelUltra) return intelUltra[1];
+
+      // 3. AMD Ryzen: e.g. "Ryzen 7 7800X3D" -> "7800X3D", "Ryzen 9 9950X" -> "9950X", "Ryzen 5 5600X" -> "5600X"
+      const ryzen = name.match(/Ryzen\s*[3579]?\s*(\d{4}[A-Za-z0-9]*)/i);
+      if (ryzen) return ryzen[1];
+
+      // 4. AMD Threadripper: e.g. "Threadripper 7980X" -> "7980X"
+      const tr = name.match(/Threadripper\s*(PRO\s*)?(\d{4}[A-Za-z0-9]*)/i);
+      if (tr) return tr[2];
+
+      // 5. Snapdragon X Elite: e.g. "Snapdragon(R) X Elite" -> "X-Elite"
+      if (name.includes('Snapdragon')) return 'X-Elite';
+
+      // 6. Generic model number fallback (4-5 digits + letters)
+      const gen = name.match(/\b(\d{4,5}[A-Za-z]*)\b/);
+      if (gen && gen[1].length <= 8) return gen[1];
+
+      return 'CPU';
+    }
+
     function renderCpu(inst, data) {
-      if (!data || !data.cpu) return renderOffline('CPU');
+      const theme = getEffectiveTheme(inst, data);
+      if (!data || !data.cpu) return renderOffline('CPU', theme);
 
       const cpu = data.cpu;
       const temp = Math.round(cpu.tempC || 0);
       const load = Math.round(cpu.loadPercent || 0);
       const watts = Math.round(cpu.powerWatts || 0);
+      const defaultHeader = getCpuHeaderTitle(cpu, data);
+      const customTitle = (inst.settings && (inst.settings.customTitle || inst.settings.btTitle)) ? (inst.settings.customTitle || inst.settings.btTitle).trim() : '';
+      const headerTitle = customTitle.length > 0 ? customTitle : defaultHeader;
+      const isMono = inst.settings && inst.settings.colorMode === 'monochrome';
+      const wattStr = `${watts}W`;
 
       ctx.clearRect(0, 0, 144, 144);
-      ctx.fillStyle = '#12151f';
+      ctx.fillStyle = theme.cardBg;
       roundRect(ctx, 4, 4, 136, 136, 16);
       ctx.fill();
-      ctx.strokeStyle = '#1e293b';
+      ctx.strokeStyle = theme.border;
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Header row
-      ctx.fillStyle = '#38bdf8';
-      ctx.font = 'bold 20px sans-serif';
+      // Header row with dynamic font auto-scaling to prevent collision with wattage
+      let headerFont = 18;
+      ctx.font = `bold ${headerFont}px sans-serif`;
+      ctx.fillStyle = theme.header;
       ctx.textAlign = 'left';
-      ctx.fillText('CPU', 16, 32);
 
-      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 15px sans-serif';
+      const wattW = ctx.measureText(wattStr).width;
+      ctx.font = `bold ${headerFont}px sans-serif`;
+
+      const maxTitleW = 128 - wattW - 20;
+      let titleW = ctx.measureText(headerTitle).width;
+      while (titleW > maxTitleW && headerFont > 11) {
+        headerFont -= 1;
+        ctx.font = `bold ${headerFont}px sans-serif`;
+        titleW = ctx.measureText(headerTitle).width;
+      }
+
+      ctx.fillText(headerTitle, 16, 32);
+
+      ctx.fillStyle = theme.textSecondary;
       ctx.font = 'bold 15px sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText(`${watts}W`, 128, 32);
+      ctx.fillText(wattStr, 128, 32);
 
       // Main stat: Temp
-      ctx.fillStyle = getTempColor(temp);
+      ctx.fillStyle = getMainStatColor(temp, 'temp', inst, theme);
       ctx.font = 'bold 40px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(`${temp}°C`, 72, 78);
 
       // Sub stat: Load
-      ctx.fillStyle = '#cbd5e1';
+      ctx.fillStyle = theme.isLight ? '#334155' : '#cbd5e1';
       ctx.font = 'bold 16px sans-serif';
       ctx.fillText(`${load}% LOAD`, 72, 108);
 
       // Progress bar
-      ctx.fillStyle = '#1e2433';
+      ctx.fillStyle = theme.barTrack;
       roundRect(ctx, 16, 120, 112, 8, 4);
       ctx.fill();
 
       const fillW = Math.max(8, (112 * Math.min(100, load)) / 100);
-      ctx.fillStyle = load > 80 ? '#f87171' : (load > 50 ? '#fbbf24' : '#38bdf8');
+      const isStaticBar = inst.settings && (inst.settings.colorMode === 'monochrome' || inst.settings.colorMode === 'accent');
+      ctx.fillStyle = isStaticBar
+        ? theme.accent
+        : (load > 80 ? (theme.isLight ? '#dc2626' : '#f87171') : (load > 50 ? (theme.isLight ? '#d97706' : '#fbbf24') : theme.accent));
       roundRect(ctx, 16, 120, fillW, 8, 4);
       ctx.fill();
 
@@ -133,73 +328,146 @@
     }
 
     function getGpuHeaderTitle(gpu, data) {
-      if (!data || !data.gpus || data.gpus.length <= 1) return 'GPU';
-
-      const idx = data.gpus.findIndex(g => g.id === gpu.id);
+      if (!gpu) return 'GPU';
       const name = gpu.name || '';
 
-      // Clean concise names for the 144x144 key header
-      if (name.includes('RTX')) {
-        const m = name.match(/RTX\s*\d+[A-Za-z]*/i);
-        if (m) return m[0].replace(/\s+/g, '');
+      // 1. NVIDIA GeForce (Discrete): e.g. "RTX 3080 Ti" -> "3080Ti", "RTX 4070 Super" -> "4070S"
+      const rtxMatch = name.match(/(?:RTX|GTX)\s*(\d+)(?:\s*(Ti|Super|S))?(?:\s*(Super|S))?/i);
+      if (rtxMatch) {
+        let model = rtxMatch[1];
+        if (rtxMatch[2]) {
+          const s1 = rtxMatch[2].toLowerCase();
+          model += (s1 === 'super' ? 'S' : (s1 === 'ti' ? 'Ti' : rtxMatch[2]));
+        }
+        if (rtxMatch[3]) {
+          const s2 = rtxMatch[3].toLowerCase();
+          model += (s2 === 'super' ? 'S' : rtxMatch[3]);
+        }
+        return model;
       }
-      if (name.includes('RX')) {
-        const m = name.match(/RX\s*\d+[A-Za-z]*/i);
-        if (m) return m[0].replace(/\s+/g, '');
-      }
-      if (name.includes('UHD')) return 'UHD' + (name.match(/\d{3}/)?.[0] || '');
-      if (name.includes('Iris')) return 'IrisXe';
-      if (name.includes('Arc')) return 'Arc';
 
-      return idx >= 0 ? `GPU ${idx}` : 'GPU';
+      // 2. AMD Radeon (Discrete): e.g. "RX 7900 XTX" -> "7900XTX", "RX 7800 XT" -> "7800XT"
+      const rxMatch = name.match(/RX\s*(\d+)(?:\s*(XTX|XT|GRE|M|S))?/i);
+      if (rxMatch) {
+        let model = rxMatch[1];
+        if (rxMatch[2]) model += rxMatch[2].toUpperCase();
+        return model;
+      }
+
+      // 3. Intel Arc (Discrete): e.g. "Intel Arc A770" -> "A770", "B580"
+      if (name.includes('Arc')) {
+        const arc = name.match(/Arc\s*([A-Za-z0-9]+)/i);
+        if (arc) return arc[1];
+      }
+
+      // 4. Intel iGPUs: "UHD Graphics 770" -> "770", "Iris Xe" -> "Xe"
+      if (name.includes('UHD') || name.includes('HD Graphics')) {
+        const uhd = name.match(/(?:UHD|HD)\s*(?:Graphics\s*)?(\d{3,4})/i);
+        if (uhd) return uhd[1];
+      }
+      if (name.includes('Iris') || name.includes('Xe')) {
+        return 'Xe';
+      }
+
+      // 5. AMD APUs: "Radeon 780M" -> "780M", "680M", "Vega 8" -> "Vega8"
+      const apuM = name.match(/\b(\d{3}M)\b/i);
+      if (apuM) return apuM[1];
+
+      const vega = name.match(/Vega\s*(\d+)?/i);
+      if (vega) return vega[1] ? `Vega${vega[1]}` : 'Vega';
+
+      // 6. Generic model number fallback (any 3-4 digit sequence)
+      const numMatch = name.match(/\b(\d{3,4}[A-Za-z]*)\b/);
+      if (numMatch && numMatch[1].length <= 7) return numMatch[1];
+
+      // 7. Brand failovers if model numbers can't be resolved
+      if (name.includes('Intel')) return 'INTEL';
+      if (name.includes('AMD') || name.includes('Radeon')) return 'AMD';
+      if (name.includes('Qualcomm') || name.includes('Snapdragon') || name.includes('Adreno')) return 'ADRENO';
+      if (name.includes('Apple')) return 'APPLE';
+
+      if (data && data.gpus && data.gpus.length > 1) {
+        const idx = data.gpus.findIndex(g => g.id === gpu.id);
+        if (idx >= 0) return `GPU ${idx}`;
+      }
+
+      return 'GPU';
     }
 
     function renderGpu(inst, data) {
+      const theme = getEffectiveTheme(inst, data);
       const gpu = getSelectedGpu(inst, data);
-      if (!gpu) return renderOffline('GPU');
+      if (!gpu) return renderOffline('GPU', theme);
 
       const temp = Math.round(gpu.tempC || 0);
       const load = Math.round(gpu.loadPercent || 0);
       const watts = Math.round(gpu.powerWatts || 0);
-      const headerTitle = getGpuHeaderTitle(gpu, data);
+      const defaultHeader = getGpuHeaderTitle(gpu, data);
+      const customTitle = (inst.settings && (inst.settings.customTitle || inst.settings.btTitle)) ? (inst.settings.customTitle || inst.settings.btTitle).trim() : '';
+      const headerTitle = customTitle.length > 0 ? customTitle : defaultHeader;
+      const isMono = inst.settings && inst.settings.colorMode === 'monochrome';
+      const wattStr = watts > 0 ? `${watts}W` : (gpu.isDiscrete ? '' : 'SoC');
 
       ctx.clearRect(0, 0, 144, 144);
-      ctx.fillStyle = '#12151f';
+      ctx.fillStyle = theme.cardBg;
       roundRect(ctx, 4, 4, 136, 136, 16);
       ctx.fill();
-      ctx.strokeStyle = '#1e293b';
+      ctx.strokeStyle = theme.border;
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Header row
-      ctx.fillStyle = '#4ade80';
-      ctx.font = 'bold 18px sans-serif';
+      // Header row with dynamic font auto-scaling to prevent any text collision
+      let headerFont = 18;
+      ctx.font = `bold ${headerFont}px sans-serif`;
+      ctx.fillStyle = theme.header;
       ctx.textAlign = 'left';
+
+      // Measure wattage width to calculate available header title width
+      let wattW = 0;
+      if (wattStr) {
+        ctx.font = 'bold 15px sans-serif';
+        wattW = ctx.measureText(wattStr).width;
+        ctx.font = `bold ${headerFont}px sans-serif`;
+      }
+
+      const maxTitleW = 128 - wattW - 20;
+      let titleW = ctx.measureText(headerTitle).width;
+      while (titleW > maxTitleW && headerFont > 11) {
+        headerFont -= 1;
+        ctx.font = `bold ${headerFont}px sans-serif`;
+        titleW = ctx.measureText(headerTitle).width;
+      }
+
       ctx.fillText(headerTitle, 16, 32);
 
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = 'bold 15px sans-serif';
-      ctx.textAlign = 'right';
-      ctx.fillText(watts > 0 ? `${watts}W` : 'SoC', 128, 32);
+      if (wattStr) {
+        ctx.fillStyle = theme.textSecondary;
+        ctx.font = 'bold 15px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(wattStr, 128, 32);
+      }
 
       // Main stat: Temp
-      ctx.fillStyle = getTempColor(temp);
+      ctx.fillStyle = getMainStatColor(temp, 'temp', inst, theme);
       ctx.font = 'bold 40px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(`${temp}°C`, 72, 78);
 
       // Sub stat: Load
-      ctx.fillStyle = '#cbd5e1';
+      ctx.fillStyle = theme.isLight ? '#334155' : '#cbd5e1';
       ctx.font = 'bold 16px sans-serif';
       ctx.fillText(`${load}% LOAD`, 72, 108);
 
       // Progress bar
-      ctx.fillStyle = '#1e2433';
+      ctx.fillStyle = theme.barTrack;
       roundRect(ctx, 16, 120, 112, 8, 4);
       ctx.fill();
 
       const fillW = Math.max(8, (112 * Math.min(100, load)) / 100);
-      ctx.fillStyle = load > 80 ? '#f87171' : (load > 50 ? '#fbbf24' : '#4ade80');
+      const isStaticBarGpu = inst.settings && (inst.settings.colorMode === 'monochrome' || inst.settings.colorMode === 'accent');
+      ctx.fillStyle = isStaticBarGpu
+        ? theme.accent
+        : (load > 80 ? (theme.isLight ? '#dc2626' : '#f87171') : (load > 50 ? (theme.isLight ? '#d97706' : '#fbbf24') : theme.accent));
       roundRect(ctx, 16, 120, fillW, 8, 4);
       ctx.fill();
 
@@ -207,50 +475,72 @@
     }
 
     function renderRam(inst, data) {
-      if (!data || !data.memory) return renderOffline('RAM');
+      const theme = getEffectiveTheme(inst, data);
+      if (!data || !data.memory) return renderOffline('RAM', theme);
 
       const mem = data.memory;
       const used = (mem.usedGb || 0).toFixed(1);
       const total = Math.round(mem.totalGb || 0);
       const pct = Math.round(mem.percent || 0);
+      const defaultHeader = 'RAM';
+      const customTitle = (inst.settings && (inst.settings.customTitle || inst.settings.btTitle)) ? (inst.settings.customTitle || inst.settings.btTitle).trim() : '';
+      const headerTitle = customTitle.length > 0 ? customTitle : defaultHeader;
+      const isMono = inst.settings && inst.settings.colorMode === 'monochrome';
 
       ctx.clearRect(0, 0, 144, 144);
-      ctx.fillStyle = '#12151f';
+      ctx.fillStyle = theme.cardBg;
       roundRect(ctx, 4, 4, 136, 136, 16);
       ctx.fill();
-      ctx.strokeStyle = '#1e293b';
+      ctx.strokeStyle = theme.border;
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Header row
-      ctx.fillStyle = '#c084fc';
-      ctx.font = 'bold 20px sans-serif';
+      // Header row with dynamic auto-scaling
+      let headerFont = 18;
+      ctx.font = `bold ${headerFont}px sans-serif`;
+      ctx.fillStyle = theme.header;
       ctx.textAlign = 'left';
-      ctx.fillText('RAM', 16, 32);
 
-      ctx.fillStyle = '#94a3b8';
+      const totalStr = `${total}G`;
+      ctx.font = 'bold 15px sans-serif';
+      const totalW = ctx.measureText(totalStr).width;
+      ctx.font = `bold ${headerFont}px sans-serif`;
+
+      const maxTitleW = 128 - totalW - 16;
+      let titleW = ctx.measureText(headerTitle).width;
+      while (titleW > maxTitleW && headerFont > 11) {
+        headerFont -= 1;
+        ctx.font = `bold ${headerFont}px sans-serif`;
+        titleW = ctx.measureText(headerTitle).width;
+      }
+      ctx.fillText(headerTitle, 16, 32);
+
+      ctx.fillStyle = theme.textSecondary;
       ctx.font = 'bold 15px sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText(`${total}G`, 128, 32);
+      ctx.fillText(totalStr, 128, 32);
 
       // Main stat: Used GB
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = getMainStatColor(pct, 'ram', inst, theme);
       ctx.font = 'bold 36px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(`${used}G`, 72, 78);
 
       // Sub stat: %
-      ctx.fillStyle = '#cbd5e1';
+      ctx.fillStyle = theme.isLight ? '#334155' : '#cbd5e1';
       ctx.font = 'bold 16px sans-serif';
       ctx.fillText(`${pct}% USED`, 72, 108);
 
       // Progress bar
-      ctx.fillStyle = '#1e2433';
+      ctx.fillStyle = theme.barTrack;
       roundRect(ctx, 16, 120, 112, 8, 4);
       ctx.fill();
 
       const fillW = Math.max(8, (112 * Math.min(100, pct)) / 100);
-      ctx.fillStyle = '#c084fc';
+      const isStaticBarRam = inst.settings && (inst.settings.colorMode === 'monochrome' || inst.settings.colorMode === 'accent');
+      ctx.fillStyle = isStaticBarRam
+        ? theme.accent
+        : (pct > 85 ? (theme.isLight ? '#dc2626' : '#f87171') : (pct > 70 ? (theme.isLight ? '#d97706' : '#fbbf24') : theme.accent));
       roundRect(ctx, 16, 120, fillW, 8, 4);
       ctx.fill();
 
@@ -277,38 +567,237 @@
     }
 
     function renderNet(inst, data) {
-      if (!data || !data.network) return renderOffline('NET');
+      const theme = getEffectiveTheme(inst, data);
+      if (!data || !data.network) return renderOffline('NET', theme);
 
       const adapter = getSelectedAdapter(inst, data);
       const down = (adapter ? adapter.downloadMbps : data.network.downloadMbps || 0).toFixed(1);
       const up = (adapter ? adapter.uploadMbps : data.network.uploadMbps || 0).toFixed(1);
-      const headerTitle = getNetHeaderTitle(adapter, data);
+      const defaultHeader = getNetHeaderTitle(adapter, data);
+      const customTitle = (inst.settings && (inst.settings.customTitle || inst.settings.btTitle)) ? (inst.settings.customTitle || inst.settings.btTitle).trim() : '';
+      const headerTitle = customTitle.length > 0 ? customTitle : defaultHeader;
 
       ctx.clearRect(0, 0, 144, 144);
-      ctx.fillStyle = '#12151f';
+      ctx.fillStyle = theme.cardBg;
       roundRect(ctx, 4, 4, 136, 136, 16);
       ctx.fill();
-      ctx.strokeStyle = '#1e293b';
+      ctx.strokeStyle = theme.border;
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Header
-      ctx.fillStyle = '#38bdf8';
-      ctx.font = 'bold 18px sans-serif';
+      // Header with dynamic font auto-scaling
+      let headerFont = 18;
+      ctx.font = `bold ${headerFont}px sans-serif`;
+      ctx.fillStyle = theme.header;
       ctx.textAlign = 'center';
+
+      let titleW = ctx.measureText(headerTitle).width;
+      while (titleW > 118 && headerFont > 11) {
+        headerFont -= 1;
+        ctx.font = `bold ${headerFont}px sans-serif`;
+        titleW = ctx.measureText(headerTitle).width;
+      }
       ctx.fillText(headerTitle, 72, 32);
 
       // Down
-      ctx.fillStyle = '#4ade80';
+      ctx.fillStyle = getMainStatColor(null, 'netDown', inst, theme);
       ctx.font = 'bold 22px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(`↓ ${down} M`, 72, 70);
 
       // Up
-      ctx.fillStyle = '#38bdf8';
+      ctx.fillStyle = getMainStatColor(null, 'netUp', inst, theme);
       ctx.font = 'bold 22px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(`↑ ${up} M`, 72, 106);
+
+      return canvas.toDataURL('image/png');
+    }
+
+    function renderBt(inst, data) {
+      const theme = getEffectiveTheme(inst, data);
+      if (!data) return renderOffline('BT SENSOR', theme);
+
+      const target = (inst.settings && inst.settings.btTarget) ? inst.settings.btTarget : 'ambient';
+      const customTitle = (inst.settings && (inst.settings.customTitle || inst.settings.btTitle || inst.settings.btCustomTitle))
+        ? (inst.settings.customTitle || inst.settings.btTitle || inst.settings.btCustomTitle).trim()
+        : '';
+      
+      let unit = 'C';
+      if (inst.settings && inst.settings.btUnit) {
+        const u = inst.settings.btUnit.toLowerCase();
+        if (u === 'fahrenheit' || u === 'f') unit = 'F';
+        else if (u === 'celsius' || u === 'c') unit = 'C';
+        else {
+          unit = (data.temperatureUnit === 'F') ? 'F' : 'C';
+        }
+      }
+
+      const displayMode = (inst.settings && inst.settings.btDisplayMode) ? inst.settings.btDisplayMode : 'temp';
+
+      let tempC = null;
+      let humidity = null;
+      let battery = null;
+      let isReal = false;
+      let defaultTitle = 'ROOM';
+
+      const bt = data.bluetooth;
+      if (target === 'ambient') {
+        defaultTitle = 'ROOM';
+        if (bt && bt.ambient && (bt.ambient.isFresh || bt.ambient.isOnline) && bt.ambient.tempC != null) {
+          tempC = bt.ambient.tempC;
+          humidity = bt.ambient.humidityPercent != null ? bt.ambient.humidityPercent : bt.ambient.humidityPct;
+          battery = bt.ambient.batteryPercent != null ? bt.ambient.batteryPercent : bt.ambient.batteryPct;
+          isReal = true;
+        } else if (data.chassis && data.chassis.isAmbientMeasured && data.chassis.estimatedAmbientTempC != null) {
+          tempC = data.chassis.estimatedAmbientTempC;
+          humidity = data.chassis.ambientHumidityPercent;
+          battery = (bt && bt.ambient) ? (bt.ambient.batteryPercent != null ? bt.ambient.batteryPercent : bt.ambient.batteryPct) : null;
+          isReal = true;
+        } else if (data.chassis && data.chassis.estimatedAmbientTempC != null) {
+          tempC = data.chassis.estimatedAmbientTempC;
+          humidity = data.chassis.ambientHumidityPercent;
+        }
+      } else if (target === 'chassis') {
+        defaultTitle = 'CASE AIR';
+        if (bt && bt.chassis && (bt.chassis.isFresh || bt.chassis.isOnline) && bt.chassis.tempC != null) {
+          tempC = bt.chassis.tempC;
+          humidity = bt.chassis.humidityPercent != null ? bt.chassis.humidityPercent : bt.chassis.humidityPct;
+          battery = bt.chassis.batteryPercent != null ? bt.chassis.batteryPercent : bt.chassis.batteryPct;
+          isReal = true;
+        } else if (data.chassis && data.chassis.isChassisAirMeasured && data.chassis.chassisAirTempC != null) {
+          tempC = data.chassis.chassisAirTempC;
+          humidity = data.chassis.chassisAirHumidityPercent;
+          battery = (bt && bt.chassis) ? (bt.chassis.batteryPercent != null ? bt.chassis.batteryPercent : bt.chassis.batteryPct) : null;
+          isReal = true;
+        } else if (data.chassis && data.chassis.chassisAirTempC != null) {
+          tempC = data.chassis.chassisAirTempC;
+          humidity = data.chassis.chassisAirHumidityPercent;
+        }
+      } else if (target === 'radiator') {
+        defaultTitle = 'EXHAUST';
+        if (bt && bt.radiator && (bt.radiator.isFresh || bt.radiator.isOnline) && bt.radiator.tempC != null) {
+          tempC = bt.radiator.tempC;
+          humidity = bt.radiator.humidityPercent != null ? bt.radiator.humidityPercent : bt.radiator.humidityPct;
+          battery = bt.radiator.batteryPercent != null ? bt.radiator.batteryPercent : bt.radiator.batteryPct;
+          isReal = true;
+        } else if (data.chassis && data.chassis.radiatorExhaustTempC != null) {
+          tempC = data.chassis.radiatorExhaustTempC;
+          humidity = data.chassis.radiatorExhaustHumidityPercent;
+          isReal = !!data.chassis.isRadiatorExhaustMeasured;
+        }
+      }
+
+      const headerTitle = customTitle.length > 0 ? customTitle : defaultTitle;
+
+      ctx.clearRect(0, 0, 144, 144);
+      ctx.fillStyle = theme.cardBg;
+      roundRect(ctx, 4, 4, 136, 136, 16);
+      ctx.fill();
+      ctx.strokeStyle = theme.border;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Header row with dynamic font auto-scaling
+      let headerFont = 18;
+      ctx.font = `bold ${headerFont}px sans-serif`;
+      ctx.fillStyle = theme.header;
+      ctx.textAlign = 'left';
+
+      const badgeStr = isReal ? (battery != null ? `${battery}%` : 'BLE') : 'EST';
+      ctx.font = 'bold 13px sans-serif';
+      const badgeW = ctx.measureText(badgeStr).width;
+      ctx.font = `bold ${headerFont}px sans-serif`;
+
+      const maxTitleW = 128 - badgeW - 14;
+      let titleW = ctx.measureText(headerTitle).width;
+      while (titleW > maxTitleW && headerFont > 11) {
+        headerFont -= 1;
+        ctx.font = `bold ${headerFont}px sans-serif`;
+        titleW = ctx.measureText(headerTitle).width;
+      }
+      ctx.fillText(headerTitle, 16, 32);
+
+      // Top right badge: real radio or estimated
+      ctx.fillStyle = isReal ? (theme.isLight ? '#0284c7' : '#38bdf8') : (theme.isLight ? '#94a3b8' : '#64748b');
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(badgeStr, 128, 32);
+
+      const displayTemp = (tempC != null)
+        ? (unit === 'F' ? Math.round((tempC * 9 / 5) + 32) : Math.round(tempC))
+        : null;
+
+      if (displayMode === 'humidity' && humidity != null) {
+        // Main stat: Humidity
+        const humVal = Math.round(humidity);
+        ctx.fillStyle = theme.isLight ? '#0284c7' : '#38bdf8';
+        ctx.font = 'bold 38px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${humVal}%`, 72, 78);
+
+        // Sub stat: Temp
+        ctx.fillStyle = theme.isLight ? '#334155' : '#cbd5e1';
+        ctx.font = 'bold 15px sans-serif';
+        ctx.textAlign = 'center';
+        if (displayTemp != null) {
+          ctx.fillText(`${displayTemp}°${unit} TEMP`, 72, 108);
+        } else {
+          ctx.fillText('HUMIDITY', 72, 108);
+        }
+
+        // Progress bar: 0 - 100%
+        ctx.fillStyle = theme.barTrack;
+        roundRect(ctx, 16, 120, 112, 8, 4);
+        ctx.fill();
+
+        const fillW = Math.max(8, (112 * Math.min(100, humVal)) / 100);
+        ctx.fillStyle = theme.accent;
+        roundRect(ctx, 16, 120, fillW, 8, 4);
+        ctx.fill();
+      } else {
+        // Main stat: Temperature
+        if (displayTemp != null) {
+          ctx.fillStyle = getMainStatColor(tempC, 'temp', inst, theme);
+          ctx.font = 'bold 38px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(`${displayTemp}°${unit}`, 72, 78);
+        } else {
+          ctx.fillStyle = theme.isLight ? '#94a3b8' : '#64748b';
+          ctx.font = 'bold 30px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('--°' + unit, 72, 78);
+        }
+
+        // Sub stat: Humidity or Status
+        ctx.fillStyle = theme.isLight ? '#334155' : '#cbd5e1';
+        ctx.font = 'bold 15px sans-serif';
+        ctx.textAlign = 'center';
+        if (isReal && humidity != null) {
+          ctx.fillText(`${Math.round(humidity)}% HUMIDITY`, 72, 108);
+        } else if (isReal) {
+          ctx.fillText('LIVE BEACON', 72, 108);
+        } else {
+          ctx.fillText('ESTIMATED', 72, 108);
+        }
+
+        // Progress bar
+        ctx.fillStyle = theme.barTrack;
+        roundRect(ctx, 16, 120, 112, 8, 4);
+        ctx.fill();
+
+        if (tempC != null) {
+          // Temperature scale: 15°C to 45°C
+          const pct = Math.max(5, Math.min(100, ((tempC - 15) / 30) * 100));
+          const fillW = Math.max(8, (112 * pct) / 100);
+          const isStaticBarBt = inst.settings && (inst.settings.colorMode === 'monochrome' || inst.settings.colorMode === 'accent');
+          ctx.fillStyle = isStaticBarBt
+            ? theme.accent
+            : (tempC > 35 ? (theme.isLight ? '#dc2626' : '#f87171') : (tempC > 27 ? (theme.isLight ? '#d97706' : '#fbbf24') : (theme.isLight ? '#0284c7' : '#38bdf8')));
+          roundRect(ctx, 16, 120, fillW, 8, 4);
+          ctx.fill();
+        }
+      }
 
       return canvas.toDataURL('image/png');
     }
@@ -326,6 +815,8 @@
           imgData = renderRam(inst, latestData);
         } else if (inst.action === 'com.foxden.infaux.net') {
           imgData = renderNet(inst, latestData);
+        } else if (inst.action === 'com.foxden.infaux.btsensor') {
+          imgData = renderBt(inst, latestData);
         }
 
         if (imgData) {
@@ -467,6 +958,19 @@
               inst.settings = (data.payload && data.payload.settings) ? data.payload.settings : {};
               renderInstance(inst);
             }
+          } else if (event === 'titleParametersDidChange') {
+            const inst = activeInstances.get(context);
+            if (inst) {
+              if (data.payload && data.payload.title !== undefined) {
+                inst.title = data.payload.title;
+                if (!inst.settings) inst.settings = {};
+                if (inst.title && inst.title.trim()) {
+                  inst.settings.customTitle = inst.title.trim();
+                  saveInstanceSettings(inst);
+                }
+              }
+              renderInstance(inst);
+            }
           } else if (event === 'keyUp') {
             const inst = activeInstances.get(context);
             if (inst) {
@@ -496,6 +1000,15 @@
                 let nextIdx = (curIdx + 1) % options.length;
                 inst.settings = inst.settings || {};
                 inst.settings.adapterId = options[nextIdx];
+                saveInstanceSettings(inst);
+                renderInstance(inst);
+                return;
+              }
+
+              if (inst.action === 'com.foxden.infaux.btsensor') {
+                inst.settings = inst.settings || {};
+                // Tap toggles display mode between Temperature and Humidity!
+                inst.settings.btDisplayMode = (inst.settings.btDisplayMode === 'humidity') ? 'temp' : 'humidity';
                 saveInstanceSettings(inst);
                 renderInstance(inst);
                 return;

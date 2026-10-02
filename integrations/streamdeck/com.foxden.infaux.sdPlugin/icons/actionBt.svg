@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
+  <defs>
+    <linearGradient id="bgBt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#161b26"/>
+      <stop offset="100%" stop-color="#0f131c"/>
+    </linearGradient>
+    <linearGradient id="btGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Base Squircle (Inset by 1px so 1.5px stroke is never clipped by viewBox boundary) -->
+  <rect x="1" y="1" width="70" height="70" rx="15" fill="url(#bgBt)" stroke="#263147" stroke-width="1.5"/>
+
+  <!-- Left Column: Bluetooth Nordic Rune (Centered at x=20, y=36) -->
+  <g stroke="url(#btGlow)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Center Spine -->
+    <line x1="20" y1="18" x2="20" y2="54"/>
+    <!-- Upper Wing & Diagonal Fold -->
+    <polyline points="12,44 28,28 20,20"/>
+    <!-- Lower Wing & Diagonal Fold -->
+    <polyline points="12,28 28,44 20,52"/>
+  </g>
+
+  <!-- Center Radiation: Triple Radio Radiation Arcs Beaming Towards Thermometer (Cyan to Fox Ember Orange) -->
+  <g fill="none" stroke-linecap="round">
+    <!-- Inner Arc (Cyan signal emitted from Bluetooth rune) -->
+    <path d="M 33 29 A 8 8 0 0 1 33 43" stroke="#38bdf8" stroke-width="2.2" opacity="0.95"/>
+    <!-- Middle Arc (Warm Amber transition) -->
+    <path d="M 37 26 A 12 12 0 0 1 37 46" stroke="#ff8a50" stroke-width="2" opacity="0.85"/>
+    <!-- Outer Arc (Fox Ember Orange matching CPU, GPU, and RAM palette) -->
+    <path d="M 41 23 A 16 16 0 0 1 41 49" stroke="#ff6b35" stroke-width="1.8" opacity="0.75"/>
+  </g>
+
+  <!-- Absolutely Centered BTH Brand Identifier Badge (Canvas Center X = 36) -->
+  <rect x="25.5" y="53" width="21" height="9.5" rx="3" fill="#141c2b" stroke="#25354e" stroke-width="1"/>
+  <text x="36" y="60.2"
+        fill="#38bdf8"
+        font-family="system-ui, -apple-system, sans-serif"
+        font-size="6.5"
+        font-weight="800"
+        letter-spacing="1"
+        text-anchor="middle">BTH</text>
+
+  <!-- Right Column: Sleek Laboratory Thermometer Gauge (Centered at x=56, y=35) -->
+  <!-- Glass Housing: Seamless blown-glass bezier flare connecting tube into bulb -->
+  <path d="M 53 18
+           A 3 3 0 0 1 59 18
+           L 59 39
+           C 59 42.5, 62.2 42.5, 62.2 46
+           A 6.2 6.2 0 0 1 49.8 46
+           C 49.8 42.5, 53 42.5, 53 39
+           Z"
+        fill="#141a26"
+        stroke="#475569"
+        stroke-width="1.8"
+        stroke-linejoin="round"/>
+
+  <!-- Unified Seamless Red Mercury (Bulb and Stalk are ONE single continuous red path) -->
+  <path d="M 54.5 25
+           A 1.5 1.5 0 0 1 57.5 25
+           L 57.5 40
+           C 57.5 42.5, 60.2 42.5, 60.2 46
+           A 4.2 4.2 0 0 1 51.8 46
+           C 51.8 42.5, 54.5 42.5, 54.5 40
+           Z"
+        fill="#ef4444"/>
+
+  <!-- Graduation Scale Tick Marks INSIDE The Thermometer Tube (Overlaid on the red mercury) -->
+  <g stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" opacity="0.85">
+    <line x1="54" y1="28" x2="57.5" y2="28"/>
+    <line x1="53.2" y1="32" x2="57.5" y2="32"/>
+    <line x1="54" y1="36" x2="57.5" y2="36"/>
+    <line x1="53.2" y1="40" x2="57.5" y2="40"/>
+  </g>
+
+  <!-- Specular Reflection Highlight On Bulb -->
+  <circle cx="54.5" cy="44.5" r="1.1" fill="#ffb4a2"/>
+</svg>

@@ -18,7 +18,7 @@ namespace InFox.Services
 
     public static class StreamDeckService
     {
-        public const string BundledVersion = "1.0.0";
+        public const string BundledVersion = "1.1.0";
         public const string PluginUuid = "com.foxden.infaux.sdPlugin";
 
         private static string AppDataPath => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
@@ -203,17 +203,23 @@ namespace InFox.Services
 
         private static void ExtractArchiveToPluginsDir(ZipArchive archive)
         {
+            // Determine if the archive already contains the root 'com.foxden.infaux.sdPlugin' directory
+            bool hasRootFolder = archive.Entries.Any(e => e.FullName.StartsWith(PluginUuid + "/", StringComparison.OrdinalIgnoreCase) ||
+                                                          e.FullName.StartsWith(PluginUuid + "\\", StringComparison.OrdinalIgnoreCase));
+
+            string baseTargetDir = hasRootFolder ? PluginsDir : InFauxPluginDir;
+
             foreach (var entry in archive.Entries)
             {
                 if (string.IsNullOrEmpty(entry.Name) && (entry.FullName.EndsWith("/") || entry.FullName.EndsWith("\\")))
                 {
                     // Directory entry
-                    string dirPath = Path.Combine(PluginsDir, entry.FullName.Replace('/', Path.DirectorySeparatorChar));
+                    string dirPath = Path.Combine(baseTargetDir, entry.FullName.Replace('/', Path.DirectorySeparatorChar));
                     Directory.CreateDirectory(dirPath);
                     continue;
                 }
 
-                string filePath = Path.Combine(PluginsDir, entry.FullName.Replace('/', Path.DirectorySeparatorChar));
+                string filePath = Path.Combine(baseTargetDir, entry.FullName.Replace('/', Path.DirectorySeparatorChar));
                 string? parentDir = Path.GetDirectoryName(filePath);
                 if (!string.IsNullOrEmpty(parentDir))
                 {

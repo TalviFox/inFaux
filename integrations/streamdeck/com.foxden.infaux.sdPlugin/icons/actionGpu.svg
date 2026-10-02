@@ -1,7 +1,39 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
-  <rect width="72" height="72" rx="14" fill="#161922"/>
-  <rect x="14" y="20" width="44" height="32" rx="4" fill="#202636" stroke="#76ff03" stroke-width="2.5"/>
-  <circle cx="28" cy="36" r="8" fill="none" stroke="#76ff03" stroke-width="2"/>
-  <circle cx="44" cy="36" r="8" fill="none" stroke="#76ff03" stroke-width="2"/>
-  <text x="36" y="62" fill="#76ff03" font-family="Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">GPU</text>
+  <defs>
+    <linearGradient id="bgGpu" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#161b26"/>
+      <stop offset="100%" stop-color="#0f131c"/>
+    </linearGradient>
+  </defs>
+  <!-- Base Squircle (Inset by 1px so 1.5px stroke is never clipped by viewBox boundary) -->
+  <rect x="1" y="1" width="70" height="70" rx="15" fill="url(#bgGpu)" stroke="#263147" stroke-width="1.5"/>
+  
+  <!-- Left I/O Slot Bracket (With authentic L-shaped chassis mounting tab at top) -->
+  <path d="M9 16 L14 16 L14 51" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Video Output Port Connectors (DisplayPort / HDMI) -->
+  <rect x="11" y="24" width="3" height="6" rx="1" fill="#64748b"/>
+  <rect x="11" y="34" width="3" height="6" rx="1" fill="#64748b"/>
+  
+  <!-- GPU Shroud Body -->
+  <rect x="15" y="22" width="45" height="28" rx="4" fill="#1a2233" stroke="#e2e8f0" stroke-width="2"/>
+  
+  <!-- Accent Shroud Stripe -->
+  <path d="M17 26 L58 26" fill="none" stroke="#334155" stroke-width="1.5"/>
+  
+  <!-- Left Fan -->
+  <circle cx="28" cy="36" r="8.5" fill="#101624" stroke="#ff6b35" stroke-width="1.8"/>
+  <circle cx="28" cy="36" r="2.8" fill="#ff6b35"/>
+  <path d="M28 29.5 L28 32 M28 40 L28 42.5 M21.5 36 L24 36 M32 36 L34.5 36" fill="none" stroke="#ff6b35" stroke-width="1.5" stroke-linecap="round"/>
+  
+  <!-- Right Fan -->
+  <circle cx="47" cy="36" r="8.5" fill="#101624" stroke="#ff6b35" stroke-width="1.8"/>
+  <circle cx="47" cy="36" r="2.8" fill="#ff6b35"/>
+  <path d="M47 29.5 L47 32 M47 40 L47 42.5 M40.5 36 L43 36 M51 36 L53.5 36" fill="none" stroke="#ff6b35" stroke-width="1.5" stroke-linecap="round"/>
+  
+  <!-- PCIe Connector Tab (White PCB Substrate Lip) -->
+  <path d="M20 50 L20 54.5 L47 54.5 L47 50 Z" fill="#e2e8f0"/>
+  
+  <!-- PCIe Gold Contact Fingers (Contained 100% inside the white connector space) -->
+  <path d="M23 50.8 L23 53.8 M25.5 50.8 L25.5 53.8 M28 50.8 L28 53.8 M30.5 50.8 L30.5 53.8 M36.5 50.8 L36.5 53.8 M39 50.8 L39 53.8 M41.5 50.8 L41.5 53.8 M44 50.8 L44 53.8" fill="none" stroke="#b45309" stroke-width="1.3" stroke-linecap="round"/>
 </svg>

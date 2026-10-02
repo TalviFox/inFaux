@@ -29,8 +29,13 @@ namespace InFox.Models.Config
         [JsonPropertyName("silverFoxOledMode")]
         public bool SilverFoxOledMode { get; set; } = false;
 
+        private string _preferredNetworkAdapter = "Auto";
         [JsonPropertyName("preferredNetworkAdapter")]
-        public string PreferredNetworkAdapter { get; set; } = "Auto"; // "Auto" or specific adapter name/description
+        public string PreferredNetworkAdapter
+        {
+            get => string.IsNullOrWhiteSpace(_preferredNetworkAdapter) ? "Auto" : _preferredNetworkAdapter;
+            set => _preferredNetworkAdapter = string.IsNullOrWhiteSpace(value) ? "Auto" : value;
+        }
 
         [JsonPropertyName("chassisProfile")]
         public string ChassisProfile { get; set; } = "Auto"; // "Auto", "Laptop", "Desktop"
@@ -41,8 +46,38 @@ namespace InFox.Models.Config
         [JsonPropertyName("cpuThermalOffset")]
         public double CpuThermalOffset { get; set; } = 0.0; // Calibration offset in degrees C (-15 to +15)
 
+        [JsonPropertyName("roomAmbientOffsetC")]
+        public double RoomAmbientOffsetC { get; set; } = 0.0; // Manual room ambient calibration offset (-10 to +10 °C)
+
+        [JsonPropertyName("enableBleAmbient")]
+        public bool EnableBleAmbient { get; set; } = false;
+
+        [JsonPropertyName("bleAmbientSensorMac")]
+        public string BleAmbientSensorMac { get; set; } = "Auto"; // "Auto" (nearest/strongest) or specific MAC
+
+        [JsonPropertyName("enableBleChassis")]
+        public bool EnableBleChassis { get; set; } = false;
+
+        [JsonPropertyName("bleChassisSensorMac")]
+        public string BleChassisSensorMac { get; set; } = ""; // Specific MAC of thermometer placed inside PC case
+
+        [JsonPropertyName("enableBleRadiator")]
+        public bool EnableBleRadiator { get; set; } = false;
+
+        [JsonPropertyName("bleRadiatorSensorMac")]
+        public string BleRadiatorSensorMac { get; set; } = ""; // Specific MAC of thermometer placed post-radiator / exhaust
+
         [JsonPropertyName("cpuTdpOverrideWatts")]
         public int CpuTdpOverrideWatts { get; set; } = 0; // 0 = Auto detected / standard
+
+        [JsonPropertyName("timProfile")]
+        public string TimProfile { get; set; } = "Auto"; // "Auto", "Kryonaut", "Noctua_NTH2", "Arctic_MX6", "PTM7950", "LiquidMetal"
+
+        [JsonPropertyName("timAppliedDateUtc")]
+        public DateTime? TimAppliedDateUtc { get; set; }
+
+        [JsonPropertyName("enableRepasteToasts")]
+        public bool EnableRepasteToasts { get; set; } = false;
 
         [JsonPropertyName("trayDisplayBadge")]
         public bool TrayDisplayBadge { get; set; } = true;

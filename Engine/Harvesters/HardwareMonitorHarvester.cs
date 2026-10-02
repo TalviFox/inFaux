@@ -356,6 +356,12 @@ namespace InFox.Engine.Harvesters
                                 gpu.FanRpm = vendorTel.FanPercentOrRpm;
                                 gpu.CoreClockMhz = vendorTel.CoreClockMhz;
                                 gpu.MemoryClockMhz = vendorTel.MemoryClockMhz;
+                                gpu.IsBoost = vendorTel.IsBoost;
+                            }
+
+                            if (!gpu.IsBoost && gpu.CoreClockMhz.HasValue && gpu.CoreClockMhz.Value >= 1350)
+                            {
+                                gpu.IsBoost = true;
                             }
 
                             gpuList.Add(gpu);
@@ -651,6 +657,7 @@ namespace InFox.Engine.Harvesters
             string mediaType = "Solid State Drive (SSD)";
             string trimStatus = "Supported (Active)";
             double? driveTemp = null;
+            bool isRemovable = false;
 
             // 1. Query Device Descriptor for Model Name, Firmware Revision, Serial, and BusType
             var query = new STORAGE_PROPERTY_QUERY
@@ -669,6 +676,7 @@ namespace InFox.Engine.Harvesters
                 if (DeviceIoControl(hDevice, IOCTL_STORAGE_QUERY_PROPERTY, pQuery, (uint)querySize, pOut, 2048, out uint bytesRet, IntPtr.Zero))
                 {
                     var desc = Marshal.PtrToStructure<STORAGE_DEVICE_DESCRIPTOR>(pOut);
+                    isRemovable = desc.RemovableMedia;
                     if (desc.ProductIdOffset > 0 && desc.ProductIdOffset < bytesRet)
                     {
                         IntPtr pStr = IntPtr.Add(pOut, (int)desc.ProductIdOffset);
@@ -705,6 +713,12 @@ namespace InFox.Engine.Harvesters
             {
                 Marshal.FreeHGlobal(pQuery);
                 Marshal.FreeHGlobal(pOut);
+            }
+
+            // Exclude external / removable USB flash drives and SD cards from internal system hardware monitor
+            if (isRemovable || busType.Equals("USB", StringComparison.OrdinalIgnoreCase) || busType.Equals("SD", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
             }
 
             // 2. Query Seek Penalty (SSD vs HDD)
@@ -784,7 +798,7 @@ namespace InFox.Engine.Harvesters
                 Name = driveModel,
                 TempC = driveTemp,
                 IsTempEstimated = !driveTemp.HasValue,
-                TempSource = driveTemp.HasValue ? "Hardware Diode" : "Thermodynamic Observer",
+                TempSource = driveTemp.HasValue ? "Hardware Sensor" : "Estimated",
                 FirmwareRevision = firmwareRev,
                 SerialNumber = serialNum,
                 BusType = busType,

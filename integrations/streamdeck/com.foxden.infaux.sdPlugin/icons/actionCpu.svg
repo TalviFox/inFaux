@@ -1,11 +1,44 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
-  <rect width="72" height="72" rx="14" fill="#161922"/>
-  <rect x="18" y="18" width="36" height="36" rx="6" fill="#202636" stroke="#00d2ff" stroke-width="2.5"/>
-  <line x1="26" y1="10" x2="26" y2="18" stroke="#00d2ff" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="36" y1="10" x2="36" y2="18" stroke="#00d2ff" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="46" y1="10" x2="46" y2="18" stroke="#00d2ff" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="26" y1="54" x2="26" y2="62" stroke="#00d2ff" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="36" y1="54" x2="36" y2="62" stroke="#00d2ff" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="46" y1="54" x2="46" y2="62" stroke="#00d2ff" stroke-width="2.5" stroke-linecap="round"/>
-  <text x="36" y="41" fill="#ffffff" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle">CPU</text>
+  <defs>
+    <linearGradient id="bgCpu" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#161b26"/>
+      <stop offset="100%" stop-color="#0f131c"/>
+    </linearGradient>
+  </defs>
+  <!-- Base Squircle (Inset by 1px so 1.5px stroke is never clipped by viewBox boundary) -->
+  <rect x="1" y="1" width="70" height="70" rx="15" fill="url(#bgCpu)" stroke="#263147" stroke-width="1.5"/>
+  
+  <!-- Socket Pin Traces -->
+  <g stroke="#475569" stroke-width="2" stroke-linecap="round">
+    <line x1="28" y1="13" x2="28" y2="18"/>
+    <line x1="36" y1="13" x2="36" y2="18"/>
+    <line x1="44" y1="13" x2="44" y2="18"/>
+    
+    <line x1="28" y1="54" x2="28" y2="59"/>
+    <line x1="36" y1="54" x2="36" y2="59"/>
+    <line x1="44" y1="54" x2="44" y2="59"/>
+    
+    <line x1="13" y1="28" x2="18" y2="28"/>
+    <line x1="13" y1="36" x2="18" y2="36"/>
+    <line x1="13" y1="44" x2="18" y2="44"/>
+    
+    <line x1="54" y1="28" x2="59" y2="28"/>
+    <line x1="54" y1="36" x2="59" y2="36"/>
+    <line x1="54" y1="44" x2="59" y2="44"/>
+  </g>
+  
+  <!-- Substrate PCB -->
+  <rect x="18" y="18" width="36" height="36" rx="5" fill="#1a2233" stroke="#94a3b8" stroke-width="2"/>
+  
+  <!-- Corner Gold Alignment Pin -->
+  <polygon points="20,20 25,20 20,25" fill="#ff6b35"/>
+  
+  <!-- Heat Spreader (IHS) -->
+  <rect x="24" y="24" width="24" height="24" rx="3" fill="#243048" stroke="#e2e8f0" stroke-width="1.5"/>
+  
+  <!-- Silicon Core Die -->
+  <rect x="30" y="30" width="12" height="12" rx="1.5" fill="#ff6b35"/>
+  
+  <!-- Core Micro-Die Accent -->
+  <rect x="33" y="33" width="6" height="6" rx="0.8" fill="#ffd0b5"/>
 </svg>

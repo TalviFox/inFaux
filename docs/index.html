@@ -52,7 +52,7 @@
     "license": "https://polyformproject.org/licenses/noncommercial/1.0.0",
     "url": "https://infaux.foxdensoftware.dev/",
     "downloadUrl": "https://github.com/TalviFox/inFaux/releases",
-    "softwareVersion": "1.0.0",
+    "softwareVersion": "1.1.0",
     "author": {
       "@type": "Organization",
       "name": "FoxDen Software",
@@ -139,14 +139,14 @@
         </h1>
 
         <p class="hero-subtitle">
-          The driverless, zero-install, zero-privilege hardware monitor and open telemetry server for Windows 10 &amp; 11. Real-time Newtonian thermodynamic modeling, per-core silicon flux, and embedded WebSockets without a single UAC prompt.
+          The driverless, zero-install, zero-privilege hardware monitor and open telemetry server for Windows 10 &amp; 11. Physics-based CPU temperature modeling, wireless Bluetooth environmental sensors, multi-GPU tracking, and local WebSockets without a single UAC prompt.
         </p>
 
         <div class="hero-actions">
           <div class="hero-btn-row">
             <a href="https://github.com/TalviFox/inFaux/releases/latest" class="btn-primary" id="hero-download-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              <span>Download inFaux <span class="release-version-tag">v1.0.0</span></span>
+              <span>Download inFaux <span class="release-version-tag">v1.1.0</span></span>
             </a>
             <a href="#showcase" class="btn-secondary" id="hero-explore-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
@@ -167,10 +167,10 @@
 
         <div class="hero-badges-row">
           <div class="badge-item"><span class="badge-dot"></span> 100% User-Mode (Zero UAC)</div>
-          <div class="badge-item"><span class="badge-dot"></span> Thermodynamic Observer</div>
+          <div class="badge-item"><span class="badge-dot"></span> Physics Thermal Modeling</div>
           <div class="badge-item"><span class="badge-dot green"></span> Embedded Kestrel Server (:8765)</div>
           <div class="badge-item"><span class="badge-dot"></span> Stream Deck Companion Suite</div>
-          <div class="badge-item"><span class="badge-dot green"></span> Virtual Machine &amp; Cloud Ready</div>
+          <div class="badge-item"><span class="badge-dot green"></span> Passive Bluetooth Listener</div>
         </div>
       </div>
     </section>
@@ -233,7 +233,7 @@
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
             </div>
             <h3 class="feature-title">Stream Deck Plugin</h3>
-            <p class="feature-desc">Comes with a companion plugin with live, smooth dials for CPU, GPU, RAM, and Network. Tap any dial to cycle multi-GPU stats, with 1-click install right from Settings.</p>
+            <p class="feature-desc">Comes with a companion plugin with live dials for CPU, GPU, RAM, Network, and Bluetooth. Tap to cycle GPUs or switch modes, with 1-click install from Settings.</p>
             <div class="feature-pills">
               <span class="feature-pill">Live Gauges</span>
               <span class="feature-pill">Tap-to-Cycle</span>
@@ -244,14 +244,14 @@
           <!-- Feature 5 -->
           <div class="feature-card">
             <div class="feature-icon-wrap">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 7 10 10-5 5V2l5 5L7 17"></path></svg>
             </div>
-            <h3 class="feature-title">Works Inside VMs</h3>
-            <p class="feature-desc">Legacy monitors crash or show blank screens inside virtual machines because hypervisors block kernel drivers. Since inFaux runs 100% in user-mode, it just works.</p>
+            <h3 class="feature-title">Wireless Bluetooth Sensors</h3>
+            <p class="feature-desc">Connect wireless BLE environmental thermometers (Shelly BLU H&amp;T, BTHome v2, ThermoBeacon, or ESPHome) natively with zero dongles. Monitor real room ambient, case air, and radiator exhaust live (yes, Windows can do this).</p>
             <div class="feature-pills">
-              <span class="feature-pill">VM Friendly</span>
-              <span class="feature-pill">Hyper-V / Proxmox</span>
-              <span class="feature-pill">No Crashes</span>
+              <span class="feature-pill">BTHome v2</span>
+              <span class="feature-pill">Zero Dongles</span>
+              <span class="feature-pill">Room &amp; Case Temp</span>
             </div>
           </div>
 
@@ -278,13 +278,14 @@
         <div class="section-header">
           <span class="section-label">Interface &amp; Showcase</span>
           <h2 class="section-title">Visual Elegance Powered by WPF</h2>
-          <p class="section-desc">Hardware-accelerated dark mode dashboard with 60-second rolling sparklines and multi-GPU monitoring.</p>
+          <p class="section-desc">Hardware-accelerated dark mode dashboard with 60-second rolling sparklines, multi-GPU monitoring, and wireless Bluetooth telemetry.</p>
         </div>
 
         <div class="showcase-tabs">
           <button class="showcase-tab active" data-showcase="dashboard" id="tab-dashboard">Dashboard Overview</button>
-          <button class="showcase-tab" data-showcase="flux" id="tab-flux">Per-Core Silicon Flux (Per Core Temp Calculation)</button>
+          <button class="showcase-tab" data-showcase="flux" id="tab-flux">Per-Core Temps</button>
           <button class="showcase-tab" data-showcase="streamdeck" id="tab-streamdeck">Stream Deck Companion</button>
+          <button class="showcase-tab" data-showcase="bluetooth" id="tab-bluetooth">Wireless Bluetooth Sensors</button>
         </div>
 
         <div class="showcase-display">
@@ -478,7 +479,17 @@
               <span class="faq-chevron">▼</span>
             </button>
             <div class="faq-answer">
-              inFaux utilizes the <strong>Thermodynamic Observer</strong> pattern. It derives real-time ambient baseline temperatures from hardware diodes accessible via read-only user-mode IOCTLs (such as GPU and NVMe SMART controllers). It then reads live per-core clock frequencies and loads via native Windows Performance Data Helper (PDH) counters, calculating dynamic CMOS wattage and solving Newton's law of cooling using asymmetrical thermal low-pass filters.
+              Microsoft Windows doesn't let regular apps read raw CPU thermal diodes without installing risky Ring-0 kernel drivers (which trigger Windows Defender security warnings). Instead, inFaux uses real physics: it reads live processor speeds and core loads through native Windows performance counters, anchors to real temperature sensors on your GPU and SSD, and simulates how heat absorbs into the copper heatspreader and cools into the air. You get smooth, realistic CPU and per-core temperatures without compromising your PC's security.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>How do wireless Bluetooth sensors work with inFaux?</span>
+              <span class="faq-chevron">▼</span>
+            </button>
+            <div class="faq-answer">
+              inFaux v1.1.0 includes a built-in passive Bluetooth Low Energy (BLE) listener supporting the open <strong>BTHome v2</strong> standard. Supported thermometers (such as <strong>Shelly BLU H&amp;T</strong> out of the box, ThermoBeacon, or custom ESPHome/ESP32 beacons) broadcast passive temperature and humidity packets. inFaux picks them up directly via Windows Bluetooth with zero pairing dongles, upgrading estimated room and case air to 100% measured physical readings (yes, Windows can do this).
             </div>
           </div>
 

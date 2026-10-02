@@ -9,8 +9,8 @@
       padding: 14px 16px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       font-size: 12px;
-      color: #cbd5e1;
-      background-color: #1e212b;
+      color: #d8d8d8;
+      background-color: #2d2d2d;
     }
     .sdpi-item {
       display: flex;
@@ -20,40 +20,55 @@
     .sdpi-heading {
       font-size: 11px;
       font-weight: 700;
-      color: #38bdf8;
+      color: #72b1ff;
       text-transform: uppercase;
       letter-spacing: 0.6px;
       margin-bottom: 6px;
     }
-    .sdpi-select {
-      background-color: #12151f;
-      color: #f8fafc;
-      border: 1px solid #334155;
-      border-radius: 6px;
-      padding: 8px 10px;
+    .sdpi-select, .sdpi-input {
+      background-color: #3b3b3b;
+      color: #f0f0f0;
+      border: 1px solid #4e4e4e;
+      border-radius: 4px;
+      padding: 7px 10px;
       font-size: 12px;
       outline: none;
+      box-sizing: border-box;
+      width: 100%;
       cursor: pointer;
       transition: border-color 0.15s ease;
     }
-    .sdpi-select:focus {
-      border-color: #00e5ff;
+    .sdpi-input {
+      cursor: text;
+    }
+    .sdpi-select:focus, .sdpi-input:focus {
+      border-color: #00a4ff;
     }
     .sdpi-note {
       font-size: 11px;
-      color: #94a3b8;
+      color: #9e9e9e;
       margin-top: 6px;
       line-height: 1.45;
+    }
+    .sdpi-callout {
+      background: #232a35;
+      border-left: 3px solid #00a4ff;
+      border-radius: 4px;
+      padding: 8px 10px;
+      color: #c4d1e2;
+      font-size: 11px;
+      line-height: 1.45;
+      margin-top: 8px;
     }
     .footer-bar {
       margin-top: 18px;
       padding-top: 10px;
-      border-top: 1px solid #2d3748;
+      border-top: 1px solid #3c3c3c;
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-size: 11px;
-      color: #64748b;
+      color: #787878;
     }
     .status-badge {
       display: inline-flex;
@@ -62,8 +77,8 @@
       border-radius: 9999px;
       font-size: 10.5px;
       font-weight: 600;
-      background: #12151f;
-      border: 1px solid #334155;
+      background: #3b3b3b;
+      border: 1px solid #4e4e4e;
       color: #4ade80;
     }
     .status-dot {
@@ -76,6 +91,13 @@
   </style>
 </head>
 <body>
+
+  <!-- Universal Custom Header Title Section -->
+  <div class="sdpi-item">
+    <div class="sdpi-heading">Custom Header Title</div>
+    <input id="customTitleInput" type="text" class="sdpi-input" placeholder="Leave blank for automatic name" maxlength="12" />
+    <div class="sdpi-note">Renames the top title line on this key (e.g. ROOM, OFFICE, 3080TI, GAMING, FIBER).</div>
+  </div>
 
   <!-- GPU Picker Section -->
   <div id="gpuContainer" class="sdpi-item" style="display:none;">
@@ -93,6 +115,55 @@
       <option value="auto">Auto (Highest Traffic)</option>
     </select>
     <div class="sdpi-note">Select which network interface this key monitors. You can also tap the physical key on your Stream Deck to cycle adapters on the fly!</div>
+  </div>
+
+  <!-- Bluetooth Sensor Section -->
+  <div id="btContainer" class="sdpi-item" style="display:none;">
+    <div class="sdpi-heading">Bluetooth Target Sensor</div>
+    <select id="btTargetSelect" class="sdpi-select">
+      <option value="ambient">Room Ambient Thermometer</option>
+      <option value="chassis">In-Case Air Thermometer</option>
+      <option value="radiator">Radiator Exhaust Thermometer</option>
+    </select>
+    <div class="sdpi-note">Select which environmental beacon this key displays.</div>
+
+    <div style="margin-top: 12px;"></div>
+    <div class="sdpi-heading">Temperature Unit</div>
+    <select id="btUnitSelect" class="sdpi-select">
+      <option value="auto">System Default (Matches inFaux)</option>
+      <option value="celsius">Celsius (°C)</option>
+      <option value="fahrenheit">Fahrenheit (°F)</option>
+    </select>
+
+    <div class="sdpi-callout">
+      ✨ <b>Quick Tap:</b> Tap the physical Stream Deck key at any time to toggle between Temperature and Humidity!
+    </div>
+  </div>
+
+  <!-- Coat Theme Section -->
+  <div class="sdpi-item">
+    <div class="sdpi-heading">Fox Coat Theme</div>
+    <select id="themeSelect" class="sdpi-select">
+      <option value="auto">Auto (Sync with inFaux App)</option>
+      <option value="SilverFoxOled">Silver Fox (OLED Midnight)</option>
+      <option value="SilverFox">Silver Fox (Stealth Platinum)</option>
+      <option value="RedFox">Red Fox (Classic Ember)</option>
+      <option value="ArcticFox">Arctic Fox (Glacial Cyan - Dark)</option>
+      <option value="ArcticFoxSnow">Arctic Fox (Winter Snow - Light)</option>
+      <option value="FennecFox">Fennec Fox (Desert Sand &amp; Amber)</option>
+    </select>
+    <div class="sdpi-note">Defaults to Auto to automatically sync with inFaux. You can also choose an individual theme for this key.</div>
+  </div>
+
+  <!-- Value Coloring: Monochrome, Accent, or Reactive -->
+  <div class="sdpi-item">
+    <div class="sdpi-heading">Telemetry Coloring</div>
+    <select id="colorModeSelect" class="sdpi-select">
+      <option value="monochrome">Monochrome (Clean White Telemetry)</option>
+      <option value="accent">Theme Accent (Unified Palette Text)</option>
+      <option value="reactive">Reactive (Dynamic Alert Colors)</option>
+    </select>
+    <div class="sdpi-note">Choose your text palette. <b>Monochrome</b> displays clean white numbers across all keys; <b>Theme Accent</b> unifies everything in your active coat color; <b>Reactive</b> alerts dynamically on load &amp; thermals.</div>
   </div>
 
   <!-- Footer Status -->
@@ -143,6 +214,8 @@
         document.getElementById('gpuContainer').style.display = 'flex';
       } else if (action === 'com.foxden.infaux.net') {
         document.getElementById('netContainer').style.display = 'flex';
+      } else if (action === 'com.foxden.infaux.btsensor') {
+        document.getElementById('btContainer').style.display = 'flex';
       }
 
       try {
@@ -190,6 +263,10 @@
     }
 
     function applySettingsToUI() {
+      const customTitleInput = document.getElementById('customTitleInput');
+      if (customTitleInput) {
+        customTitleInput.value = (settings.customTitle !== undefined) ? settings.customTitle : (settings.btTitle || '');
+      }
       if (settings.gpuId) {
         const select = document.getElementById('gpuSelect');
         if (select) select.value = settings.gpuId;
@@ -198,15 +275,69 @@
         const select = document.getElementById('netSelect');
         if (select) select.value = settings.adapterId;
       }
+      if (settings.btTarget) {
+        const select = document.getElementById('btTargetSelect');
+        if (select) select.value = settings.btTarget;
+      }
+      if (settings.btUnit) {
+        const select = document.getElementById('btUnitSelect');
+        if (select) select.value = settings.btUnit;
+      }
+      const themeSelect = document.getElementById('themeSelect');
+      if (themeSelect) {
+        themeSelect.value = settings.theme || 'auto';
+      }
+      const colorModeSelect = document.getElementById('colorModeSelect');
+      if (colorModeSelect) {
+        colorModeSelect.value = settings.colorMode || 'reactive';
+      }
     }
 
-    document.getElementById('gpuSelect').addEventListener('change', function(e) {
-      settings.gpuId = e.target.value;
+    const titleInput = document.getElementById('customTitleInput');
+    if (titleInput) {
+      titleInput.addEventListener('input', function(e) {
+        settings.customTitle = e.target.value;
+        settings.btTitle = e.target.value;
+        saveSettings();
+      });
+    }
+
+    const gpuSel = document.getElementById('gpuSelect');
+    if (gpuSel) {
+      gpuSel.addEventListener('change', function(e) {
+        settings.gpuId = e.target.value;
+        saveSettings();
+      });
+    }
+
+    const netSel = document.getElementById('netSelect');
+    if (netSel) {
+      netSel.addEventListener('change', function(e) {
+        settings.adapterId = e.target.value;
+        saveSettings();
+      });
+    }
+
+    const btSel = document.getElementById('btTargetSelect');
+    if (btSel) {
+      btSel.addEventListener('change', function(e) {
+        settings.btTarget = e.target.value;
+        saveSettings();
+      });
+    }
+
+    document.getElementById('btUnitSelect').addEventListener('change', function(e) {
+      settings.btUnit = e.target.value;
       saveSettings();
     });
 
-    document.getElementById('netSelect').addEventListener('change', function(e) {
-      settings.adapterId = e.target.value;
+    document.getElementById('themeSelect').addEventListener('change', function(e) {
+      settings.theme = e.target.value;
+      saveSettings();
+    });
+
+    document.getElementById('colorModeSelect').addEventListener('change', function(e) {
+      settings.colorMode = e.target.value;
       saveSettings();
     });
 

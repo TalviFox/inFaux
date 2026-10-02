@@ -1,6 +1,47 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
-  <rect width="72" height="72" rx="14" fill="#161922"/>
-  <path d="M26 40 L26 22 L20 28 M26 22 L32 28" fill="none" stroke="#00e5ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M46 32 L46 50 L40 44 M46 50 L52 44" fill="none" stroke="#00e676" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="36" y="62" fill="#ffffff" font-family="Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">NET</text>
+  <defs>
+    <linearGradient id="bgNet" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#161b26"/>
+      <stop offset="100%" stop-color="#0f131c"/>
+    </linearGradient>
+    <linearGradient id="waveGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="30%" stop-color="#0369a1"/>
+      <stop offset="70%" stop-color="#c2410c"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
+  <!-- Base Squircle (Inset by 1px so 1.5px stroke is never clipped by viewBox boundary) -->
+  <rect x="1" y="1" width="70" height="70" rx="15" fill="url(#bgNet)" stroke="#263147" stroke-width="1.5"/>
+  
+  <!-- Network Activity Waveform Carrier (Dynamic Throughput Oscilloscope Track) -->
+  <path d="M 10 36 L 19 36 L 23 27 L 27 45 L 31 36 L 41 36 L 45 27 L 49 45 L 53 36 L 62 36"
+        fill="none"
+        stroke="url(#waveGlow)"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+        
+  <!-- Subtle Carrier Wave Endpoint & Center Nodes -->
+  <circle cx="10" cy="36" r="1.5" fill="#334155"/>
+  <circle cx="36" cy="36" r="1.5" fill="#475569"/>
+  <circle cx="62" cy="36" r="1.5" fill="#334155"/>
+  
+  <!-- Download Stream Arrow (Left - Glacial Cyan) -->
+  <!-- Motion Pulse Trail -->
+  <line x1="27" y1="13" x2="27" y2="15" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+  <!-- Main Downward Data Stream -->
+  <g stroke="#38bdf8" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <line x1="27" y1="19" x2="27" y2="49"/>
+    <polyline points="19,41 27,49 35,41"/>
+  </g>
+  
+  <!-- Upload Stream Arrow (Right - Fox Ember) -->
+  <!-- Motion Pulse Trail -->
+  <line x1="45" y1="57" x2="45" y2="59" stroke="#ff6b35" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+  <!-- Main Upward Data Stream -->
+  <g stroke="#ff6b35" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <line x1="45" y1="53" x2="45" y2="23"/>
+    <polyline points="37,31 45,23 53,31"/>
+  </g>
 </svg>

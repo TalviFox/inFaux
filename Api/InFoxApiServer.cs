@@ -168,13 +168,14 @@ namespace InFox.Api
                 });
             });
 
-            // Real-time WebSocket stream
+            // Real-time WebSocket stream (Supports optional ?channel=cpu|gpu|memory|storage|network filter)
             app.Map("/api/v1/stream", async (HttpContext context) =>
             {
                 if (context.WebSockets.IsWebSocketRequest)
                 {
+                    string? channel = context.Request.Query["channel"].ToString();
                     using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                    await HandleWebSocketStreamAsync(webSocket, context.RequestAborted);
+                    await HandleWebSocketStreamAsync(webSocket, channel, context.RequestAborted);
                 }
                 else
                 {
@@ -183,16 +184,30 @@ namespace InFox.Api
             });
         }
 
-        private static async Task HandleWebSocketStreamAsync(WebSocket ws, CancellationToken ct)
+        private static async Task HandleWebSocketStreamAsync(WebSocket ws, string? channel, CancellationToken ct)
         {
             var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+            string normalizedChannel = (channel ?? "").Trim().ToLowerInvariant();
 
             while (ws.State == WebSocketState.Open && !ct.IsCancellationRequested)
             {
                 try
                 {
                     var summary = TelemetryEngine.Instance.CurrentSummary;
-                    string json = JsonSerializer.Serialize(summary, options);
+                    object payload = normalizedChannel switch
+                    {
+                        "cpu" => new { timestamp = summary.Timestamp, cpu = summary.Cpu },
+                        "gpu" or "gpus" => new { timestamp = summary.Timestamp, gpus = summary.Gpus, primaryGpu = summary.PrimaryGpu },
+                        "ram" or "memory" => new { timestamp = summary.Timestamp, memory = summary.Memory },
+                        "storage" or "disk" => new { timestamp = summary.Timestamp, storage = summary.Storage },
+                        "network" or "net" => new { timestamp = summary.Timestamp, network = summary.Network },
+                        "battery" or "power" => new { timestamp = summary.Timestamp, battery = summary.Battery },
+                        "chassis" => new { timestamp = summary.Timestamp, chassis = summary.Chassis },
+                        "bluetooth" or "ble" => new { timestamp = summary.Timestamp, bluetooth = summary.Bluetooth, chassis = summary.Chassis },
+                        _ => summary
+                    };
+
+                    string json = JsonSerializer.Serialize(payload, options);
                     byte[] bytes = Encoding.UTF8.GetBytes(json);
 
                     await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, ct);

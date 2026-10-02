@@ -21,6 +21,7 @@ namespace InFox.Tray
         private NotifyIcon? _notifyIcon;
         private IntPtr _lastHIcon = IntPtr.Zero;
         private Icon? _defaultIcon;
+        private double? _lastReportedTemp;
         private readonly object _renderLock = new();
 
         public event Action? OpenDashboardRequested;
@@ -112,6 +113,14 @@ namespace InFox.Tray
 
             // Wire up telemetry ticks
             TelemetryEngine.Instance.TelemetryUpdated += OnTelemetryUpdated;
+
+            // Wire up dynamic theme switches for instantaneous tray icon recoloring
+            ThemeService.ThemeChanged += OnThemeChanged;
+        }
+
+        private void OnThemeChanged(FoxThemeDefinition theme)
+        {
+            UpdateTrayBadge(_lastReportedTemp);
         }
 
         private void OnTelemetryUpdated(SystemSummary summary, System.Collections.Generic.IReadOnlyList<SensorMetric> metrics)
@@ -138,6 +147,7 @@ namespace InFox.Tray
                 displayTemp = summary.Cpu.TempC;
             }
 
+            _lastReportedTemp = displayTemp;
             UpdateTrayBadge(displayTemp);
 
             // Update tooltip text
@@ -176,17 +186,31 @@ namespace InFox.Tray
                         int tempInt = (int)Math.Round(tempC.Value);
                         string text = tempInt.ToString();
 
-                        // Color coding
+                        var activeTheme = ThemeService.CurrentTheme;
+                        var accent = activeTheme.PrimaryAccent;
+                        var bg = activeTheme.HeaderBackground;
+
+                        // Dynamic Color coding: Theme Accent baseline with safety thermal escalations
                         Color textColor;
                         if (tempInt >= 80)
-                            textColor = Color.FromArgb(255, 82, 82);   // Hot Red
+                        {
+                            textColor = Color.FromArgb(255, 82, 82);   // Hot Red Alert
+                        }
                         else if (tempInt >= 65)
-                            textColor = Color.FromArgb(255, 145, 0);  // Fox Amber
+                        {
+                            textColor = Color.FromArgb(255, 145, 0);  // Fox Amber Warning
+                        }
                         else
-                            textColor = Color.FromArgb(64, 196, 255);  // Fox Cyan
+                        {
+                            // Active Fox Coat Accent (Silver Platinum / Ember Red / Glacial Cyan / Fennec Amber)
+                            textColor = Color.FromArgb(accent.A, accent.R, accent.G, accent.B);
+                        }
+
+                        // Background pill tinted to match theme (True Black in OLED, Slate/Deep Navy in Dark)
+                        Color bgColor = Color.FromArgb(230, bg.R, bg.G, bg.B);
 
                         // Draw background pill badge
-                        using (var bgBrush = new SolidBrush(Color.FromArgb(220, 12, 16, 24)))
+                        using (var bgBrush = new SolidBrush(bgColor))
                         {
                             g.FillEllipse(bgBrush, 0, 0, 31, 31);
                         }
@@ -236,6 +260,9 @@ namespace InFox.Tray
 
         public void Dispose()
         {
+            TelemetryEngine.Instance.TelemetryUpdated -= OnTelemetryUpdated;
+            ThemeService.ThemeChanged -= OnThemeChanged;
+
             if (_notifyIcon != null)
             {
                 _notifyIcon.Visible = false;
