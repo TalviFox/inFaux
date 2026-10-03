@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const showcaseData = {
     dashboard: {
       img: 'assets/screenshots/inFaux-Main-Screen.png',
-      caption: 'inFaux Native Dashboard: Real-time CPU, GPU, Memory, Network, and Storage thermals with zero kernel drivers.'
+      caption: 'inFaux Native Dashboard: Real-time CPU, GPU, Memory, Network, and Storage telemetry with zero kernel drivers.'
     },
     flux: {
       img: 'assets/screenshots/inFaux-Core-Temps.png',

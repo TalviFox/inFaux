@@ -54,7 +54,7 @@ For the last 15 years, the PC hardware monitoring world has been split into two 
 * **Deep Component Drilldowns:** Click any card on the dashboard to access dedicated telemetry views:
   * **CPU View:** Per-core breakdown across all physical cores and threads with live per-core frequencies (MHz), load percentages, and dynamic thermal flux modeling.
   * **GPU View:** Multi-adapter switcher, vendor-native hardware telemetry (NVML / ADL / DXGI), core/memory clocks, VRAM allocation, dynamic power wattage, and fan RPM.
-  * **Storage View:** Volume capacities, real-time read/write throughput rates (MB/s via PDH), physical drive SMART attributes (health status, firmware revision, serial number, bus type NVMe/SATA, media type SSD/HDD, active TRIM status, and hardware diode / thermodynamic fallback temps).
+  * **Storage View:** Volume capacities, real-time read/write throughput rates (MB/s via PDH), physical drive geometry, and volume utilization (bus type NVMe/SATA and media type SSD/HDD).
   * **Network & Power View:** Real-time throughput rates (Mbps), adapter switcher (`Auto` highest traffic or specific adapter), link speed, battery charge/discharge wattage, AC line state, and estimated runtime minutes.
 * **All Sensors View:** Complete live DataGrid table of all raw hardware sensors and channels with min/max tracking, category, type, and current values (rendered via non-destructive in-place sync to eliminate visual flickering).
 * **Settings & Tuning View:** Interactive controls for polling intervals, tray icon sensor targets, network adapter binding, chassis form factor profiles, cooler profiles, live thermal calibration offset slider (-15°C to +15°C), CPU TDP override targets, and 1-click API testing.
