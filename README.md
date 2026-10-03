@@ -133,11 +133,8 @@ Built-in local HTTP + WebSocket server powered by ASP.NET Core Kestrel on `http:
 </p>
 
 * **Real-Time Numeric Temperature Badge:** Renders high-legibility live temperature numbers directly onto your Windows taskbar tray icon using dynamic GDI+ pixel buffers.
-* **Theme-Reactive Styling:** Cool and nominal temperatures (< 65°C) dynamically match your active **Fox Coat Theme** accent color (Red Fox Ember, Arctic Fox Glacial Cyan, Fennec Fox Amber, or Silver Fox Platinum).
-* **Intelligent Thermal Color Escalation:**
-  * 🟢 **Theme Accent (< 65°C):** Cool and nominal desktop workload.
-  * 🟡 **Fox Amber (65°C to 79°C):** Moderate gaming and compiling workload.
-  * 🔴 **Hot Red (≥ 80°C):** High thermal load or heavy stress.
+* **Theme-Reactive Styling:** Dynamically matches your active **Fox Coat Theme** styling (Red Fox Ember, Arctic Fox Glacial Cyan, Fennec Fox Amber, Silver Fox Platinum, Silver Fox OLED True Black, and Arctic Fox Snow White).
+* **Automatic Safety Escalation:** Seamlessly shifts to safety amber (65°C to 79°C) and hot alert red (≥ 80°C) during heavy thermal stress.
 * **Customizable Sensor Target:** Right-click the tray icon to switch between CPU Package Temp, Primary GPU Core Temp, or Highest (CPU or GPU) auto-tracking.
 * **Hover Telemetry Tooltip:** Hover over the tray icon for an instant breakdown of live CPU %, GPU %, and RAM utilization.
 
