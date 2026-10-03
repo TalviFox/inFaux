@@ -54,19 +54,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const showcaseData = {
     dashboard: {
       img: 'assets/screenshots/inFaux-Main-Screen.png',
-      caption: 'inFaux Native Dashboard — Real-time CPU, GPU, Memory, Network, and Storage thermals with zero kernel drivers.'
+      caption: 'inFaux Native Dashboard: Real-time CPU, GPU, Memory, Network, and Storage thermals with zero kernel drivers.'
     },
     flux: {
       img: 'assets/screenshots/inFaux-Core-Temps.png',
-      caption: 'Per-Core Silicon Temps — Live physical-first core breakdown, SMT/HT demystification, and dynamic turbo boost indicators without kernel drivers.'
+      caption: 'Per-Core Silicon Temps: Live physical-first core breakdown, SMT/HT demystification, and dynamic turbo boost indicators without kernel drivers.'
     },
     streamdeck: {
       img: 'assets/screenshots/Stream-Deck.png',
-      caption: 'Stream Deck Companion Suite — Live hardware gauges for CPU, GPU, RAM, Network, and Bluetooth with tap-to-cycle.'
+      caption: 'Stream Deck Companion Suite: Live hardware gauges for CPU, GPU, RAM, Network, and Bluetooth with tap-to-cycle.'
     },
     bluetooth: {
       img: 'assets/screenshots/inFaux-Bluetooth.png',
-      caption: 'Wireless Bluetooth Hardware Telemetry — Real-time room ambient, in-case air, and radiator exhaust monitoring via BTHome v2.'
+      caption: 'Wireless Bluetooth Hardware Telemetry: Real-time room ambient, in-case air, and radiator exhaust monitoring via BTHome v2.'
     }
   };
 
