@@ -287,7 +287,7 @@ Settings are stored in `%LOCALAPPDATA%\inFaux\config.json`:
 | `apiPort` | `int` | `8765` | Port for the embedded Kestrel REST and WebSocket API |
 | `enableApi` | `bool` | `true` | Enables or disables the embedded HTTP/WebSocket server |
 | `apiBindLocalhostOnly` | `bool` | `true` | When true, binds only to `127.0.0.1` (safe user-mode loopback) |
-| `pollingIntervalMs` | `int` | `1000` | Telemetry harvest interval in milliseconds (250ms–2000ms) |
+| `pollingIntervalMs` | `int` | `1000` | Telemetry harvest interval in milliseconds (250ms-2000ms) |
 | `traySensorTarget` | `string` | `"cpu_temp"` | Tray badge metric: `"cpu_temp"`, `"gpu_temp"`, or `"auto_max_temp"` |
 | `preferredNetworkAdapter` | `string` | `"Auto"` | Interface to monitor: `"Auto"` (highest traffic) or specific adapter |
 | `chassisProfile` | `string` | `"Auto"` | Enclosure profile for air cavity modeling: `"Auto"`, `"Laptop"`, `"Desktop"` |
