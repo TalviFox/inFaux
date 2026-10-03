@@ -60,6 +60,25 @@ if (-not $DryRun) {
     $csprojContent = Get-Content $csprojPath -Raw
     $csprojContent = [regex]::Replace($csprojContent, "<Version>.*?</Version>", "<Version>$cleanVersion</Version>")
     Set-Content -Path $csprojPath -Value $csprojContent -Encoding UTF8
+
+    # Update install.ps1 version & release tag
+    $installScriptPath = Join-Path $root "install.ps1"
+    if (Test-Path $installScriptPath) {
+        Write-Host "[*] Updating version and release tag in install.ps1..." -ForegroundColor Cyan
+        $installContent = Get-Content $installScriptPath -Raw
+        $installContent = [regex]::Replace($installContent, '(?m)Version \d+\.\d+\.\d+', "Version $cleanVersion")
+        $installContent = [regex]::Replace($installContent, '(?m)\$releaseTag\s*=\s*"v\d+\.\d+\.\d+"', "`$releaseTag = `"v$cleanVersion`"")
+        Set-Content -Path $installScriptPath -Value $installContent -Encoding UTF8
+    }
+
+    # Update uninstall.ps1 version
+    $uninstallScriptPath = Join-Path $root "uninstall.ps1"
+    if (Test-Path $uninstallScriptPath) {
+        Write-Host "[*] Updating version in uninstall.ps1..." -ForegroundColor Cyan
+        $uninstallContent = Get-Content $uninstallScriptPath -Raw
+        $uninstallContent = [regex]::Replace($uninstallContent, '(?m)Version \d+\.\d+\.\d+', "Version $cleanVersion")
+        Set-Content -Path $uninstallScriptPath -Value $uninstallContent -Encoding UTF8
+    }
 }
 
 # 3. Locate .NET SDK
@@ -253,7 +272,7 @@ ${tripleBt}
 if ($existingNotes -and $existingNotes -match "(?m)^## .*What's New in v$cleanVersion") {
     # Preserve existing custom changelog for this version, only update title and checksums table
     $updatedNotes = [regex]::Replace($existingNotes, "(?m)^# .*inFaux v.*$", "# $foxEmoji inFaux v$cleanVersion")
-    $updatedNotes = [regex]::Replace($updatedNotes, "(?ms)^## [^\r\n]*Checksums & Binary Verification.*$", $checksumSection)
+    $updatedNotes = [regex]::Replace($updatedNotes, "(?ms)## [^\r\n]*Checksums & Binary Verification.*$", { param($m) $checksumSection })
     [System.IO.File]::WriteAllText($releaseNotesPath, $updatedNotes, $utf8NoBom)
     Write-Host "[+] Updated checksums in existing release notes at $releaseNotesPath" -ForegroundColor Green
 }

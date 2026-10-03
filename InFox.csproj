@@ -14,7 +14,7 @@
     <Product>inFaux</Product>
     <Company>FoxDen Software</Company>
     <Authors>FoxDen Software</Authors>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Description>Modern, native, lean hardware monitor and open telemetry server for Windows. Real telemetry. Faux drivers.</Description>
     <Copyright>Copyright (c) FoxDen Software</Copyright>
     <SatelliteResourceLanguages>en-US</SatelliteResourceLanguages>
@@ -55,6 +55,9 @@
   </ItemGroup>
 
 </Project>
+
+
+
 
 
 

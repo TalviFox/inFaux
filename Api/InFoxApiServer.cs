@@ -92,12 +92,20 @@ namespace InFox.Api
                 await _app.StopAsync();
                 await _app.DisposeAsync();
                 _app = null;
+                _cts?.Dispose();
+                _cts = null;
                 LoggingService.Instance.Info("ApiServer", "API server stopped.");
             }
             catch (Exception ex)
             {
                 LoggingService.Instance.Error("ApiServer", "Error stopping API server", ex);
             }
+        }
+
+        public async Task RestartAsync()
+        {
+            await StopAsync();
+            await StartAsync();
         }
 
         private void ConfigureEndpoints(WebApplication app)
