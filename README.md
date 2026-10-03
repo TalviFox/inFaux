@@ -13,7 +13,7 @@
 <p align="center">
   <a href="https://github.com/TalviFox/inFaux"><img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-blue.svg" alt="Platform" /></a>
   <a href="https://dotnet.microsoft.com/"><img src="https://img.shields.io/badge/.NET-10.0%20(Self--Contained)-purple.svg" alt="Runtime" /></a>
-  <a href="https://github.com/TalviFox/inFaux"><img src="https://img.shields.io/badge/RAM-~150%20MB-brightgreen.svg" alt="RAM Footprint" /></a>
+  <a href="https://github.com/TalviFox/inFaux"><img src="https://img.shields.io/badge/RAM-~115%20MB-brightgreen.svg" alt="RAM Footprint" /></a>
   <a href="https://github.com/TalviFox/inFaux"><img src="https://img.shields.io/badge/Background%20Processes-0-success.svg" alt="Background Processes" /></a>
   <a href="https://github.com/TalviFox/inFaux"><img src="https://img.shields.io/badge/Kernel%20Drivers-0%20(100%25%20Driverless)-success.svg" alt="Driverless" /></a>
   <a href="https://github.com/TalviFox/inFaux"><img src="https://img.shields.io/badge/Elevation-Standard%20User%20(asInvoker)-success.svg" alt="Privilege" /></a>
@@ -57,7 +57,7 @@ For the last 15 years, the PC hardware monitoring world has been split into two 
   * **Storage View:** Volume capacities, real-time read/write throughput rates (MB/s via PDH), physical drive geometry, and volume utilization (bus type NVMe/SATA and media type SSD/HDD).
   * **Network & Power View:** Real-time throughput rates (Mbps), adapter switcher (`Auto` highest traffic or specific adapter), link speed, battery charge/discharge wattage, AC line state, and estimated runtime minutes.
 * **All Sensors View:** Complete live DataGrid table of all raw hardware sensors and channels with min/max tracking, category, type, and current values (rendered via non-destructive in-place sync to eliminate visual flickering).
-* **Settings & Tuning View:** Interactive controls for polling intervals, tray icon sensor targets, network adapter binding, chassis form factor profiles, cooler profiles, live thermal calibration offset slider (-15°C to +15°C), CPU TDP override targets, and 1-click API testing.
+* **Settings & Tuning View:** Interactive configuration for polling intervals, tray icon sensor targets, network adapter binding, chassis form factor profiles, thermal dissipation profiles (AIO, Tower Air, SFF Compact), live thermal calibration offset slider (-15°C to +15°C), CPU TDP override targets, and 1-click API testing.
 
 ---
 
@@ -68,7 +68,7 @@ For the last 15 years, the PC hardware monitoring world has been split into two 
   * **Real Hardware Baselines:** Continuously reads safe, user-mode diode temperatures from your GPU and NVMe SSD controllers to establish the true thermal floor of your PC chassis.
   * **Copper Heat Spreader Simulation:** Treats your CPU's integrated heat spreader (IHS) and cooler cold plate like a real thermal mass. Solid copper heats up quickly when a core spikes under heavy load, and dissipates heat gradually into the cooler fins.
   * **Per-Core Temperature Gradients:** Models localized heat blooms across individual cores and clusters based on live clock frequencies and workloads from native Windows performance counters.
-  * **Zero Elevation, Zero Lag:** Runs 100% in user space (`asInvoker`) with zero UAC prompts, zero background services, and zero fan-hunting jitter.
+  * **Zero Elevation, Zero Lag:** Runs 100% in user space (`asInvoker`) with zero UAC prompts, zero background services, and smooth thermal modeling free of raw sensor spike jitter.
   * **Honest Telemetry:** Real physical diode readings (GPU, NVMe, and Bluetooth beacons) are clearly marked with `[📡 Measured]`, while thermodynamic CPU numbers are transparently tagged `[Estimated]`.
 
 ---
@@ -101,39 +101,45 @@ For the last 15 years, the PC hardware monitoring world has been split into two 
 
 ### 5. Embedded Read-Only Open API (Port 8765)
 Built-in local HTTP + WebSocket server powered by ASP.NET Core Kestrel on `http://127.0.0.1:8765`:
-* `GET /` — Root overview with API manifest and version.
-* `GET /api/v1/summary` — Clean JSON snapshot of curated system telemetry.
-* `GET /api/v1/sensors` — Complete flat list of all hardware probes with min/max tracking.
-* `GET /api/v1/sensors/{category}` — Category-filtered sensors (`cpu`, `gpu`, `memory`, `storage`, `network`).
-* `GET /api/v1/history/{metricId}` — 60-second rolling ring buffer for sparklines (`cpu_temp`, `gpu_temp`, `ram_load`, etc.).
-* `GET /api/v1/health` — Service health check and uptime status.
-* `WS  /api/v1/stream` — Low-latency WebSocket push stream for live dashboards, Stream Decks, and Discord bots.
+* `GET /`: Root overview with API manifest and version.
+* `GET /api/v1/summary`: Clean JSON snapshot of curated system telemetry.
+* `GET /api/v1/sensors`: Complete flat list of all hardware probes with min/max tracking.
+* `GET /api/v1/sensors/{category}`: Category-filtered sensors (`cpu`, `gpu`, `memory`, `storage`, `network`).
+* `GET /api/v1/history/{metricId}`: 60-second rolling ring buffer for sparklines (`cpu_temp`, `gpu_temp`, `ram_load`, etc.).
+* `GET /api/v1/health`: Service health check and uptime status.
+* `WS  /api/v1/stream`: Low-latency WebSocket push stream for live dashboards, Stream Decks, and Discord bots.
 
 ---
 
-### 6. Stream Deck Companion Suite v1.1.0 (Built-In LCM)
+### 6. Stream Deck Companion Suite (In-App Management)
 * **Real-Time Physical Hardware Gauges:** Dynamic canvas-rendered gauges for **CPU**, **GPU**, **RAM**, **Network**, and **BT Sensor** with live wattage, thermal color grading, usage percentages, and progress bars.
 * **Universal Key Renaming:** Rename the top header on ANY key directly from the Property Inspector (e.g. `GAMING`, `3080TI`, `OFFICE`, `ROOM`) without random text stomping in the middle of your button.
 * **Interactive Quick Tap:**
   * **GPU / Net:** Tap the key to instantly cycle through multiple GPUs or network adapters.
   * **BT Sensor:** Tap the key to toggle between live Temperature and Humidity on the fly!
 * **Coat Color Modes:** Choose between clean pure **Monochrome** (white on dark), **Theme Accent** (syncs with your Fox Coat theme), or **Reactive** (dynamic green/amber/red thermal alerts).
-* **Zero-Config Lifecycle Management (LCM):** 
+* **1-Click In-App Management:** 
   * Built straight into the inFaux **Settings** tab.
   * **1-Click Install:** Drops the plugin directly into `%APPDATA%\Elgato\StreamDeck\Plugins\` with zero web searches, zero manual file copying, and zero marketplace accounts.
-  * **1-Click Repair / Update & Clean Uninstall:** One-click management with version auditing.
+  * **In-App Updates & Clean Removal:** Easily update to the newest version or remove the plugin right from the app.
 * Also distributed as a standalone, double-click installable package: [`com.foxden.infaux.streamDeckPlugin`](integrations/streamdeck/).
 
 ---
 
 ### 7. Dynamic Numeric System Tray Icon
-* Draws live, readable temperature numbers (e.g. `42°` or `68°`) directly onto your Windows system tray icon using GDI+ pixel fonts.
-* **Customizable Target:** Choose between CPU Package Temp, Primary GPU Temp, or Highest (CPU/GPU) auto-tracking.
-* **Intelligent Thermal Color-Coding:**
-  * 🟢 **Cyan (< 65°C):** Cool & nominal.
-  * 🟡 **Amber (65–79°C):** Moderate gaming / compiling workload.
-  * 🔴 **Red (≥ 80°C):** Thermal throttling / heavy stress.
-* Automatically recovers if `explorer.exe` restarts.
+
+<p align="center">
+  <img src="docs/assets/tray/tray_showcase.png" alt="inFaux Dynamic System Tray Badges" width="680" />
+</p>
+
+* **Real-Time Numeric Temperature Badge:** Renders high-legibility live temperature numbers directly onto your Windows taskbar tray icon using dynamic GDI+ pixel buffers.
+* **Theme-Reactive Styling:** Cool and nominal temperatures (< 65°C) dynamically match your active **Fox Coat Theme** accent color (Red Fox Ember, Arctic Fox Glacial Cyan, Fennec Fox Amber, or Silver Fox Platinum).
+* **Intelligent Thermal Color Escalation:**
+  * 🟢 **Theme Accent (< 65°C):** Cool and nominal desktop workload.
+  * 🟡 **Fox Amber (65°C to 79°C):** Moderate gaming and compiling workload.
+  * 🔴 **Hot Red (≥ 80°C):** High thermal load or heavy stress.
+* **Customizable Sensor Target:** Right-click the tray icon to switch between CPU Package Temp, Primary GPU Core Temp, or Highest (CPU or GPU) auto-tracking.
+* **Hover Telemetry Tooltip:** Hover over the tray icon for an instant breakdown of live CPU %, GPU %, and RAM utilization.
 
 ---
 
@@ -149,7 +155,7 @@ Customize the appearance of inFaux and your Stream Deck to match your setup:
 ---
 
 ### 9. Zero-UAC Lifecycle & Companion Scripts
-* **Standard User Autostart:** Registers with Windows Task Scheduler using standard user permissions—starts on boot with **0 UAC prompts**.
+* **Standard User Autostart:** Registers with Windows Task Scheduler using standard user permissions: starts on boot with **0 UAC prompts**.
 * **Zero-Elevation Installer (`install.ps1`):** Installs cleanly into `%LOCALAPPDATA%\Programs\inFaux`, sets up shortcuts, registers in Windows *Installed Apps* (Add or Remove Programs), and validates SHA-256 hashes.
 * **Cryptographic Auditor (`verify.ps1`):** Automatically downloads and verifies your local `inFaux.exe` against official GitHub Release SHA-256 checksums.
 * **Clean Uninstaller (`uninstall.ps1`):** Complete 1-click system removal of scheduled tasks, shortcuts, registry entries, and program files.
@@ -307,8 +313,8 @@ Every feature, script, and build is actively dogfooded, tested, and run on my ow
 
 ## 🦊 FoxDen Software Suite
 
-* **[WireFox](https://wirefox.foxdensoftware.dev/)** — Intelligent WireGuard Roaming Companion for Windows
-* **[inFaux](https://github.com/TalviFox/inFaux)** — Modern Native Hardware Monitor & Telemetry Server
+* **[WireFox](https://wirefox.foxdensoftware.dev/)**: Intelligent WireGuard Roaming Companion for Windows
+* **[inFaux](https://github.com/TalviFox/inFaux)**: Modern Native Hardware Monitor & Telemetry Server
 
 ---
 
