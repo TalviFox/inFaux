@@ -329,7 +329,16 @@
 
     function getGpuHeaderTitle(gpu, data) {
       if (!gpu) return 'GPU';
-      const name = gpu.name || '';
+      const name = (gpu.name || '').trim();
+      const short = (gpu.shortName || '').trim();
+
+      // If user provided a custom name or alias (<= 7 chars), display it directly!
+      if (gpu.isCustomName && short && short.length <= 7) {
+        return short.replace(/\s+/g, '');
+      }
+      if (gpu.isCustomName && name && name.length <= 7) {
+        return name.replace(/\s+/g, '');
+      }
 
       // 1. NVIDIA GeForce (Discrete): e.g. "RTX 3080 Ti" -> "3080Ti", "RTX 4070 Super" -> "4070S"
       const rtxMatch = name.match(/(?:RTX|GTX)\s*(\d+)(?:\s*(Ti|Super|S))?(?:\s*(Super|S))?/i);
@@ -379,6 +388,8 @@
       // 6. Generic model number fallback (any 3-4 digit sequence)
       const numMatch = name.match(/\b(\d{3,4}[A-Za-z]*)\b/);
       if (numMatch && numMatch[1].length <= 7) return numMatch[1];
+
+      if (short && short.length <= 6) return short.replace(/\s+/g, '');
 
       // 7. Brand failovers if model numbers can't be resolved
       if (name.includes('Intel')) return 'INTEL';

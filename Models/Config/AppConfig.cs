@@ -96,5 +96,13 @@ namespace InFox.Models.Config
 
         [JsonPropertyName("ignoredUpdateVersion")]
         public string? IgnoredUpdateVersion { get; set; }
+
+        private System.Collections.Generic.Dictionary<string, string> _gpuNameAliases = new(StringComparer.OrdinalIgnoreCase);
+        [JsonPropertyName("gpuNameAliases")]
+        public System.Collections.Generic.Dictionary<string, string> GpuNameAliases
+        {
+            get => _gpuNameAliases ??= new(StringComparer.OrdinalIgnoreCase);
+            set => _gpuNameAliases = value != null ? new System.Collections.Generic.Dictionary<string, string>(value, StringComparer.OrdinalIgnoreCase) : new(StringComparer.OrdinalIgnoreCase);
+        }
     }
 }

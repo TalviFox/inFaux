@@ -34,6 +34,7 @@ namespace InFox.Services
             }
         }
 
+        public void Debug(string category, string message) => Log("DEBUG", category, message);
         public void Info(string category, string message) => Log("INFO", category, message);
         public void Warning(string category, string message) => Log("WARN", category, message);
         public void Error(string category, string message, Exception? ex = null)

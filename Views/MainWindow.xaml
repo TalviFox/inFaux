@@ -87,6 +87,7 @@
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
@@ -94,12 +95,16 @@
                             <ContentPresenter ContentSource="Header"/>
                         </Border>
                         <ControlTemplate.Triggers>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsSelected" Value="False"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="TabBorder" Property="TextElement.Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                            </MultiTrigger>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="TabBorder" Property="BorderBrush" Value="{DynamicResource PrimaryAccentBrush}"/>
-                                <Setter Property="Foreground" Value="{DynamicResource PrimaryAccentBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                <Setter TargetName="TabBorder" Property="TextElement.Foreground" Value="{DynamicResource PrimaryAccentBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -142,6 +147,8 @@
         <!-- Modern Pill Toggle Switch (Inspired by WireFox) -->
         <Style x:Key="ToggleSwitch" TargetType="CheckBox">
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="ToolTipService.Placement" Value="Bottom"/>
+            <Setter Property="ToolTipService.VerticalOffset" Value="6"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
@@ -638,13 +645,26 @@
                                                 </ItemsControl.ItemsPanel>
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Button Content="{Binding ShortName}" Tag="{Binding Id}" Click="OnGpuPillClick" Style="{StaticResource GpuPillButtonStyle}"/>
+                                                        <Button Content="{Binding ShortName}" Tag="{Binding Id}" Click="OnGpuPillClick" Style="{StaticResource GpuPillButtonStyle}">
+                                                            <Button.ContextMenu>
+                                                                <ContextMenu Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}">
+                                                                    <MenuItem Header="✏️ Rename / Custom Label..." Tag="{Binding Id}" Click="OnRenameGpuContextClick"/>
+                                                                    <MenuItem Header="↺ Reset Name to Default" Tag="{Binding Id}" Click="OnResetGpuNameContextClick"/>
+                                                                </ContextMenu>
+                                                            </Button.ContextMenu>
+                                                        </Button>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
 
                                             <!-- Single GPU Name fallback -->
-                                            <TextBlock Text="{Binding CurrentGpu.Name}" TextTrimming="CharacterEllipsis" MaxWidth="240" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" Margin="0,0,8,0">
+                                            <TextBlock Text="{Binding CurrentGpu.Name}" TextTrimming="CharacterEllipsis" MaxWidth="240" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" Margin="0,0,8,0" Cursor="Hand" ToolTip="Right-click to rename or customize label">
+                                                <TextBlock.ContextMenu>
+                                                    <ContextMenu Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}">
+                                                        <MenuItem Header="✏️ Rename GPU / Custom Label..." Tag="{Binding CurrentGpu.Id}" Click="OnRenameGpuContextClick"/>
+                                                        <MenuItem Header="↺ Reset Name to Default" Tag="{Binding CurrentGpu.Id}" Click="OnResetGpuNameContextClick"/>
+                                                    </ContextMenu>
+                                                </TextBlock.ContextMenu>
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
                                                         <Style.Triggers>
@@ -808,7 +828,7 @@
 
                                         <StackPanel Grid.Column="2" Visibility="{Binding BatteryVisibility}" ToolTip="{Binding Summary.Battery.FullStatusTooltip}" Cursor="Help">
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="BATTERY" Style="{StaticResource SubLabel}"/>
+                                                <TextBlock Text="{Binding BatteryLabel, FallbackValue='BATTERY'}" Style="{StaticResource SubLabel}"/>
                                                 <Border Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="4,1" Margin="6,0,0,0" VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding Summary.Battery.ShortStatusText}" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                                 </Border>
@@ -887,6 +907,9 @@
                                             </Button.Resources>
                                         </Button>
                                         <TextBlock Text="{Binding DetailTitle}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                        <Button Content="✏️ Rename" Click="OnRenameGpuClick" Visibility="{Binding GpuDetailVisibility}" 
+                                                Style="{StaticResource GhostButton}" Margin="12,0,0,0" Padding="8,4" FontSize="11" VerticalAlignment="Center"
+                                                ToolTip="Customize the display name or short pill label for this GPU across inFaux, API, and Stream Deck"/>
                                     </StackPanel>
 
                                     <!-- Multi-GPU switcher in detail header -->
@@ -898,7 +921,14 @@
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Button Content="{Binding ShortName}" Tag="{Binding Id}" Click="OnGpuPillClick" Style="{StaticResource GpuPillButtonStyle}" Margin="4,0" Padding="10,5" FontSize="12"/>
+                                                <Button Content="{Binding ShortName}" Tag="{Binding Id}" Click="OnGpuPillClick" Style="{StaticResource GpuPillButtonStyle}" Margin="4,0" Padding="10,5" FontSize="12">
+                                                    <Button.ContextMenu>
+                                                        <ContextMenu Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}">
+                                                            <MenuItem Header="✏️ Rename / Custom Label..." Tag="{Binding Id}" Click="OnRenameGpuContextClick"/>
+                                                            <MenuItem Header="↺ Reset Name to Default" Tag="{Binding Id}" Click="OnResetGpuNameContextClick"/>
+                                                        </ContextMenu>
+                                                    </Button.ContextMenu>
+                                                </Button>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -1189,6 +1219,143 @@
                                 </StackPanel>
                             </Border>
 
+                            <!-- MEMORY DETAIL: ARCHITECTURE, TOPOLOGY & ALLOCATION -->
+                            <Border Style="{StaticResource StaticCard}" Visibility="{Binding MemoryDetailVisibility}">
+                                <StackPanel>
+                                    <!-- ARCHITECTURE & TOPOLOGY HEADER CARD -->
+                                    <Border Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14,12" Margin="0,0,0,14">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="MEMORY ARCHITECTURE &amp; TOPOLOGY" Style="{StaticResource SubLabel}"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <TextBlock Text="{Binding Summary.Memory.MemoryType}" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="15"/>
+                                                    <TextBlock Text="-" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="15"/>
+                                                    <TextBlock Text="{Binding Summary.Memory.SpeedMts, StringFormat={}{0} MT/s, FallbackValue='Auto'}" FontWeight="Bold" Foreground="{DynamicResource PrimaryAccentBrush}" FontSize="15"/>
+                                                    <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Summary.Memory.TopologyDescription}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryAccentBrush}"/>
+                                                    </Border>
+                                                    <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="6,0,0,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Summary.Memory.FormFactor}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                    </Border>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <StackPanel Margin="0,0,24,0" HorizontalAlignment="Right">
+                                                    <TextBlock Text="DRIVER NON-PAGED POOL" Style="{StaticResource SubLabel}" HorizontalAlignment="Right" ToolTip="Kernel memory locked in RAM; essential sentinel for detecting driver memory leaks"/>
+                                                    <TextBlock Text="{Binding Summary.Memory.KernelNonPagedMb, StringFormat={}{0:F0} MB, TargetNullValue='-- MB', FallbackValue='-- MB'}" FontWeight="Bold" Foreground="#38BDF8" FontFamily="Consolas" FontSize="13" HorizontalAlignment="Right"/>
+                                                </StackPanel>
+                                                <StackPanel HorizontalAlignment="Right">
+                                                    <TextBlock Text="TOTAL INSTALLED" Style="{StaticResource SubLabel}" HorizontalAlignment="Right"/>
+                                                    <TextBlock Text="{Binding Summary.Memory.TotalGb, StringFormat={}{0:F1} GB, FallbackValue='-- GB'}" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="Consolas" FontSize="13" HorizontalAlignment="Right"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- ALLOCATION METERS: PHYSICAL RAM & VIRTUAL COMMIT -->
+                                    <Grid Margin="0,0,0,14">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="14"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Physical Memory Allocation -->
+                                        <Border Grid.Column="0" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14,10">
+                                            <StackPanel>
+                                                <Grid Margin="0,0,0,6">
+                                                    <TextBlock Text="PHYSICAL RAM ALLOCATION" Style="{StaticResource SubLabel}"/>
+                                                    <TextBlock HorizontalAlignment="Right" Foreground="{DynamicResource TextPrimaryBrush}" FontFamily="Consolas" FontSize="11">
+                                                        <Run Text="{Binding Summary.Memory.UsedGb, Mode=OneWay, StringFormat={}{0:F1} GB}"/>
+                                                        <Run Text=" / " Foreground="{DynamicResource TextMutedBrush}"/>
+                                                        <Run Text="{Binding Summary.Memory.TotalGb, Mode=OneWay, StringFormat={}{0:F1} GB}" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                        <Run Text=" (" Foreground="{DynamicResource TextMutedBrush}"/>
+                                                        <Run Text="{Binding Summary.Memory.Percent, Mode=OneWay, StringFormat={}{0:F0}%}"/>
+                                                        <Run Text=")" Foreground="{DynamicResource TextMutedBrush}"/>
+                                                    </TextBlock>
+                                                </Grid>
+                                                <ProgressBar Value="{Binding Summary.Memory.UsedGb, Mode=OneWay}" Minimum="0" Maximum="{Binding Summary.Memory.TotalGb, Mode=OneWay}" Height="7" Background="{DynamicResource ProgressBarTrackBrush}" Foreground="{DynamicResource PrimaryAccentBrush}" BorderThickness="0"/>
+                                                <Grid Margin="0,6,0,0">
+                                                    <TextBlock Text="{Binding Summary.Memory.AvailableGb, StringFormat={}Available: {0:F1} GB}" FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" FontFamily="Consolas"/>
+                                                    <TextBlock Text="{Binding Summary.Memory.UsedGb, StringFormat={}In-Use: {0:F1} GB}" HorizontalAlignment="Right" FontSize="10.5" Foreground="{DynamicResource PrimaryAccentBrush}" FontFamily="Consolas"/>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Virtual Memory (Commit Charge) -->
+                                        <Border Grid.Column="2" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14,10"
+                                                ToolTip="Committed virtual memory across RAM and pagefile. When this nears 100%, Windows or games trigger Out-Of-Memory (OOM) crashes even if physical RAM is not full.">
+                                            <StackPanel>
+                                                <Grid Margin="0,0,0,6">
+                                                    <TextBlock Text="VIRTUAL MEMORY (PAGEFILE COMMIT)" Style="{StaticResource SubLabel}"/>
+                                                    <TextBlock HorizontalAlignment="Right" Foreground="{DynamicResource TextPrimaryBrush}" FontFamily="Consolas" FontSize="11">
+                                                        <Run Text="{Binding Summary.Memory.CommittedGb, Mode=OneWay, StringFormat={}{0:F1} GB}"/>
+                                                        <Run Text=" / " Foreground="{DynamicResource TextMutedBrush}"/>
+                                                        <Run Text="{Binding Summary.Memory.CommitLimitGb, Mode=OneWay, StringFormat={}{0:F1} GB}" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                        <Run Text=" (" Foreground="{DynamicResource TextMutedBrush}"/>
+                                                        <Run Text="{Binding Summary.Memory.CommitPercent, Mode=OneWay, StringFormat={}{0:F0}%}"/>
+                                                        <Run Text=")" Foreground="{DynamicResource TextMutedBrush}"/>
+                                                    </TextBlock>
+                                                </Grid>
+                                                <ProgressBar Value="{Binding Summary.Memory.CommittedGb, Mode=OneWay}" Minimum="0" Maximum="{Binding Summary.Memory.CommitLimitGb, Mode=OneWay}" Height="7" Background="{DynamicResource ProgressBarTrackBrush}" Foreground="#F59E0B" BorderThickness="0"/>
+                                                <Grid Margin="0,6,0,0">
+                                                    <TextBlock Text="OOM Safety Margin" FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}"/>
+                                                    <TextBlock Text="{Binding Summary.Memory.CommitPercent, StringFormat={}{0:F0}% Charged}" HorizontalAlignment="Right" FontSize="10.5" Foreground="#F59E0B" FontFamily="Consolas"/>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- INSTALLED PHYSICAL DIMM MODULES -->
+                                    <TextBlock Text="INSTALLED PHYSICAL DIMM MODULES" Style="{StaticResource CardHeader}" Margin="0,0,0,10"/>
+                                    <ItemsControl ItemsSource="{Binding Summary.Memory.Modules}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14,12" Margin="0,0,12,12" Width="295">
+                                                    <StackPanel>
+                                                        <Grid>
+                                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Slot}" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                                                <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="4,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding MemoryType}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource PrimaryAccentBrush}"/>
+                                                                </Border>
+                                                            </StackPanel>
+                                                            <TextBlock Text="{Binding CapacityGb, StringFormat={}{0:F0} GB}" HorizontalAlignment="Right" FontWeight="Bold" Foreground="#10B981" FontFamily="Consolas" FontSize="13"/>
+                                                        </Grid>
+
+                                                        <Border Height="1" Background="{DynamicResource ControlBorderBrush}" Margin="0,8,0,8"/>
+
+                                                        <Grid Margin="0,2">
+                                                            <TextBlock Text="MANUFACTURER" Style="{StaticResource SubLabel}"/>
+                                                            <TextBlock Text="{Binding Manufacturer}" HorizontalAlignment="Right" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" FontSize="11.5"/>
+                                                        </Grid>
+
+                                                        <Grid Margin="0,2">
+                                                            <TextBlock Text="PART NUMBER" Style="{StaticResource SubLabel}"/>
+                                                            <TextBlock Text="{Binding PartNumber, TargetNullValue='Standard DIMM'}" ToolTip="{Binding PartNumber}" TextTrimming="CharacterEllipsis" HorizontalAlignment="Right" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="Consolas" FontSize="11" MaxWidth="170"/>
+                                                        </Grid>
+
+                                                        <Grid Margin="0,2">
+                                                            <TextBlock Text="CONFIGURED SPEED" Style="{StaticResource SubLabel}"/>
+                                                            <TextBlock Text="{Binding ConfiguredSpeedMts, StringFormat={}{0} MT/s, TargetNullValue='Auto'}" HorizontalAlignment="Right" Foreground="{DynamicResource PrimaryAccentBrush}" FontFamily="Consolas" FontWeight="SemiBold" FontSize="11"/>
+                                                        </Grid>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+
                             <!-- DETAIL SENSORS TABLE -->
                             <Border Style="{StaticResource StaticCard}">
                                 <StackPanel>
@@ -1284,6 +1451,7 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
                                 <!-- Header row with shield squircle badge -->
@@ -1294,7 +1462,7 @@
                                     </Grid.ColumnDefinitions>
 
                                     <Border Grid.Column="0" Width="44" Height="44" CornerRadius="8" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource PrimaryAccentBrush}" BorderThickness="1.5" Margin="0,0,16,0" VerticalAlignment="Top">
-                                        <TextBlock Text="🛡️" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <TextBlock Text="🛡️" FontSize="20" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
 
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -1303,19 +1471,43 @@
                                     </StackPanel>
                                 </Grid>
 
-                                <!-- Action / status row -->
-                                <Grid Grid.Row="1" Margin="0,14,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
+                                <!-- Divider -->
+                                <Border Grid.Row="1" Height="1" Background="{DynamicResource AccentBorderBrush}" Margin="0,14,0,12" Opacity="0.6"/>
 
-                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="Default REST Endpoint: " Foreground="{DynamicResource TextMutedBrush}" FontSize="12"/>
-                                        <TextBlock Text="{Binding ApiEndpointUrl, StringFormat={}{0}/api/v1/summary}" Foreground="{DynamicResource PrimaryAccentBrush}" FontFamily="Consolas" FontSize="12"/>
-                                    </StackPanel>
+                                <!-- Configuration & Action Grid -->
+                                <Grid Grid.Row="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
 
-                                    <Button Grid.Column="1" Content="✓ Open Live API in Browser" Click="OnOpenApiInBrowserClick" Style="{StaticResource ActionButton}"/>
+                                    <!-- Bind Localhost Only Toggle -->
+                                    <Grid Grid.Row="0" Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
+                                            <TextBlock Text="Localhost Only Binding (Loopback)" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                            <TextBlock Text="{Binding ApiBindModeDescription, FallbackValue='Restricts telemetry to 127.0.0.1. Disable to allow LAN access from other devices.'}" Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding ApiBindLocalhostOnly}" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center" ToolTip="Toggle binding to 127.0.0.1 (Loopback only) vs 0.0.0.0 (Local Network / LAN)"/>
+                                    </Grid>
+
+                                    <!-- Action / status row -->
+                                    <Grid Grid.Row="1">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="Live REST Endpoint: " Foreground="{DynamicResource TextMutedBrush}" FontSize="12"/>
+                                            <TextBlock Text="{Binding ApiEndpointUrl, StringFormat={}{0}/api/v1/summary}" Foreground="{DynamicResource PrimaryAccentBrush}" FontFamily="Consolas" FontSize="12"/>
+                                        </StackPanel>
+
+                                        <Button Grid.Column="1" Content="🌐 Open Live API in Browser" Click="OnOpenApiInBrowserClick" Style="{StaticResource ActionButton}"/>
+                                    </Grid>
                                 </Grid>
                             </Grid>
                         </Border>
@@ -1337,7 +1529,7 @@
                                     </Grid.ColumnDefinitions>
 
                                     <Border Grid.Column="0" Width="44" Height="44" CornerRadius="8" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource PrimaryAccentBrush}" BorderThickness="1.5" Margin="0,0,16,0" VerticalAlignment="Top">
-                                        <TextBlock Text="🎛️" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <TextBlock Text="🎛️" FontSize="20" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
 
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -1512,7 +1704,7 @@
                                 <!-- Divider -->
                                 <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,12"/>
 
-                                <!-- Minimize on Startup (THE MISSED FEATURE!) -->
+                                <!-- Minimize on Startup -->
                                 <Grid Margin="0,4">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -1523,6 +1715,22 @@
                                         <TextBlock Text="Start quietly in the system tray notification area without opening the dashboard window." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
                                     </StackPanel>
                                     <CheckBox Grid.Column="1" IsChecked="{Binding MinimizeOnStartup}" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <!-- Divider -->
+                                <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,12"/>
+
+                                <!-- Quit Application -->
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Quit inFaux" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                        <TextBlock Text="Shut down the local telemetry server and remove the tray icon." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="Exit inFaux" Click="OnExitAppClick" Style="{StaticResource DangerButton}" VerticalAlignment="Center" ToolTip="Completely close inFaux"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
@@ -1704,19 +1912,19 @@
                                 <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,12"/>
 
                                 <!-- Post-Radiator / Cooler Exhaust Thermometer (BTHome / BLE) -->
-                                <Grid Margin="0,4" Background="Transparent" ToolTip="Listen passively for a wireless thermometer placed at radiator or cooler exhaust airflow. Measures live radiator ΔT cooling efficiency.">
+                                <Grid Margin="0,4" Background="Transparent" ToolTip="{Binding BleExhaustTooltip, FallbackValue='Listen passively for a wireless thermometer placed at radiator or cooler exhaust airflow.'}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="290"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Margin="0,0,16,0">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="Post-Radiator Exhaust (BTHome / BLE)" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                            <TextBlock Text="{Binding BleExhaustTitle, FallbackValue='Radiator Exhaust (BTHome / BLE)'}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
                                             <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding BleRadiatorStatusBadge}" FontSize="10.5" Foreground="{Binding BleRadiatorStatusColor}" FontWeight="SemiBold"/>
                                             </Border>
                                         </StackPanel>
-                                        <TextBlock Text="Measure exhaust air temperature and compute real-time radiator thermal delta (ΔT)." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
+                                        <TextBlock Text="{Binding BleExhaustDescription, FallbackValue='Measure exhaust air temperature and compute real-time thermal delta (ΔT).'}" Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
                                         <TextBlock Text="{Binding BleRadiatorStatusText}" FontSize="11" Foreground="{Binding BleRadiatorStatusColor}" Margin="0,3,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -2126,6 +2334,12 @@
                     <TextBlock x:Name="ModalMessageText" Text="Dialog message body..." FontSize="12.5" LineHeight="18" 
                                Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,14"/>
 
+                    <!-- Optional Text Input Field (for Rename / Custom Label prompts) -->
+                    <StackPanel x:Name="ModalInputContainer" Visibility="Collapsed" Margin="0,0,0,16">
+                        <TextBlock x:Name="ModalInputLabel" Text="Custom Name / Alias:" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                        <TextBox x:Name="ModalInputBox" Height="34" FontSize="13" Padding="8,4" VerticalContentAlignment="Center" KeyDown="OnModalInputBoxKeyDown" Background="{DynamicResource ControlBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1"/>
+                    </StackPanel>
+
                     <!-- Optional Monospaced Details / Hash Card -->
                     <Border x:Name="ModalDetailsCard" Visibility="Collapsed" Background="{DynamicResource ControlBackgroundBrush}" 
                             BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,16">
@@ -2142,6 +2356,7 @@
 
                     <!-- Action Buttons -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+                        <Button x:Name="ModalTertiaryButton" Content="Reset Default" Style="{StaticResource DangerButton}" MinWidth="95" Margin="0,0,10,0" Click="OnModalTertiaryClick" Visibility="Collapsed"/>
                         <Button x:Name="ModalSecondaryButton" Content="Cancel" Style="{StaticResource GhostButton}" MinWidth="90" Margin="0,0,10,0" Click="OnModalSecondaryClick" Visibility="Collapsed"/>
                         <Button x:Name="ModalPrimaryButton" Content="OK" Style="{StaticResource PrimaryButton}" MinWidth="100" Click="OnModalPrimaryClick"/>
                     </StackPanel>

@@ -18,6 +18,9 @@ namespace InFox.Tray
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         private static extern bool DestroyIcon(IntPtr handle);
 
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
         private NotifyIcon? _notifyIcon;
         private IntPtr _lastHIcon = IntPtr.Zero;
         private Icon? _defaultIcon;
@@ -108,7 +111,19 @@ namespace InFox.Tray
             var exitItem = new ToolStripMenuItem("Exit inFaux", null, (s, e) => ExitRequested?.Invoke());
             menu.Items.Add(exitItem);
 
+            menu.Opening += (s, e) =>
+            {
+                SetForegroundWindow(menu.Handle);
+            };
+
             _notifyIcon.ContextMenuStrip = menu;
+            _notifyIcon.MouseClick += (s, e) =>
+            {
+                if (e.Button == MouseButtons.Left)
+                {
+                    OpenDashboardRequested?.Invoke();
+                }
+            };
             _notifyIcon.DoubleClick += (s, e) => OpenDashboardRequested?.Invoke();
 
             // Wire up telemetry ticks

@@ -76,6 +76,14 @@ namespace InFox.Services
             ConfigChanged?.Invoke(_config);
         }
 
+        public Dictionary<string, string> GetGpuNameAliasesSnapshot()
+        {
+            lock (_lock)
+            {
+                return new Dictionary<string, string>(_config.GpuNameAliases, StringComparer.OrdinalIgnoreCase);
+            }
+        }
+
         private void SaveConfigInternal(AppConfig cfg)
         {
             try

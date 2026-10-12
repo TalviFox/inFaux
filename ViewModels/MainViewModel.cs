@@ -6,7 +6,9 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Runtime.CompilerServices;
 using System.Security.Principal;
+using System.Threading.Tasks;
 using System.Windows.Threading;
+using InFox.Api;
 using InFox.Engine;
 using InFox.Models.Config;
 using InFox.Models.Sensors;
@@ -39,6 +41,7 @@ namespace InFox.ViewModels
                 OnPropertyChanged(nameof(HasBattery));
                 OnPropertyChanged(nameof(BatteryVisibility));
                 OnPropertyChanged(nameof(BatteryColumnWidth));
+                OnPropertyChanged(nameof(BatteryLabel));
                 OnPropertyChanged(nameof(NetworkCardTitle));
                 OnPropertyChanged(nameof(NetworkCardToolTip));
                 OnPropertyChanged(nameof(ThrottlingDivergenceVisibility));
@@ -51,8 +54,9 @@ namespace InFox.ViewModels
         public bool HasBattery => Summary.Battery.HasBattery;
         public System.Windows.Visibility BatteryVisibility => Summary.Battery.HasBattery ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
         public System.Windows.GridLength BatteryColumnWidth => Summary.Battery.HasBattery ? new System.Windows.GridLength(1, System.Windows.GridUnitType.Star) : new System.Windows.GridLength(0);
-        public string NetworkCardTitle => Summary.Battery.HasBattery ? "NETWORK & POWER" : "NETWORK";
-        public string NetworkCardToolTip => Summary.Battery.HasBattery ? "Click to view network and battery details" : "Click to view network details";
+        public string NetworkCardTitle => Summary.Battery.HasBattery ? (Summary.Battery.IsUps ? "NETWORK & UPS" : "NETWORK & POWER") : "NETWORK";
+        public string NetworkCardToolTip => Summary.Battery.HasBattery ? (Summary.Battery.IsUps ? "Click to view network and UPS telemetry" : "Click to view network and battery details") : "Click to view network details";
+        public string BatteryLabel => Summary.Battery.DisplayLabel;
 
         public bool IsPhysicalMachine => !Summary.IsVirtualMachine;
         public string ChassisProfileTooltip => Summary.IsVirtualMachine
@@ -111,7 +115,9 @@ namespace InFox.ViewModels
                 OnPropertyChanged(nameof(IsNetworkDetail));
                 OnPropertyChanged(nameof(CpuDetailVisibility));
                 OnPropertyChanged(nameof(GpuDetailVisibility));
+                OnPropertyChanged(nameof(MemoryDetailVisibility));
                 OnPropertyChanged(nameof(StorageDetailVisibility));
+                OnPropertyChanged(nameof(NetworkDetailVisibility));
                 UpdateDetailMetrics();
             }
         }
@@ -130,16 +136,22 @@ namespace InFox.ViewModels
 
         public System.Windows.Visibility CpuDetailVisibility => IsCpuDetail ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
         public System.Windows.Visibility GpuDetailVisibility => IsGpuDetail ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+        public System.Windows.Visibility MemoryDetailVisibility => IsMemoryDetail ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
         public System.Windows.Visibility StorageDetailVisibility => IsStorageDetail ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+        public System.Windows.Visibility NetworkDetailVisibility => IsNetworkDetail ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
         public System.Windows.Visibility MultiGpuVisibility => HasMultipleGpus ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
 
         public string DetailTitle => DetailSection switch
         {
             "Cpu" => $"Processor (CPU) — {Summary.Cpu.DisplayName}",
             "Gpu" => $"Graphics (GPU) — {CurrentGpu.Name}",
-            "Memory" => "System Memory (RAM)",
+            "Memory" => Summary.Memory.TotalGb > 0 && Summary.Memory.SpeedMts > 0
+                ? $"System Memory (RAM) — {Summary.Memory.TotalGb:F0} GB {Summary.Memory.MemoryType}-{Summary.Memory.SpeedMts} MT/s"
+                : "System Memory (RAM)",
             "Storage" => "Storage Volumes & Physical Drives",
-            "Network" => $"Network & Power — {Summary.Network.CleanAdapterName}",
+            "Network" => Summary.Battery.IsUps
+                ? $"Network & UPS — {Summary.Network.CleanAdapterName}"
+                : $"Network & Power — {Summary.Network.CleanAdapterName}",
             _ => "Component Details"
         };
 
@@ -169,6 +181,78 @@ namespace InFox.ViewModels
             {
                 g.IsSelected = (g.Id == active.Id);
             }
+        }
+
+        public void RenameGpu(string gpuId, string newName)
+        {
+            var gpu = Summary.Gpus.Find(g => g.Id == gpuId) ?? CurrentGpu;
+
+            if (string.IsNullOrWhiteSpace(newName))
+            {
+                // Reset to default
+                ConfigManager.Instance.UpdateConfig(config =>
+                {
+                    config.GpuNameAliases.Remove(gpuId);
+                    string shortId = gpuId.Replace("/gpu-amd/", "gpu_").Replace("/gpu-nvidia/", "gpu_").Replace("/gpu-intel/", "gpu_");
+                    config.GpuNameAliases.Remove(shortId);
+
+                    if (gpu != null && !string.IsNullOrEmpty(gpu.OriginalHardwareName))
+                    {
+                        config.GpuNameAliases.Remove(gpu.OriginalHardwareName);
+                    }
+                });
+
+                if (gpu != null)
+                {
+                    gpu.IsCustomName = false;
+                    string orig = !string.IsNullOrEmpty(gpu.OriginalHardwareName) ? gpu.OriginalHardwareName : gpu.Name;
+                    gpu.Name = InFox.Engine.Harvesters.HardwareMonitorHarvester.ResolveGpuName(gpu.Id, orig, Summary.Cpu.Name, 0, out _);
+                }
+            }
+            else
+            {
+                string trimmed = newName.Trim();
+                ConfigManager.Instance.UpdateConfig(config =>
+                {
+                    config.GpuNameAliases[gpuId] = trimmed;
+                    string shortId = gpuId.Replace("/gpu-amd/", "gpu_").Replace("/gpu-nvidia/", "gpu_").Replace("/gpu-intel/", "gpu_");
+                    config.GpuNameAliases[shortId] = trimmed;
+
+                    if (gpu != null && !string.IsNullOrEmpty(gpu.OriginalHardwareName))
+                    {
+                        config.GpuNameAliases[gpu.OriginalHardwareName] = trimmed;
+                    }
+                });
+
+                if (gpu != null)
+                {
+                    gpu.IsCustomName = true;
+                    gpu.Name = trimmed;
+                }
+            }
+
+            OnPropertyChanged(nameof(CurrentGpu));
+            OnPropertyChanged(nameof(GpuList));
+            OnPropertyChanged(nameof(DetailTitle));
+        }
+
+        public void ResetAllGpuNames()
+        {
+            ConfigManager.Instance.UpdateConfig(config =>
+            {
+                config.GpuNameAliases.Clear();
+            });
+
+            foreach (var gpu in Summary.Gpus)
+            {
+                gpu.IsCustomName = false;
+                string orig = !string.IsNullOrEmpty(gpu.OriginalHardwareName) ? gpu.OriginalHardwareName : gpu.Name;
+                gpu.Name = InFox.Engine.Harvesters.HardwareMonitorHarvester.ResolveGpuName(gpu.Id, orig, Summary.Cpu.Name, 0, out _);
+            }
+
+            OnPropertyChanged(nameof(CurrentGpu));
+            OnPropertyChanged(nameof(GpuList));
+            OnPropertyChanged(nameof(DetailTitle));
         }
 
         // History rolling arrays
@@ -246,6 +330,30 @@ namespace InFox.ViewModels
                 }
             }
         }
+
+        public bool ApiBindLocalhostOnly
+        {
+            get => Config.ApiBindLocalhostOnly;
+            set
+            {
+                if (Config.ApiBindLocalhostOnly != value)
+                {
+                    ConfigManager.Instance.UpdateConfig(c => c.ApiBindLocalhostOnly = value);
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(ApiEndpointUrl));
+                    OnPropertyChanged(nameof(ApiBindModeDescription));
+
+                    _ = Task.Run(async () =>
+                    {
+                        await InFoxApiServer.Instance.RestartAsync();
+                    });
+                }
+            }
+        }
+
+        public string ApiBindModeDescription => ApiBindLocalhostOnly
+            ? "Loopback Only (127.0.0.1) — Safely restricted to this PC"
+            : "LAN Enabled (0.0.0.0) — Accessible by other devices on your local network";
 
         public string LocalExecutableHash => UpdateService.Instance.GetLocalExecutableHash();
 
@@ -383,9 +491,28 @@ namespace InFox.ViewModels
                 {
                     ConfigManager.Instance.UpdateConfig(c => c.CoolerProfile = value);
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsLiquidCooler));
+                    OnPropertyChanged(nameof(BleExhaustTitle));
+                    OnPropertyChanged(nameof(BleExhaustDescription));
+                    OnPropertyChanged(nameof(BleExhaustTooltip));
+                    OnPropertyChanged(nameof(BleRadiatorStatusText));
                 }
             }
         }
+
+        public bool IsLiquidCooler => string.Equals(Config.CoolerProfile, "AIO", StringComparison.OrdinalIgnoreCase);
+
+        public string BleExhaustTitle => IsLiquidCooler
+            ? "Radiator Exhaust (BTHome / BLE)"
+            : "Chassis Exhaust (BTHome / BLE)";
+
+        public string BleExhaustDescription => IsLiquidCooler
+            ? "Measure exhaust air temperature and compute real-time radiator thermal delta (ΔT)."
+            : "Measure exhaust air temperature and compute real-time exhaust thermal delta (ΔT).";
+
+        public string BleExhaustTooltip => IsLiquidCooler
+            ? "Listen passively for a wireless thermometer placed at your liquid cooler radiator exhaust. Measures live radiator ΔT cooling efficiency."
+            : "Listen passively for a wireless thermometer placed at your chassis exhaust airflow. Measures live exhaust thermal delta (ΔT).";
 
         public double CpuThermalOffset
         {
@@ -873,7 +1000,7 @@ namespace InFox.ViewModels
             {
                 if (!Config.EnableBleRadiator)
                 {
-                    return "Disabled: Post-radiator / cooler exhaust telemetry inactive.";
+                    return $"Disabled: {(IsLiquidCooler ? "Radiator" : "Exhaust")} telemetry inactive.";
                 }
                 if (!BTHomeBleService.Instance.IsSupported && !BTHomeBleService.Instance.IsRunning)
                 {
@@ -881,7 +1008,7 @@ namespace InFox.ViewModels
                 }
                 if (string.IsNullOrWhiteSpace(Config.BleRadiatorSensorMac) || Config.BleRadiatorSensorMac.Equals("Auto", StringComparison.OrdinalIgnoreCase))
                 {
-                    return "Select your post-radiator thermometer from the dropdown list to calculate ΔT.";
+                    return $"Select your {(IsLiquidCooler ? "radiator" : "exhaust")} thermometer from the dropdown list to calculate ΔT.";
                 }
 
                 var reading = BTHomeBleService.Instance.GetSpecificReading(Config.BleRadiatorSensorMac);
@@ -890,7 +1017,8 @@ namespace InFox.ViewModels
                     string humStr = reading.HumidityPercent.HasValue ? $" • {reading.HumidityPercent.Value:F0}% RH" : "";
                     string rssiStr = reading.Rssi > -127 ? $" • {reading.Rssi} dBm" : "";
                     double deltaTF = Summary.Chassis?.RadiatorDeltaTF ?? 0;
-                    return $"🔒 Radiator Sensor {reading.MacAddress}: {reading.TemperatureF:F1}°F / {reading.TemperatureC:F1}°C{humStr}{rssiStr} (Exhaust ΔT +{deltaTF:F1}°F).";
+                    string label = IsLiquidCooler ? "Radiator Sensor" : "Exhaust Sensor";
+                    return $"🔒 {label} {reading.MacAddress}: {reading.TemperatureF:F1}°F / {reading.TemperatureC:F1}°C{humStr}{rssiStr} (Exhaust ΔT +{deltaTF:F1}°F).";
                 }
 
                 return $"🔒 Locked to {Config.BleRadiatorSensorMac} (Waiting for beacon packet from this sensor...).";
@@ -1163,7 +1291,50 @@ namespace InFox.ViewModels
             }
         }
 
-        public string ApiEndpointUrl => $"http://localhost:{Config.ApiPort}";
+        public string ApiEndpointUrl
+        {
+            get
+            {
+                int port = Config.ApiPort > 0 ? Config.ApiPort : 8765;
+                if (Config.ApiBindLocalhostOnly)
+                {
+                    return $"http://localhost:{port}";
+                }
+
+                string ip = GetPrimaryLocalIpAddress() ?? "localhost";
+                return $"http://{ip}:{port}";
+            }
+        }
+
+        private static string? GetPrimaryLocalIpAddress()
+        {
+            try
+            {
+                var nics = NetworkInterface.GetAllNetworkInterfaces();
+                if (nics == null) return null;
+
+                var candidate = nics
+                    .Where(n => n.OperationalStatus == OperationalStatus.Up &&
+                                n.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
+                                n.NetworkInterfaceType != NetworkInterfaceType.Tunnel)
+                    .OrderByDescending(n => n.NetworkInterfaceType == NetworkInterfaceType.Ethernet ? 2 :
+                                            n.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 ? 1 : 0);
+
+                foreach (var nic in candidate)
+                {
+                    var ipProps = nic.GetIPProperties();
+                    var ipv4 = ipProps.UnicastAddresses
+                        .FirstOrDefault(a => a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork &&
+                                             !System.Net.IPAddress.IsLoopback(a.Address));
+                    if (ipv4 != null)
+                    {
+                        return ipv4.Address.ToString();
+                    }
+                }
+            }
+            catch { }
+            return null;
+        }
         public string VersionString => $"v{UpdateService.Instance.GetCurrentVersionString()}";
 
         // Admin Check & Non-Intrusive Notice
@@ -1293,7 +1464,9 @@ namespace InFox.ViewModels
             {
                 foreach (var m in AllMetrics)
                 {
-                    if (m.Category == targetCategory.Value || (targetCategory == HardwareCategory.Cpu && m.Category == HardwareCategory.Cooler))
+                    if (m.Category == targetCategory.Value || 
+                        (targetCategory == HardwareCategory.Cpu && m.Category == HardwareCategory.Cooler) ||
+                        (targetCategory == HardwareCategory.Network && m.Category == HardwareCategory.Battery))
                     {
                         // If GPU detail, only show sensors for the currently selected GPU if available
                         if (targetCategory == HardwareCategory.Gpu && !string.IsNullOrEmpty(CurrentGpu.Id))

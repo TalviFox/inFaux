@@ -1,4 +1,4 @@
-# inFaux — Stream Deck Companion Plugin
+# inFaux - Stream Deck Companion Plugin
 
 > Zero-config, real-time hardware telemetry gauges on your physical Elgato Stream Deck, powered natively by [inFaux](https://github.com/TalviFox/inFaux).
 
@@ -10,7 +10,7 @@
 - **GPU Monitor:** Live board wattage, GPU temperature, load percentage, and dynamic load bar.
 - **RAM Monitor:** Live GB used out of total installed capacity, memory load percentage, and color-coded memory bar.
 - **Network Monitor:** Live real-time bidirectional download and upload throughput.
-- **Zero Configuration:** Automatically connects to inFaux's local REST API on `http://127.0.0.1:8765/api/v1/summary`. No URLs or JSON paths to configure—just drag and drop.
+- **Zero Configuration:** Automatically connects to inFaux's local REST API on `http://127.0.0.1:8765/api/v1/summary`. No URLs or JSON paths to configure - just drag and drop.
 - **Offline Resilient:** Shows clean `OFFLINE` status if inFaux is not running, and resumes the instant inFaux starts up.
 
 ---

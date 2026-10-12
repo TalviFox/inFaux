@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows;
 using InFox.Api;
@@ -13,6 +14,15 @@ namespace InFox
     {
         private static Mutex? _singleInstanceMutex;
         private MainWindow? _mainWindow;
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        private static extern uint RegisterWindowMessage(string lpString);
+
+        [DllImport("user32.dll")]
+        private static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        private const int HWND_BROADCAST = 0xFFFF;
+        public static readonly uint WM_SHOW_INFAUX = RegisterWindowMessage("inFaux_ShowDashboardMessage");
 
         protected override async void OnStartup(StartupEventArgs e)
         {
@@ -45,7 +55,8 @@ namespace InFox
             _singleInstanceMutex = new Mutex(true, mutexName, out bool createdNew);
             if (!createdNew)
             {
-                System.Windows.MessageBox.Show("inFaux is already running in the background.", "inFaux", MessageBoxButton.OK, MessageBoxImage.Information);
+                // Silently summon the existing running instance to the foreground
+                PostMessage((IntPtr)HWND_BROADCAST, WM_SHOW_INFAUX, IntPtr.Zero, IntPtr.Zero);
                 Shutdown();
                 return;
             }
@@ -166,7 +177,7 @@ namespace InFox
             _mainWindow.Activate();
         }
 
-        private void ExitApp()
+        internal void ExitApp()
         {
             LoggingService.Instance.Info("App", "Shutting down inFaux...");
             try

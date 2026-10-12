@@ -296,7 +296,8 @@ namespace InFox.Engine.Harvesters
                             };
 
                             bool isDiscrete = DetermineIfDiscrete(desc.Description, cpuName, desc.VendorId);
-                            string resolvedName = ResolveGpuName(desc.Description, cpuName, desc.DeviceId);
+                            string gpuId = $"/gpu-{vendor.ToLowerInvariant()}/{adapterIndex}";
+                            string resolvedName = ResolveGpuName(gpuId, desc.Description, cpuName, desc.DeviceId, out bool isCustom);
 
                             double vramTotalGb = Math.Round((ulong)desc.DedicatedVideoMemory / (1024.0 * 1024.0 * 1024.0), 2);
                             double sharedTotalGb = Math.Round((ulong)desc.SharedSystemMemory / (1024.0 * 1024.0 * 1024.0), 2);
@@ -335,11 +336,12 @@ namespace InFox.Engine.Harvesters
                                 catch { }
                             }
 
-                            string gpuId = $"/gpu-{vendor.ToLowerInvariant()}/{adapterIndex}";
                             var gpu = new GpuSummary
                             {
                                 Id = gpuId,
                                 Name = resolvedName,
+                                OriginalHardwareName = desc.Description,
+                                IsCustomName = isCustom,
                                 Vendor = vendor,
                                 IsDiscrete = isDiscrete,
                                 VramTotalGb = vramTotalGb > 0 ? vramTotalGb : sharedTotalGb,
@@ -536,26 +538,28 @@ namespace InFox.Engine.Harvesters
             // NVIDIA discrete GPUs
             if (vendorId == 0x10DE) return true;
 
-            // AMD APUs
+            // AMD
             if (vendorId == 0x1002)
             {
-                if (descUpper.Contains("780M") || descUpper.Contains("680M") || descUpper.Contains("890M") ||
-                    descUpper.Contains("610M") || descUpper.Contains("VEGA") || descUpper.Contains("RADEON(TM) GRAPHICS"))
+                // Explicit discrete AMD series
+                if (descUpper.Contains("RX ") || descUpper.Contains("PRO W") || descUpper.Contains("RADEON PRO") || descUpper.Contains("FIREPRO"))
+                {
+                    return true;
+                }
+
+                // Known APU identifiers
+                if (descUpper.Contains("780M") || descUpper.Contains("760M") || descUpper.Contains("740M") ||
+                    descUpper.Contains("680M") || descUpper.Contains("660M") || descUpper.Contains("610M") ||
+                    descUpper.Contains("890M") || descUpper.Contains("880M") ||
+                    descUpper.Contains("VEGA") || (descUpper.Contains("RADEON") && descUpper.Contains("GRAPHICS")))
                 {
                     return false;
                 }
 
-                if (cpuUpper.Contains("RYZEN") && (cpuUpper.Contains("7840") || cpuUpper.Contains("6800") || cpuUpper.Contains("8840") || cpuUpper.Contains("5700G") || cpuUpper.Contains("5600G")))
+                // Paired with AMD CPU without discrete tags -> integrated
+                if (cpuUpper.Contains("RYZEN") || cpuUpper.Contains("AMD"))
                 {
-                    if (!descUpper.Contains("RX ") && !descUpper.Contains("XT") && !descUpper.Contains("PRO W"))
-                    {
-                        return false;
-                    }
-                }
-
-                if (descUpper.Contains("RX ") || descUpper.Contains("PRO W") || descUpper.Contains("RADEON PRO"))
-                {
-                    return true;
+                    return false;
                 }
 
                 return false;
@@ -571,25 +575,56 @@ namespace InFox.Engine.Harvesters
             return false;
         }
 
-        private static string ResolveGpuName(string description, string cpuName, uint deviceId)
+        public static string ResolveGpuName(string gpuId, string description, string cpuName, uint deviceId, out bool isCustom)
         {
-            if (description.Equals("AMD Radeon(TM) Graphics", StringComparison.OrdinalIgnoreCase) ||
-                description.Equals("AMD Radeon Graphics", StringComparison.OrdinalIgnoreCase))
+            isCustom = false;
+
+            // 1. Check user aliases from config first
+            try
             {
-                string cpuUpper = cpuName.ToUpperInvariant();
-                if (cpuUpper.Contains("7840") || cpuUpper.Contains("7940") || cpuUpper.Contains("8840") || cpuUpper.Contains("8945"))
+                var aliases = InFox.Services.ConfigManager.Instance?.GetGpuNameAliasesSnapshot();
+                if (aliases != null)
                 {
-                    return "AMD Radeon 780M Graphics";
-                }
-                if (cpuUpper.Contains("6800") || cpuUpper.Contains("6600") || cpuUpper.Contains("6900"))
-                {
-                    return "AMD Radeon 680M Graphics";
-                }
-                if (cpuUpper.Contains("7730") || cpuUpper.Contains("7530") || cpuUpper.Contains("5800") || cpuUpper.Contains("5700"))
-                {
-                    return "AMD Radeon Vega Graphics";
+                    if (!string.IsNullOrEmpty(gpuId) && aliases.TryGetValue(gpuId, out var alias) && !string.IsNullOrWhiteSpace(alias))
+                    {
+                        isCustom = true;
+                        return alias.Trim();
+                    }
+                    if (!string.IsNullOrEmpty(description) && aliases.TryGetValue(description, out alias) && !string.IsNullOrWhiteSpace(alias))
+                    {
+                        isCustom = true;
+                        return alias.Trim();
+                    }
+                    // Also check simplified "gpu_0", "gpu_1"
+                    string shortId = gpuId.Replace("/gpu-amd/", "gpu_").Replace("/gpu-nvidia/", "gpu_").Replace("/gpu-intel/", "gpu_");
+                    if (aliases.TryGetValue(shortId, out alias) && !string.IsNullOrWhiteSpace(alias))
+                    {
+                        isCustom = true;
+                        return alias.Trim();
+                    }
                 }
             }
+            catch { }
+
+            // 2. Normalize description (strip driver trademark noise)
+            string normDesc = description
+                .Replace("(TM)", "", StringComparison.OrdinalIgnoreCase)
+                .Replace("(tm)", "", StringComparison.OrdinalIgnoreCase)
+                .Replace("(R)", "", StringComparison.OrdinalIgnoreCase)
+                .Replace("(r)", "", StringComparison.OrdinalIgnoreCase)
+                .Replace("™", "")
+                .Replace("®", "")
+                .Trim();
+
+            while (normDesc.Contains("  ")) normDesc = normDesc.Replace("  ", " ");
+
+            if (!string.IsNullOrWhiteSpace(normDesc))
+            {
+                if (normDesc.Equals("Radeon Graphics", StringComparison.OrdinalIgnoreCase))
+                    return "AMD Radeon Graphics";
+                return normDesc;
+            }
+
             return description;
         }
 

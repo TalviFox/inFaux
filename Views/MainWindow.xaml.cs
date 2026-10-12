@@ -115,6 +115,22 @@ namespace InFox.Views
                 handled = true;
                 return IntPtr.Zero;
             }
+            // Second-instance broadcast wakeup: summon dashboard to front
+            if (msg == (int)App.WM_SHOW_INFAUX)
+            {
+                Dispatcher.InvokeAsync(() =>
+                {
+                    Show();
+                    if (WindowState == WindowState.Minimized)
+                    {
+                        WindowState = WindowState.Normal;
+                    }
+                    Activate();
+                });
+                handled = true;
+                return IntPtr.Zero;
+            }
+
             return IntPtr.Zero;
         }
 
@@ -205,18 +221,25 @@ namespace InFox.Views
             Hide();
         }
 
+        private void OnExitAppClick(object sender, RoutedEventArgs e)
+        {
+            (System.Windows.Application.Current as App)?.ExitApp();
+        }
+
         private void OnOpenApiInBrowserClick(object sender, RoutedEventArgs e)
         {
-            int port = ConfigManager.Instance.Config.ApiPort;
+            string url = (DataContext as MainViewModel)?.ApiEndpointUrl ?? $"http://localhost:{ConfigManager.Instance.Config.ApiPort}";
             Process.Start(new ProcessStartInfo
             {
-                FileName = $"http://localhost:{port}/api/v1/summary",
+                FileName = $"{url}/api/v1/summary",
                 UseShellExecute = true
             });
         }
 
         private Action? _onModalPrimaryAction;
         private Action? _onModalSecondaryAction;
+        private Action? _onModalTertiaryAction;
+        private Action<string>? _onModalPromptSubmit;
 
         public void ShowInAppModal(
             string title, 
@@ -230,10 +253,14 @@ namespace InFox.Views
         {
             _onModalPrimaryAction = onPrimary;
             _onModalSecondaryAction = onSecondary;
+            _onModalTertiaryAction = null;
+            _onModalPromptSubmit = null;
 
             ModalTitleText.Text = title;
             ModalMessageText.Text = message;
             ModalIconText.Text = icon;
+            ModalInputContainer.Visibility = Visibility.Collapsed;
+            ModalTertiaryButton.Visibility = Visibility.Collapsed;
 
             if (!string.IsNullOrWhiteSpace(details))
             {
@@ -261,11 +288,59 @@ namespace InFox.Views
             InAppModalOverlay.Visibility = Visibility.Visible;
         }
 
+        public void ShowInAppPrompt(
+            string title,
+            string message,
+            string initialValue,
+            string inputLabel,
+            string icon = "✏️",
+            string primaryButtonText = "Save",
+            string secondaryButtonText = "Cancel",
+            string? tertiaryButtonText = null,
+            Action<string>? onSave = null,
+            Action? onReset = null)
+        {
+            _onModalPromptSubmit = onSave;
+            _onModalTertiaryAction = onReset;
+            _onModalPrimaryAction = null;
+            _onModalSecondaryAction = null;
+
+            ModalTitleText.Text = title;
+            ModalMessageText.Text = message;
+            ModalIconText.Text = icon;
+            ModalInputLabel.Text = inputLabel;
+            ModalInputBox.Text = initialValue;
+            ModalInputContainer.Visibility = Visibility.Visible;
+            ModalDetailsCard.Visibility = Visibility.Collapsed;
+
+            ModalPrimaryButton.Content = primaryButtonText;
+            ModalSecondaryButton.Content = secondaryButtonText;
+            ModalSecondaryButton.Visibility = Visibility.Visible;
+
+            if (!string.IsNullOrEmpty(tertiaryButtonText) && onReset != null)
+            {
+                ModalTertiaryButton.Content = tertiaryButtonText;
+                ModalTertiaryButton.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                ModalTertiaryButton.Visibility = Visibility.Collapsed;
+            }
+
+            InAppModalOverlay.Visibility = Visibility.Visible;
+            ModalInputBox.Focus();
+            ModalInputBox.SelectAll();
+        }
+
         public void HideInAppModal()
         {
             InAppModalOverlay.Visibility = Visibility.Collapsed;
+            ModalInputContainer.Visibility = Visibility.Collapsed;
+            ModalTertiaryButton.Visibility = Visibility.Collapsed;
             _onModalPrimaryAction = null;
             _onModalSecondaryAction = null;
+            _onModalTertiaryAction = null;
+            _onModalPromptSubmit = null;
         }
 
         private void OnModalBackdropMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -278,11 +353,35 @@ namespace InFox.Views
             HideInAppModal();
         }
 
+        private void OnModalInputBoxKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                OnModalPrimaryClick(sender, e);
+                e.Handled = true;
+            }
+            else if (e.Key == System.Windows.Input.Key.Escape)
+            {
+                HideInAppModal();
+                e.Handled = true;
+            }
+        }
+
         private void OnModalPrimaryClick(object sender, RoutedEventArgs e)
         {
-            var action = _onModalPrimaryAction;
+            var submitAction = _onModalPromptSubmit;
+            var primaryAction = _onModalPrimaryAction;
+            string inputText = ModalInputBox.Text;
             HideInAppModal();
-            action?.Invoke();
+
+            if (submitAction != null)
+            {
+                submitAction(inputText);
+            }
+            else
+            {
+                primaryAction?.Invoke();
+            }
         }
 
         private void OnModalSecondaryClick(object sender, RoutedEventArgs e)
@@ -290,6 +389,68 @@ namespace InFox.Views
             var action = _onModalSecondaryAction;
             HideInAppModal();
             action?.Invoke();
+        }
+
+        private void OnModalTertiaryClick(object sender, RoutedEventArgs e)
+        {
+            var action = _onModalTertiaryAction;
+            HideInAppModal();
+            action?.Invoke();
+        }
+
+        private void OnRenameGpuClick(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is not MainViewModel vm) return;
+            var gpu = vm.CurrentGpu;
+            if (gpu == null) return;
+            PromptRenameGpu(gpu);
+        }
+
+        private void OnRenameGpuContextClick(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is not MainViewModel vm) return;
+            var fe = sender as FrameworkElement;
+            var gpu = (fe?.DataContext as InFox.Models.Sensors.GpuSummary) 
+                      ?? vm.Summary.Gpus.Find(g => g.Id == fe?.Tag as string) 
+                      ?? vm.CurrentGpu;
+            if (gpu == null) return;
+            PromptRenameGpu(gpu);
+        }
+
+        private void OnResetGpuNameContextClick(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is not MainViewModel vm) return;
+            var fe = sender as FrameworkElement;
+            var gpu = (fe?.DataContext as InFox.Models.Sensors.GpuSummary) 
+                      ?? vm.Summary.Gpus.Find(g => g.Id == fe?.Tag as string) 
+                      ?? vm.CurrentGpu;
+            if (gpu == null) return;
+            vm.RenameGpu(gpu.Id, "");
+        }
+
+        private void PromptRenameGpu(InFox.Models.Sensors.GpuSummary gpu)
+        {
+            if (DataContext is not MainViewModel vm) return;
+
+            string initialName = gpu.IsCustomName ? gpu.Name : (!string.IsNullOrEmpty(gpu.ShortName) ? gpu.ShortName : gpu.Name);
+
+            ShowInAppPrompt(
+                title: "Customize GPU Display Name",
+                message: $"Set a custom name or short pill label for {gpu.Name} ({gpu.Id}). This label propagates across inFaux, the REST/WebSocket API, and your Elgato Stream Deck companion keys.",
+                initialValue: initialName,
+                inputLabel: "Display Name / Pill Label:",
+                icon: "✏️",
+                primaryButtonText: "Save Name",
+                secondaryButtonText: "Cancel",
+                tertiaryButtonText: gpu.IsCustomName ? "Reset to Default" : null,
+                onSave: (newName) =>
+                {
+                    vm.RenameGpu(gpu.Id, newName);
+                },
+                onReset: () =>
+                {
+                    vm.RenameGpu(gpu.Id, "");
+                });
         }
 
         private void OnModalCopyClick(object sender, RoutedEventArgs e)

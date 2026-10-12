@@ -165,24 +165,111 @@ namespace InFox.Models.Sensors
             }
         }
 
-        [JsonIgnore]
+        [JsonPropertyName("shortName")]
         public string ShortName
         {
             get
             {
-                if (string.IsNullOrEmpty(Name)) return "GPU";
-                return Name
-                    .Replace("NVIDIA GeForce RTX ", "RTX ")
-                    .Replace("NVIDIA GeForce GTX ", "GTX ")
-                    .Replace("NVIDIA GeForce ", "")
-                    .Replace("NVIDIA ", "")
-                    .Replace("Intel(R) UHD Graphics ", "Intel UHD ")
-                    .Replace("Intel(R) Iris(R) Xe Graphics ", "Iris Xe ")
-                    .Replace("Intel(R) Arc(TM) Graphics", "Intel Arc")
-                    .Replace("AMD Radeon RX ", "RX ")
-                    .Replace("AMD Radeon(TM) Graphics", "Radeon Graphics")
-                    .Replace("AMD Radeon Graphics", "Radeon Graphics")
-                    .Replace("AMD Radeon ", "");
+                if (string.IsNullOrWhiteSpace(Name)) return "GPU";
+
+                // 1. If explicitly marked as custom name and reasonably concise, prioritize it directly!
+                if (IsCustomName && Name.Trim().Length <= 14)
+                {
+                    return Name.Trim();
+                }
+
+                // 2. Check user alias from config if available
+                try
+                {
+                    var aliases = InFox.Services.ConfigManager.Instance?.GetGpuNameAliasesSnapshot();
+                    if (aliases != null && !string.IsNullOrEmpty(Id))
+                    {
+                        if (aliases.TryGetValue(Id, out var alias) && !string.IsNullOrWhiteSpace(alias))
+                        {
+                            if (alias.Trim().Length <= 14) return alias.Trim();
+                        }
+                        string shortId = Id.Replace("/gpu-amd/", "gpu_").Replace("/gpu-nvidia/", "gpu_").Replace("/gpu-intel/", "gpu_");
+                        if (aliases.TryGetValue(shortId, out alias) && !string.IsNullOrWhiteSpace(alias))
+                        {
+                            if (alias.Trim().Length <= 14) return alias.Trim();
+                        }
+                    }
+                }
+                catch { }
+
+                // 3. Normalize trademarks and redundant whitespace
+                string s = Name
+                    .Replace("(TM)", "", StringComparison.OrdinalIgnoreCase)
+                    .Replace("(tm)", "", StringComparison.OrdinalIgnoreCase)
+                    .Replace("(R)", "", StringComparison.OrdinalIgnoreCase)
+                    .Replace("(r)", "", StringComparison.OrdinalIgnoreCase)
+                    .Replace("™", "")
+                    .Replace("®", "")
+                    .Trim();
+
+                while (s.Contains("  ")) s = s.Replace("  ", " ");
+
+                // 4. AMD APUs: e.g. "Vega 8", "Vega 7", "Vega 6", "Vega 10", "780M", "680M", "890M", "610M"
+                var vegaMatch = System.Text.RegularExpressions.Regex.Match(s, @"\bVega\s*(\d+)?\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (vegaMatch.Success)
+                {
+                    return vegaMatch.Groups[1].Success ? $"Vega {vegaMatch.Groups[1].Value}" : "Vega";
+                }
+
+                var apuMatch = System.Text.RegularExpressions.Regex.Match(s, @"\b(\d{3}M)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (apuMatch.Success)
+                {
+                    return apuMatch.Groups[1].Value.ToUpperInvariant();
+                }
+
+                // 5. NVIDIA Discrete
+                if (s.Contains("RTX ", StringComparison.OrdinalIgnoreCase))
+                {
+                    int idx = s.IndexOf("RTX ", StringComparison.OrdinalIgnoreCase);
+                    return s.Substring(idx).Trim();
+                }
+                if (s.Contains("GTX ", StringComparison.OrdinalIgnoreCase))
+                {
+                    int idx = s.IndexOf("GTX ", StringComparison.OrdinalIgnoreCase);
+                    return s.Substring(idx).Trim();
+                }
+
+                // 6. AMD Discrete (RX)
+                if (s.Contains("RX ", StringComparison.OrdinalIgnoreCase))
+                {
+                    int idx = s.IndexOf("RX ", StringComparison.OrdinalIgnoreCase);
+                    return s.Substring(idx).Trim();
+                }
+
+                // 7. Intel
+                if (s.Contains("Arc ", StringComparison.OrdinalIgnoreCase))
+                {
+                    int idx = s.IndexOf("Arc ", StringComparison.OrdinalIgnoreCase);
+                    return s.Substring(idx).Trim();
+                }
+                if (s.Contains("Iris Xe", StringComparison.OrdinalIgnoreCase)) return "Iris Xe";
+                if (s.Contains("UHD ", StringComparison.OrdinalIgnoreCase))
+                {
+                    int idx = s.IndexOf("UHD ", StringComparison.OrdinalIgnoreCase);
+                    return s.Substring(idx).Replace("Graphics", "", StringComparison.OrdinalIgnoreCase).Trim();
+                }
+
+                // 8. Clean redundant prefixes
+                s = s.Replace("AMD Radeon ", "", StringComparison.OrdinalIgnoreCase)
+                     .Replace("Radeon ", "", StringComparison.OrdinalIgnoreCase)
+                     .Replace("NVIDIA ", "", StringComparison.OrdinalIgnoreCase)
+                     .Replace("Intel ", "", StringComparison.OrdinalIgnoreCase)
+                     .Replace("Graphics", "", StringComparison.OrdinalIgnoreCase)
+                     .Trim();
+
+                if (string.IsNullOrWhiteSpace(s))
+                {
+                    if (Name.Contains("Radeon", StringComparison.OrdinalIgnoreCase)) return "Radeon";
+                    if (Name.Contains("Intel", StringComparison.OrdinalIgnoreCase)) return "Intel";
+                    if (Name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase) || Name.Contains("GeForce", StringComparison.OrdinalIgnoreCase)) return "GeForce";
+                    return "GPU";
+                }
+                return s;
             }
         }
 
@@ -218,8 +305,27 @@ namespace InFox.Models.Sensors
         [JsonPropertyName("id")]
         public string Id { get; set; } = string.Empty;
 
+        private string _name = "Unknown GPU";
         [JsonPropertyName("name")]
-        public string Name { get; set; } = "Unknown GPU";
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                if (_name != value)
+                {
+                    _name = value;
+                    PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(Name)));
+                    PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(ShortName)));
+                }
+            }
+        }
+
+        [JsonPropertyName("originalHardwareName")]
+        public string OriginalHardwareName { get; set; } = string.Empty;
+
+        [JsonPropertyName("isCustomName")]
+        public bool IsCustomName { get; set; } = false;
 
         [JsonPropertyName("isDiscrete")]
         public bool IsDiscrete { get; set; } = true;
@@ -288,6 +394,45 @@ namespace InFox.Models.Sensors
         }
     }
 
+    public class DimmModuleSummary
+    {
+        [JsonPropertyName("slot")]
+        public string Slot { get; set; } = string.Empty;
+
+        [JsonPropertyName("bankLocator")]
+        public string BankLocator { get; set; } = string.Empty;
+
+        [JsonPropertyName("capacityGb")]
+        public double CapacityGb { get; set; }
+
+        [JsonPropertyName("manufacturer")]
+        public string Manufacturer { get; set; } = string.Empty;
+
+        [JsonPropertyName("partNumber")]
+        public string PartNumber { get; set; } = string.Empty;
+
+        [JsonPropertyName("serialNumber")]
+        public string SerialNumber { get; set; } = string.Empty;
+
+        [JsonPropertyName("configuredSpeedMts")]
+        public int? ConfiguredSpeedMts { get; set; }
+
+        [JsonPropertyName("ratedSpeedMts")]
+        public int? RatedSpeedMts { get; set; }
+
+        [JsonPropertyName("memoryType")]
+        public string MemoryType { get; set; } = "DDR5";
+
+        [JsonPropertyName("formFactor")]
+        public string FormFactor { get; set; } = "DIMM";
+
+        [JsonPropertyName("voltageV")]
+        public double? VoltageV { get; set; }
+
+        [JsonIgnore]
+        public string DisplayTitle => $"{CapacityGb:F0} GB {MemoryType}-{(ConfiguredSpeedMts ?? RatedSpeedMts ?? 0)} ({Manufacturer})";
+    }
+
     public class MemorySummary
     {
         [JsonPropertyName("usedGb")]
@@ -304,6 +449,42 @@ namespace InFox.Models.Sensors
 
         [JsonPropertyName("speedMts")]
         public int? SpeedMts { get; set; }
+
+        [JsonPropertyName("committedGb")]
+        public double CommittedGb { get; set; }
+
+        [JsonPropertyName("commitLimitGb")]
+        public double CommitLimitGb { get; set; }
+
+        [JsonPropertyName("commitPercent")]
+        public double CommitPercent { get; set; }
+
+        [JsonPropertyName("kernelNonPagedMb")]
+        public double? KernelNonPagedMb { get; set; }
+
+        [JsonPropertyName("kernelPagedMb")]
+        public double? KernelPagedMb { get; set; }
+
+        [JsonPropertyName("memoryType")]
+        public string MemoryType { get; set; } = "DDR5";
+
+        [JsonPropertyName("formFactor")]
+        public string FormFactor { get; set; } = "DIMM";
+
+        [JsonPropertyName("slotsUsed")]
+        public int SlotsUsed { get; set; }
+
+        [JsonPropertyName("totalSlots")]
+        public int TotalSlots { get; set; } = 2;
+
+        [JsonPropertyName("channelLayout")]
+        public string ChannelLayout { get; set; } = "Dual Channel";
+
+        [JsonPropertyName("modules")]
+        public List<DimmModuleSummary> Modules { get; set; } = new();
+
+        [JsonIgnore]
+        public string TopologyDescription => $"{SlotsUsed} of {TotalSlots} Slots Populated ({ChannelLayout})";
     }
 
     public class DriveSummary
@@ -385,6 +566,18 @@ namespace InFox.Models.Sensors
         [JsonPropertyName("hasBattery")]
         public bool HasBattery { get; set; }
 
+        [JsonPropertyName("isUps")]
+        public bool IsUps { get; set; }
+
+        [JsonPropertyName("deviceName")]
+        public string DeviceName { get; set; } = string.Empty;
+
+        [JsonPropertyName("manufacturer")]
+        public string Manufacturer { get; set; } = string.Empty;
+
+        [JsonIgnore]
+        public string DisplayLabel => IsUps ? "UPS" : "BATTERY";
+
         [JsonPropertyName("isPluggedIn")]
         public bool IsPluggedIn { get; set; }
 
@@ -422,7 +615,7 @@ namespace InFox.Models.Sensors
             {
                 if (!HasBattery) return "";
                 if (IsCharging) return "Charging";
-                if (IsPluggedIn) return "Plugged In";
+                if (IsPluggedIn) return IsUps ? "Online (AC)" : "Plugged In";
                 if (EstimatedRuntimeMinutes.HasValue && EstimatedRuntimeMinutes.Value > 0)
                 {
                     int mins = EstimatedRuntimeMinutes.Value;
@@ -430,7 +623,7 @@ namespace InFox.Models.Sensors
                     int m = mins % 60;
                     return h > 0 ? $"{h}h {m}m" : $"{m}m";
                 }
-                return "On Battery";
+                return IsUps ? "On Battery Backup" : "On Battery";
             }
         }
 
@@ -441,15 +634,25 @@ namespace InFox.Models.Sensors
             {
                 if (!HasBattery) return "No battery or UPS detected.";
                 var sb = new System.Text.StringBuilder();
-                sb.AppendLine("Power & Battery Status:");
-                sb.AppendLine(IsPluggedIn ? "• AC Power: Connected 🔌 (Utility / Wall)" : "• AC Power: Disconnected 🔋 (On Battery / Backup)");
-                sb.AppendLine(IsCharging ? "• Battery: Actively Charging ⚡" : (IsPluggedIn ? "• Battery: Idle / Conservation (Not Charging)" : "• Battery: Discharging"));
-                if (Percent.HasValue) sb.AppendLine($"• Current Level: {Percent.Value:F0}%");
+                if (IsUps)
+                {
+                    string name = !string.IsNullOrEmpty(DeviceName) ? DeviceName : "Uninterruptible Power Supply (UPS)";
+                    sb.AppendLine($"UPS Telemetry — {name}:");
+                    sb.AppendLine(IsPluggedIn ? "• AC Line: Connected 🔌 (Utility / Wall Grid Normal)" : "• AC Line: Disconnected 🔋 (On Battery Inverter)");
+                    sb.AppendLine(IsCharging ? "• Battery Pack: Actively Recharging ⚡" : (IsPluggedIn ? "• Battery Pack: Standby / Fully Charged" : "• Battery Pack: Discharging to Inverter"));
+                }
+                else
+                {
+                    sb.AppendLine("Power & Battery Status:");
+                    sb.AppendLine(IsPluggedIn ? "• AC Power: Connected 🔌 (Utility / Wall)" : "• AC Power: Disconnected 🔋 (On Battery / Backup)");
+                    sb.AppendLine(IsCharging ? "• Battery: Actively Charging ⚡" : (IsPluggedIn ? "• Battery: Idle / Conservation (Not Charging)" : "• Battery: Discharging"));
+                }
+                if (Percent.HasValue) sb.AppendLine($"• Battery Level: {Percent.Value:F0}%");
                 if (EstimatedRuntimeMinutes.HasValue && EstimatedRuntimeMinutes.Value > 0)
                 {
                     int h = EstimatedRuntimeMinutes.Value / 60;
                     int m = EstimatedRuntimeMinutes.Value % 60;
-                    sb.AppendLine($"• Estimated Remaining: {h}h {m:D2}m");
+                    sb.AppendLine(h > 0 ? $"• Estimated Backup Runtime: {h}h {m:D2}m" : $"• Estimated Backup Runtime: {m} min");
                 }
                 return sb.ToString().TrimEnd();
             }
@@ -626,19 +829,19 @@ namespace InFox.Models.Sensors
                 if (IsVirtualMachine)
                     return $"VM Thermal Impact: +{(AdditiveThermalDeltaC ?? 0):F0}°C ΔT";
 
-                string casePart = IsChassisAirMeasured
-                    ? $"Case: {ChassisAirTempF:F0}°F ({ChassisAirTempC:F0}°C) 📡"
-                    : $"Est. Case: {ChassisAirTempF:F0}°F ({ChassisAirTempC:F0}°C)";
-
                 string roomPart = IsAmbientMeasured
                     ? $"Room: {EstimatedAmbientTempF:F0}°F ({EstimatedAmbientTempC:F0}°C) 📡"
                     : $"Est. Room: {EstimatedAmbientTempF:F0}°F ({EstimatedAmbientTempC:F0}°C)";
 
-                string radPart = IsRadiatorExhaustMeasured && RadiatorExhaustTempF.HasValue
-                    ? $" • Rad: {RadiatorExhaustTempF.Value:F0}°F (ΔT +{RadiatorDeltaTF:F0}°F) 📡"
+                string casePart = IsChassisAirMeasured
+                    ? $"Case: {ChassisAirTempF:F0}°F ({ChassisAirTempC:F0}°C) 📡"
+                    : $"Est. Case: {ChassisAirTempF:F0}°F ({ChassisAirTempC:F0}°C)";
+
+                string exhaustPart = IsRadiatorExhaustMeasured && RadiatorExhaustTempF.HasValue
+                    ? $" • Exhaust: {RadiatorExhaustTempF.Value:F0}°F (ΔT +{RadiatorDeltaTF:F0}°F) 📡"
                     : "";
 
-                return $"{casePart} • {roomPart}{radPart}";
+                return $"{roomPart} • {casePart}{exhaustPart}";
             }
         }
     }

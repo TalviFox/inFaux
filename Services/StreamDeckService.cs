@@ -18,7 +18,7 @@ namespace InFox.Services
 
     public static class StreamDeckService
     {
-        public const string BundledVersion = "1.1.0";
+        public const string BundledVersion = "1.2.0";
         public const string PluginUuid = "com.foxden.infaux.sdPlugin";
 
         private static string AppDataPath => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);

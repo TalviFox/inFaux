@@ -122,7 +122,7 @@ namespace InFox.Models.Sensors
                 MetricType.Temperature => $"{val:F1} {unit}",
                 MetricType.Load => $"{val:F1} %",
                 MetricType.Power => $"{val:F1} W",
-                MetricType.Clock => val >= 1000 ? $"{val / 1000.0:F2} GHz" : $"{val:F0} MHz",
+                MetricType.Clock => unit == "MT/s" ? $"{val:F0} MT/s" : (unit == "MHz" ? $"{val:F0} MHz" : (val >= 1000 ? $"{val / 1000.0:F2} GHz" : $"{val:F0} MHz")),
                 MetricType.Voltage => $"{val:F3} V",
                 MetricType.Fan => $"{val:F0} RPM",
                 MetricType.Throughput => $"{val:F2} {unit}",

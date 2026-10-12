@@ -83,9 +83,32 @@ namespace InFox.Engine.Harvesters
             public ulong ToUInt64() => ((ulong)dwHighDateTime << 32) | dwLowDateTime;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct PERFORMANCE_INFORMATION
+        {
+            public int cb;
+            public UIntPtr CommitTotal;
+            public UIntPtr CommitLimit;
+            public UIntPtr CommitPeak;
+            public UIntPtr PhysicalTotal;
+            public UIntPtr PhysicalAvailable;
+            public UIntPtr SystemCache;
+            public UIntPtr KernelTotal;
+            public UIntPtr KernelPaged;
+            public UIntPtr KernelNonpaged;
+            public UIntPtr PageSize;
+            public int HandleCount;
+            public int ProcessCount;
+            public int ThreadCount;
+        }
+
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GlobalMemoryStatusEx([In, Out] MEMORYSTATUSEX lpBuffer);
+
+        [DllImport("psapi.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GetPerformanceInfo(out PERFORMANCE_INFORMATION pPerformanceInformation, int cb);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -162,8 +185,11 @@ namespace InFox.Engine.Harvesters
                 // Initialize PDH Query for zero-driver frequencies and thermals
                 InitPdhCounters();
 
-                // Query physical memory speed (MT/s) via SMBIOS / WMI
-                _ = Task.Run(InitRamSpeed);
+                // Query physical memory topology and speed via SMBIOS / WMI
+                _ = Task.Run(InitMemoryTopology);
+
+                // Probe battery identity (UPS detection)
+                _ = Task.Run(CheckBatteryIdentity);
             }
             catch (Exception ex)
             {
@@ -215,36 +241,243 @@ namespace InFox.Engine.Harvesters
         }
 
         private int? _cachedRamSpeedMts;
+        private MemorySummary? _cachedMemoryTopology;
 
-        private void InitRamSpeed()
+        private void InitMemoryTopology()
         {
             try
             {
-                using var searcher = new System.Management.ManagementObjectSearcher("SELECT ConfiguredClockSpeed, Speed FROM Win32_PhysicalMemory");
+                var topo = new MemorySummary();
                 int maxSpeed = 0;
-                foreach (var obj in searcher.Get())
+
+                // 1. Total slot capacity from Win32_PhysicalMemoryArray
+                try
                 {
-                    if (obj["ConfiguredClockSpeed"] != null && Convert.ToInt32(obj["ConfiguredClockSpeed"]) > 0)
+                    using var arraySearcher = new System.Management.ManagementObjectSearcher("SELECT MemoryDevices FROM Win32_PhysicalMemoryArray");
+                    foreach (var obj in arraySearcher.Get())
                     {
-                        int s = Convert.ToInt32(obj["ConfiguredClockSpeed"]);
-                        if (s > maxSpeed) maxSpeed = s;
-                    }
-                    else if (obj["Speed"] != null && Convert.ToInt32(obj["Speed"]) > 0)
-                    {
-                        int s = Convert.ToInt32(obj["Speed"]);
-                        if (s > maxSpeed) maxSpeed = s;
+                        if (obj["MemoryDevices"] != null && Convert.ToInt32(obj["MemoryDevices"]) > 0)
+                        {
+                            topo.TotalSlots = Convert.ToInt32(obj["MemoryDevices"]);
+                        }
                     }
                 }
+                catch { }
+
+                // 2. Individual modules from Win32_PhysicalMemory
+                using var searcher = new System.Management.ManagementObjectSearcher(
+                    "SELECT Capacity, Manufacturer, PartNumber, SerialNumber, DeviceLocator, BankLabel, ConfiguredClockSpeed, Speed, SMBIOSMemoryType, FormFactor, ConfiguredVoltage FROM Win32_PhysicalMemory");
+
+                foreach (var obj in searcher.Get())
+                {
+                    var mod = new DimmModuleSummary();
+
+                    if (obj["Capacity"] != null && Convert.ToInt64(obj["Capacity"]) > 0)
+                    {
+                        mod.CapacityGb = Math.Round(Convert.ToInt64(obj["Capacity"]) / (1024.0 * 1024.0 * 1024.0), 1);
+                    }
+
+                    mod.Manufacturer = (obj["Manufacturer"]?.ToString() ?? "Unknown").Trim();
+                    mod.PartNumber = (obj["PartNumber"]?.ToString() ?? "").Trim();
+                    mod.SerialNumber = (obj["SerialNumber"]?.ToString() ?? "").Trim();
+                    mod.Slot = (obj["DeviceLocator"]?.ToString() ?? $"DIMM {topo.Modules.Count}").Trim();
+                    mod.BankLocator = (obj["BankLabel"]?.ToString() ?? "").Trim();
+
+                    if (obj["ConfiguredClockSpeed"] != null && Convert.ToInt32(obj["ConfiguredClockSpeed"]) > 0)
+                    {
+                        mod.ConfiguredSpeedMts = Convert.ToInt32(obj["ConfiguredClockSpeed"]);
+                        if (mod.ConfiguredSpeedMts.Value > maxSpeed) maxSpeed = mod.ConfiguredSpeedMts.Value;
+                    }
+
+                    if (obj["Speed"] != null && Convert.ToInt32(obj["Speed"]) > 0)
+                    {
+                        mod.RatedSpeedMts = Convert.ToInt32(obj["Speed"]);
+                        if (mod.RatedSpeedMts.Value > maxSpeed && !mod.ConfiguredSpeedMts.HasValue) maxSpeed = mod.RatedSpeedMts.Value;
+                    }
+
+                    int smbiosType = obj["SMBIOSMemoryType"] != null ? Convert.ToInt32(obj["SMBIOSMemoryType"]) : 0;
+                    mod.MemoryType = smbiosType switch
+                    {
+                        34 => "DDR5",
+                        35 => "LPDDR5",
+                        26 => "DDR4",
+                        30 => "LPDDR4",
+                        24 => "DDR3",
+                        _ => (mod.ConfiguredSpeedMts ?? mod.RatedSpeedMts ?? 0) >= 4800 ? "DDR5" : "DDR4"
+                    };
+
+                    int formFactor = obj["FormFactor"] != null ? Convert.ToInt32(obj["FormFactor"]) : 0;
+                    mod.FormFactor = formFactor switch
+                    {
+                        12 => "SODIMM",
+                        8 => "DIMM",
+                        _ => "DIMM"
+                    };
+
+                    if (obj["ConfiguredVoltage"] != null && Convert.ToInt32(obj["ConfiguredVoltage"]) > 0)
+                    {
+                        mod.VoltageV = Math.Round(Convert.ToInt32(obj["ConfiguredVoltage"]) / 1000.0, 3);
+                    }
+
+                    topo.Modules.Add(mod);
+                }
+
+                topo.SlotsUsed = topo.Modules.Count;
+                if (topo.TotalSlots < topo.SlotsUsed) topo.TotalSlots = topo.SlotsUsed;
+
+                if (topo.Modules.Count > 0)
+                {
+                    topo.MemoryType = topo.Modules[0].MemoryType;
+                    topo.FormFactor = topo.Modules[0].FormFactor;
+
+                    if (topo.Modules.Count == 1)
+                    {
+                        topo.ChannelLayout = "Single Channel";
+                    }
+                    else if (topo.Modules.Count == 2)
+                    {
+                        topo.ChannelLayout = topo.MemoryType == "DDR5" ? "Dual Channel (Quad 32-bit)" : "Dual Channel";
+                    }
+                    else if (topo.Modules.Count >= 4)
+                    {
+                        topo.ChannelLayout = "Dual Channel (4 DIMMs)";
+                    }
+                }
+
                 if (maxSpeed > 0)
                 {
                     _cachedRamSpeedMts = maxSpeed;
-                    LoggingService.Instance.Info("SystemHarvester", $"Detected physical RAM speed: {_cachedRamSpeedMts} MT/s");
+                    topo.SpeedMts = maxSpeed;
+                }
+
+                _cachedMemoryTopology = topo;
+                LoggingService.Instance.Info("SystemHarvester", $"Detected {topo.SlotsUsed}/{topo.TotalSlots} {topo.MemoryType} DIMMs at {_cachedRamSpeedMts ?? 0} MT/s ({topo.ChannelLayout})");
+            }
+            catch (Exception ex)
+            {
+                LoggingService.Instance.Warning("SystemHarvester", $"Failed to query memory topology via WMI: {ex.Message}");
+            }
+        }
+
+        private bool _isBatteryIdentityChecked;
+        private bool _isUps;
+        private string _batteryDeviceName = string.Empty;
+        private string _batteryManufacturer = string.Empty;
+        private int? _batteryEstimatedRunTimeMinutes;
+
+        private void CheckBatteryIdentity()
+        {
+            if (_isBatteryIdentityChecked) return;
+            _isBatteryIdentityChecked = true;
+            try
+            {
+                // Note: Win32_Battery does NOT contain a 'Manufacturer' property in standard WMI schema;
+                // querying non-existent columns throws ManagementException: "Invalid query".
+                using var searcher = new System.Management.ManagementObjectSearcher("SELECT Name, DeviceID, Caption, Description, EstimatedRunTime FROM Win32_Battery");
+                foreach (var obj in searcher.Get())
+                {
+                    string name = (obj["Name"]?.ToString() ?? "").Trim();
+                    string devId = (obj["DeviceID"]?.ToString() ?? "").Trim();
+                    string caption = (obj["Caption"]?.ToString() ?? "").Trim();
+                    string desc = (obj["Description"]?.ToString() ?? "").Trim();
+
+                    if (obj["EstimatedRunTime"] != null && int.TryParse(obj["EstimatedRunTime"]?.ToString(), out int estMins) && estMins > 0 && estMins < 1440)
+                    {
+                        _batteryEstimatedRunTimeMinutes = estMins;
+                    }
+
+                    string combined = $"{name} {devId} {caption} {desc}".ToLowerInvariant();
+                    bool upsMatch = combined.Contains("ups") || combined.Contains("cyberpower") || combined.Contains("apc") ||
+                                    combined.Contains("back-ups") || combined.Contains("smart-ups") || combined.Contains("tripp") ||
+                                    combined.Contains("eaton") || combined.Contains("powercom") || combined.Contains("hid battery") ||
+                                    combined.Contains("cp1500") || combined.Contains("cp1350") || combined.Contains("cp1000") ||
+                                    combined.Contains("cps") || devId.Contains("cps");
+
+                    if (!upsMatch && IsDesktopEnclosure())
+                    {
+                        upsMatch = true;
+                    }
+
+                    if (upsMatch)
+                    {
+                        _isUps = true;
+                        string mfr = "";
+                        if (combined.Contains("cyberpower") || devId.Contains("cps") || name.StartsWith("CP", StringComparison.OrdinalIgnoreCase))
+                        {
+                            mfr = "CyberPower Systems";
+                        }
+                        else if (combined.Contains("apc") || combined.Contains("schneider"))
+                        {
+                            mfr = "APC by Schneider Electric";
+                        }
+                        else if (combined.Contains("tripp"))
+                        {
+                            mfr = "Tripp Lite";
+                        }
+                        else if (combined.Contains("eaton"))
+                        {
+                            mfr = "Eaton";
+                        }
+
+                        _batteryManufacturer = mfr;
+                        string rawName = !string.IsNullOrWhiteSpace(name) ? name : (!string.IsNullOrWhiteSpace(caption) ? caption : "UPS Battery Backup");
+                        if (!string.IsNullOrEmpty(mfr) && !rawName.StartsWith(mfr, StringComparison.OrdinalIgnoreCase) && !rawName.StartsWith("CyberPower", StringComparison.OrdinalIgnoreCase))
+                        {
+                            _batteryDeviceName = $"{mfr} {rawName}";
+                        }
+                        else
+                        {
+                            _batteryDeviceName = rawName;
+                        }
+
+                        LoggingService.Instance.Info("SystemHarvester", $"Identified UPS hardware: {_batteryDeviceName} ({_batteryManufacturer})");
+                        break;
+                    }
+                    else
+                    {
+                        _batteryDeviceName = !string.IsNullOrWhiteSpace(name) ? name : "Internal Battery";
+                    }
                 }
             }
             catch (Exception ex)
             {
-                LoggingService.Instance.Warning("SystemHarvester", $"Failed to query RAM speed via WMI: {ex.Message}");
+                LoggingService.Instance.Debug("SystemHarvester", $"Win32_Battery query exception: {ex.Message}");
             }
+
+            // Desktop safety guard: A desktop chassis physically has no internal mobile battery.
+            // If Windows reports any battery presence on a desktop, it is 100% an external USB UPS.
+            if (!_isUps && IsDesktopEnclosure())
+            {
+                _isUps = true;
+                if (string.IsNullOrWhiteSpace(_batteryDeviceName) || _batteryDeviceName.Equals("Internal Battery", StringComparison.OrdinalIgnoreCase))
+                {
+                    _batteryDeviceName = "UPS Battery Backup";
+                }
+                LoggingService.Instance.Info("SystemHarvester", $"Desktop enclosure detected with battery telemetry: classified as UPS ({_batteryDeviceName})");
+            }
+        }
+
+        private static bool? _isDesktopEnclosure;
+        private static bool IsDesktopEnclosure()
+        {
+            if (_isDesktopEnclosure.HasValue) return _isDesktopEnclosure.Value;
+            try
+            {
+                using var searcher = new System.Management.ManagementObjectSearcher("SELECT ChassisTypes FROM Win32_SystemEnclosure");
+                foreach (var obj in searcher.Get())
+                {
+                    if (obj["ChassisTypes"] is ushort[] types && types.Length > 0)
+                    {
+                        ushort t = types[0];
+                        bool isMobile = t == 8 || t == 9 || t == 10 || t == 11 || t == 12 || t == 14 || t == 30 || t == 31 || t == 32;
+                        _isDesktopEnclosure = !isMobile;
+                        return _isDesktopEnclosure.Value;
+                    }
+                }
+            }
+            catch { }
+            _isDesktopEnclosure = false;
+            return false;
         }
 
         private static string? _nativeCpuName;
@@ -276,9 +509,9 @@ namespace InFox.Engine.Harvesters
             PollMemory(summary, metrics, recordHistory);
             PollBattery(summary, metrics, recordHistory);
             PollCpuLoadFallback(summary, metrics, recordHistory);
-            PollPdhCpuData(summary, metrics, recordHistory);
             PollNetwork(summary, metrics, recordHistory);
             EstimateChassisAndAmbient(summary, metrics, recordHistory);
+            PollPdhCpuData(summary, metrics, recordHistory);
             EvaluateTimDiagnostics(summary);
             PollMotherboardAndVrm(summary, metrics, recordHistory);
             EmitCpuMetrics(summary, metrics, recordHistory);
@@ -379,11 +612,11 @@ namespace InFox.Engine.Harvesters
                     }
                 }
 
-                // 2. Process CPU Temperature (Dynamic Newton Thermodynamic Model + ACPI Zone)
-                PollCpuTemperature(summary, recordHistory);
-
-                // 3. Process CPU Package Power (Dynamic CMOS Power Model)
+                // 2. Process CPU Package Power (Dynamic CMOS Power Model)
                 PollCpuPowerFallback(summary, recordHistory);
+
+                // 3. Process CPU Temperature (Dynamic Newton Thermodynamic Model + ACPI Zone)
+                PollCpuTemperature(summary, recordHistory);
 
                 // 4. Enrich Integrated GPUs (AMD APUs & Intel UHD / Iris / Arc)
                 EnrichIntegratedGpus(summary, recordHistory);
@@ -524,51 +757,75 @@ namespace InFox.Engine.Harvesters
 
             var cfg = ConfigManager.Instance.Config;
 
-            // Derive realistic die temperature using dynamic thermodynamic Newton cooling model
-            double ambientAnchor = 28.0;
-            // Only anchor to discrete GPU diode if available, never circular to integrated APU
-            var discreteGpu = summary.Gpus.Find(g => g.IsDiscrete && g.TempC.HasValue && !double.IsNaN(g.TempC.Value) && g.TempC.Value > 20);
-            if (discreteGpu != null)
+            // 1. Establish thermodynamic reference floor from environmental sensors and chassis
+            double ambientAnchor;
+            if (summary.Chassis.IsChassisAirMeasured && summary.Chassis.ChassisAirTempC > 0)
             {
-                // Discrete GPU die in idle/desktop load runs ~8-10 C above ambient chassis air intake
-                ambientAnchor = Math.Clamp(discreteGpu.TempC!.Value - 8.0, 24.0, 36.0);
+                // In-Case BLE thermometer is direct physical ground truth
+                ambientAnchor = summary.Chassis.ChassisAirTempC;
+            }
+            else if (summary.Chassis.ChassisAirTempC > 0)
+            {
+                // Modeled from storage SMART physical hardware anchor
+                ambientAnchor = summary.Chassis.ChassisAirTempC;
             }
             else if (acpiTemp.HasValue && !double.IsNaN(acpiTemp.Value))
             {
                 ambientAnchor = Math.Clamp(acpiTemp.Value, 24.0, 38.0);
             }
+            else
+            {
+                var discreteGpu = summary.Gpus.Find(g => g.IsDiscrete && g.TempC.HasValue && !double.IsNaN(g.TempC.Value) && g.TempC.Value > 20);
+                if (discreteGpu != null)
+                {
+                    ambientAnchor = Math.Clamp(discreteGpu.TempC!.Value - 8.0, 24.0, 36.0);
+                }
+                else
+                {
+                    ambientAnchor = 28.0;
+                }
+            }
 
-            // Cooler Profile Scaling
+            // Cooler Profile & Physical Idle Deltas
             double coolerDissipationFactor = 0.80; // Default balanced tower air
-            double baseIdleOffset = 0.0;
+            double baseIdleDelta = 11.0; // Silicon junction-to-ambient thermal resistance at idle
 
             string profile = (cfg.CoolerProfile ?? "Auto").Trim();
             if (profile.Equals("AIO", StringComparison.OrdinalIgnoreCase))
             {
                 coolerDissipationFactor = 0.65; // High dissipation AIO (240mm-360mm+)
-                baseIdleOffset = -2.0;
+                // When an exhaust / radiator BLE sensor is active, it defines the loop's fluid exhaust heat
+                if (summary.Chassis.IsRadiatorExhaustMeasured && summary.Chassis.RadiatorExhaustTempC.HasValue)
+                {
+                    ambientAnchor = summary.Chassis.RadiatorExhaustTempC.Value;
+                    baseIdleDelta = 8.5; // Die sits ~8.5°C above exhaust air at idle
+                }
+                else
+                {
+                    baseIdleDelta = 10.5; // Die sits ~10.5°C above case air at idle on an AIO
+                }
             }
             else if (profile.Equals("TowerAir", StringComparison.OrdinalIgnoreCase))
             {
                 coolerDissipationFactor = 0.80; // Standard / Dual-tower desktop air
-                baseIdleOffset = 0.0;
+                baseIdleDelta = 12.0;
             }
             else if (profile.Equals("Compact", StringComparison.OrdinalIgnoreCase))
             {
                 coolerDissipationFactor = 1.05; // Low-profile / laptop / stock box cooler
-                baseIdleOffset = 3.0;
+                baseIdleDelta = 16.0;
             }
             else // Auto
             {
-                if (summary.Battery.HasBattery || cfg.ChassisProfile.Equals("Laptop", StringComparison.OrdinalIgnoreCase))
+                if (summary.Battery.HasBattery || (cfg.ChassisProfile != null && cfg.ChassisProfile.Equals("Laptop", StringComparison.OrdinalIgnoreCase)))
                 {
                     coolerDissipationFactor = 1.05;
-                    baseIdleOffset = 2.0;
+                    baseIdleDelta = 16.0;
                 }
                 else
                 {
                     coolerDissipationFactor = 0.80; // Modern desktop default
-                    baseIdleOffset = 0.0;
+                    baseIdleDelta = 12.0;
                 }
             }
 
@@ -585,7 +842,24 @@ namespace InFox.Engine.Harvesters
 
             // Calculate live thermodynamic target
             double dynamicHeatRise = (loadRatio * freqRatio * 44.0 * coolerDissipationFactor) + (loadRatio * 6.0);
-            double targetTemp = ambientAnchor + baseIdleOffset + dynamicHeatRise + 3.0 + siliconOffset + cfg.CpuThermalOffset;
+            double targetTemp = ambientAnchor + baseIdleDelta + dynamicHeatRise + siliconOffset + cfg.CpuThermalOffset;
+
+            // Physical floor clamp: a CPU under ambient liquid/air cooling cannot drop below its coolant/case floor
+            double physicalMinFloor;
+            if (summary.Chassis.IsRadiatorExhaustMeasured && summary.Chassis.RadiatorExhaustTempC.HasValue)
+            {
+                physicalMinFloor = summary.Chassis.RadiatorExhaustTempC.Value + 3.5;
+            }
+            else if (summary.Chassis.ChassisAirTempC > 0)
+            {
+                physicalMinFloor = summary.Chassis.ChassisAirTempC + 5.0;
+            }
+            else
+            {
+                physicalMinFloor = summary.Chassis.EstimatedAmbientTempC + 8.0;
+            }
+
+            targetTemp = Math.Max(targetTemp, physicalMinFloor);
             if (double.IsNaN(targetTemp)) targetTemp = 38.0;
 
             // Load-vs-Frequency Divergence Check (PROCHOT & Mounting Failure Guard)
@@ -797,45 +1071,48 @@ namespace InFox.Engine.Harvesters
             // Low-pass filter the thermal resistance
             _smoothedThermalResistance = (_smoothedThermalResistance * 0.96) + (r * 0.04);
 
-            // Anchor to physical passive sensors if available (Zero-privilege hardware truth)
+            // Anchor to physical hardware sensors (Zero-privilege hardware truth)
             double? physicalChassisAnchor = null;
 
-            // 1. Storage NVMe SSD Diode (Passive PCB inside chassis cavity)
+            // 1. Storage NVMe SSD / SATA Diode (Passive PCB inside chassis cavity - primary physical hardware anchor)
             if (summary.Storage != null && summary.Storage.Count > 0)
             {
-                var validDrives = summary.Storage.FindAll(d => d.TempC.HasValue && !d.IsTempEstimated && !double.IsNaN(d.TempC.Value) && d.TempC.Value > 15 && d.TempC.Value < 80);
-                if (validDrives.Count > 0)
+                // Invariant 1 (ROADMAP 1.2.0): I/O Activity Gate
+                // Drives with active sustained read/write (> 2.0 MB/s) are disqualified from anchoring ambient.
+                var quiescentDrives = summary.Storage.FindAll(d => 
+                    d.TempC.HasValue && !d.IsTempEstimated && !double.IsNaN(d.TempC.Value) && 
+                    d.TempC.Value > 15 && d.TempC.Value < 80 &&
+                    (d.ReadSpeedMBps + d.WriteSpeedMBps) < 2.0);
+
+                var candidateDrives = quiescentDrives.Count > 0 
+                    ? quiescentDrives 
+                    : summary.Storage.FindAll(d => d.TempC.HasValue && !d.IsTempEstimated && !double.IsNaN(d.TempC.Value) && d.TempC.Value > 15 && d.TempC.Value < 80);
+
+                if (candidateDrives.Count > 0)
                 {
-                    // In a laptop, NVMe runs ~4-6°C above internal chassis air; in desktop ~6-9°C above case air
+                    // In a laptop, NVMe runs ~4-6°C above internal chassis air; in desktop ~6-8°C above case air
                     double ssdDelta = isLaptop ? 5.0 : 7.0;
-                    double minSsdTemp = validDrives.Min(d => d.TempC!.Value);
-                    physicalChassisAnchor = Math.Max(22.0, minSsdTemp - ssdDelta);
-                    confidence = Math.Max(confidence, 88);
+                    double minSsdTemp = candidateDrives.Min(d => d.TempC!.Value);
+                    physicalChassisAnchor = Math.Max(20.0, minSsdTemp - ssdDelta);
+                    confidence = Math.Max(confidence, quiescentDrives.Count > 0 ? 90 : 70);
                 }
             }
 
-            // 2. Discrete GPU diode at idle/desktop load (< 55°C)
-            var discreteGpu = summary.Gpus.Find(g => g.IsDiscrete && g.TempC.HasValue && !double.IsNaN(g.TempC.Value) && g.TempC.Value > 20 && g.TempC.Value < 55);
-            if (discreteGpu != null)
+            // 2. Discrete GPU diode fallback if no storage drive has hardware SMART
+            if (!physicalChassisAnchor.HasValue)
             {
-                double gpuAnchor = discreteGpu.TempC!.Value - (isLaptop ? 6.0 : 8.0);
-                physicalChassisAnchor = physicalChassisAnchor.HasValue
-                    ? (physicalChassisAnchor.Value * 0.5 + gpuAnchor * 0.5)
-                    : gpuAnchor;
-                confidence = Math.Max(confidence, 92);
+                var discreteGpu = summary.Gpus.Find(g => g.IsDiscrete && g.TempC.HasValue && !double.IsNaN(g.TempC.Value) && g.TempC.Value > 20 && g.TempC.Value < 55);
+                if (discreteGpu != null)
+                {
+                    physicalChassisAnchor = discreteGpu.TempC!.Value - (isLaptop ? 6.0 : 8.0);
+                    confidence = Math.Max(confidence, 85);
+                }
             }
 
-            // 3. Fallback: Dynamic Zero-Watt Intercept
-            // Base idle wattage (~10W) maintains silicon at ~ambient + baseIdleOffset. Dynamic rise is only from watts above idle.
-            double activeWatts = Math.Max(0.0, watts - 10.0);
-            double dynamicModelChassis = temp - (_smoothedThermalResistance * activeWatts) - (isLaptop ? 3.0 : 1.0);
-            double chassisMinFloor = isLaptop ? 27.0 : 23.0;
+            double chassisMinFloor = isLaptop ? 25.0 : 20.0;
             double chassisMaxCeil = isLaptop ? 45.0 : 42.0;
-            dynamicModelChassis = Math.Clamp(dynamicModelChassis, chassisMinFloor, chassisMaxCeil);
 
-            double instantChassis = physicalChassisAnchor.HasValue
-                ? (physicalChassisAnchor.Value * 0.70 + dynamicModelChassis * 0.30)
-                : dynamicModelChassis;
+            double instantChassis = physicalChassisAnchor ?? (isLaptop ? 30.0 : 25.0);
             instantChassis = Math.Clamp(instantChassis, chassisMinFloor, chassisMaxCeil);
 
             // Convective air cavity-to-room temperature delta
@@ -849,7 +1126,19 @@ namespace InFox.Engine.Harvesters
 
             // Smooth the baseline physics with low-pass filter
             _smoothedChassisAir = (_smoothedChassisAir * 0.95) + (instantChassis * 0.05);
-            _smoothedAmbient = (_smoothedAmbient * 0.95) + (instantAmbientBase * 0.05);
+
+            // Invariant 3 (ROADMAP 1.2.0): Asymmetric Slew Engine
+            // Rising: Hard-clamped to a max upward slew rate of +0.5°C per 10 minutes (+0.05°C/min = ~0.00083°C/sec)
+            // Falling: Normal smooth downward tracking (tau = 60s)
+            if (instantAmbientBase > _smoothedAmbient)
+            {
+                double maxRise = 0.05 / 60.0; // ~0.00083°C per second
+                _smoothedAmbient = Math.Min(_smoothedAmbient + maxRise, instantAmbientBase);
+            }
+            else
+            {
+                _smoothedAmbient = (_smoothedAmbient * 0.95) + (instantAmbientBase * 0.05);
+            }
 
             // 1. Room Ambient BLE Sensor
             var bleReading = BTHomeBleService.Instance.GetSelectedOrNearestReading(ConfigManager.Instance.Config.BleAmbientSensorMac);
@@ -985,7 +1274,7 @@ namespace InFox.Engine.Harvesters
             if (useBleRad && bleRadReading != null && summary.Chassis.RadiatorExhaustTempF.HasValue)
             {
                 string radRssi = bleRadReading.Rssi > -127 ? $"{bleRadReading.Rssi} dBm" : "Active";
-                notes.Add($"Rad Exhaust: {summary.Chassis.RadiatorExhaustTempF.Value:F1}°F ({summary.Chassis.RadiatorExhaustTempC!.Value:F1}°C) (ΔT +{summary.Chassis.RadiatorDeltaTF:F1}°F) ({radRssi}) [{bleRadReading.DisplayName}]");
+                notes.Add($"Exhaust: {summary.Chassis.RadiatorExhaustTempF.Value:F1}°F ({summary.Chassis.RadiatorExhaustTempC!.Value:F1}°C) (ΔT +{summary.Chassis.RadiatorDeltaTF:F1}°F) ({radRssi}) [{bleRadReading.DisplayName}]");
             }
 
             if (notes.Count > 0)
@@ -1035,18 +1324,52 @@ namespace InFox.Engine.Harvesters
                 double usedGb = Math.Max(0, totalGb - availGb);
                 double percent = mem.dwMemoryLoad;
 
+                double commitLimitGb = mem.ullTotalPageFile / (1024.0 * 1024.0 * 1024.0);
+                double commitAvailGb = mem.ullAvailPageFile / (1024.0 * 1024.0 * 1024.0);
+                double committedGb = Math.Max(0, commitLimitGb - commitAvailGb);
+                double commitPercent = commitLimitGb > 0 ? Math.Clamp((committedGb / commitLimitGb) * 100.0, 0.0, 100.0) : 0.0;
+
                 summary.Memory.TotalGb = Math.Round(totalGb, 2);
                 summary.Memory.UsedGb = Math.Round(usedGb, 2);
                 summary.Memory.AvailableGb = Math.Round(availGb, 2);
                 summary.Memory.Percent = percent;
+                summary.Memory.CommittedGb = Math.Round(committedGb, 2);
+                summary.Memory.CommitLimitGb = Math.Round(commitLimitGb, 2);
+                summary.Memory.CommitPercent = Math.Round(commitPercent, 1);
+
+                if (_cachedMemoryTopology != null)
+                {
+                    summary.Memory.MemoryType = _cachedMemoryTopology.MemoryType;
+                    summary.Memory.FormFactor = _cachedMemoryTopology.FormFactor;
+                    summary.Memory.SlotsUsed = _cachedMemoryTopology.SlotsUsed;
+                    summary.Memory.TotalSlots = _cachedMemoryTopology.TotalSlots;
+                    summary.Memory.ChannelLayout = _cachedMemoryTopology.ChannelLayout;
+                    summary.Memory.Modules = _cachedMemoryTopology.Modules;
+                }
+
                 if (_cachedRamSpeedMts.HasValue)
                 {
                     summary.Memory.SpeedMts = _cachedRamSpeedMts.Value;
                 }
 
+                try
+                {
+                    if (GetPerformanceInfo(out var perf, Marshal.SizeOf<PERFORMANCE_INFORMATION>()))
+                    {
+                        double pageSizeKb = perf.PageSize.ToUInt64() / 1024.0;
+                        double nonPagedMb = (perf.KernelNonpaged.ToUInt64() * pageSizeKb) / 1024.0;
+                        double pagedMb = (perf.KernelPaged.ToUInt64() * pageSizeKb) / 1024.0;
+                        summary.Memory.KernelNonPagedMb = Math.Round(nonPagedMb, 1);
+                        summary.Memory.KernelPagedMb = Math.Round(pagedMb, 1);
+                    }
+                }
+                catch { }
+
                 recordHistory("ram_load", percent);
                 recordHistory("ram_used", usedGb);
+                recordHistory("ram_commit_percent", commitPercent);
 
+                // Sensor Channels
                 metrics.Add(new SensorMetric
                 {
                     Id = "ram_load",
@@ -1070,6 +1393,81 @@ namespace InFox.Engine.Harvesters
                     Value = usedGb,
                     Unit = "GB"
                 });
+
+                metrics.Add(new SensorMetric
+                {
+                    Id = "ram_avail",
+                    Name = "Memory Available",
+                    HardwareId = "system_ram",
+                    HardwareName = "Physical Memory",
+                    Category = HardwareCategory.Memory,
+                    Type = MetricType.Capacity,
+                    Value = availGb,
+                    Unit = "GB"
+                });
+
+                metrics.Add(new SensorMetric
+                {
+                    Id = "ram_total",
+                    Name = "Memory Total Installed",
+                    HardwareId = "system_ram",
+                    HardwareName = "Physical Memory",
+                    Category = HardwareCategory.Memory,
+                    Type = MetricType.Capacity,
+                    Value = totalGb,
+                    Unit = "GB"
+                });
+
+                metrics.Add(new SensorMetric
+                {
+                    Id = "ram_commit_used",
+                    Name = "Committed Virtual Memory",
+                    HardwareId = "system_ram",
+                    HardwareName = "Virtual Memory (Commit)",
+                    Category = HardwareCategory.Memory,
+                    Type = MetricType.Capacity,
+                    Value = committedGb,
+                    Unit = "GB"
+                });
+
+                metrics.Add(new SensorMetric
+                {
+                    Id = "ram_commit_limit",
+                    Name = "Commit Limit",
+                    HardwareId = "system_ram",
+                    HardwareName = "Virtual Memory (Commit)",
+                    Category = HardwareCategory.Memory,
+                    Type = MetricType.Capacity,
+                    Value = commitLimitGb,
+                    Unit = "GB"
+                });
+
+                metrics.Add(new SensorMetric
+                {
+                    Id = "ram_commit_percent",
+                    Name = "Commit Load %",
+                    HardwareId = "system_ram",
+                    HardwareName = "Virtual Memory (Commit)",
+                    Category = HardwareCategory.Memory,
+                    Type = MetricType.Load,
+                    Value = commitPercent,
+                    Unit = "%"
+                });
+
+                if (summary.Memory.KernelNonPagedMb.HasValue)
+                {
+                    metrics.Add(new SensorMetric
+                    {
+                        Id = "ram_kernel_nonpaged",
+                        Name = "Kernel Non-Paged Pool (Driver Leak Sentinel)",
+                        HardwareId = "system_ram",
+                        HardwareName = "Kernel Memory",
+                        Category = HardwareCategory.Memory,
+                        Type = MetricType.Capacity,
+                        Value = Math.Round(summary.Memory.KernelNonPagedMb.Value / 1024.0, 2),
+                        Unit = "GB"
+                    });
+                }
 
                 if (_cachedRamSpeedMts.HasValue)
                 {
@@ -1131,6 +1529,12 @@ namespace InFox.Engine.Harvesters
 
                 if (hasBattery)
                 {
+                    CheckBatteryIdentity();
+
+                    summary.Battery.IsUps = _isUps;
+                    summary.Battery.DeviceName = _batteryDeviceName;
+                    summary.Battery.Manufacturer = _batteryManufacturer;
+
                     summary.Battery.Percent = status.BatteryLifePercent <= 100 ? status.BatteryLifePercent : null;
                     bool isPluggedIn = status.ACLineStatus == 1;
                     bool isCharging = (status.BatteryFlag & 8) != 0;
@@ -1142,10 +1546,18 @@ namespace InFox.Engine.Harvesters
                     {
                         summary.Battery.EstimatedRuntimeMinutes = status.BatteryLifeTime / 60;
                     }
+                    else if (_batteryEstimatedRunTimeMinutes.HasValue && _batteryEstimatedRunTimeMinutes.Value > 0)
+                    {
+                        summary.Battery.EstimatedRuntimeMinutes = _batteryEstimatedRunTimeMinutes.Value;
+                    }
                     else
                     {
                         summary.Battery.EstimatedRuntimeMinutes = null;
                     }
+
+                    string deviceTitle = _isUps 
+                        ? (!string.IsNullOrEmpty(_batteryDeviceName) ? _batteryDeviceName : "UPS Battery Backup")
+                        : "System Battery";
 
                     if (summary.Battery.Percent.HasValue)
                     {
@@ -1153,9 +1565,9 @@ namespace InFox.Engine.Harvesters
                         metrics.Add(new SensorMetric
                         {
                             Id = "battery_percent",
-                            Name = "Battery Charge",
+                            Name = _isUps ? "UPS Battery Charge" : "Battery Charge",
                             HardwareId = "battery_0",
-                            HardwareName = "System Battery",
+                            HardwareName = deviceTitle,
                             Category = HardwareCategory.Battery,
                             Type = MetricType.Level,
                             Value = summary.Battery.Percent.Value,
@@ -1163,16 +1575,31 @@ namespace InFox.Engine.Harvesters
                         });
                     }
 
+                    if (summary.Battery.EstimatedRuntimeMinutes.HasValue)
+                    {
+                        metrics.Add(new SensorMetric
+                        {
+                            Id = "battery_runtime",
+                            Name = _isUps ? "UPS Backup Runtime" : "Battery Runtime",
+                            HardwareId = "battery_0",
+                            HardwareName = deviceTitle,
+                            Category = HardwareCategory.Battery,
+                            Type = MetricType.Level,
+                            Value = summary.Battery.EstimatedRuntimeMinutes.Value,
+                            Unit = "min"
+                        });
+                    }
+
                     metrics.Add(new SensorMetric
                     {
                         Id = "battery_power_source",
-                        Name = "Power Source",
+                        Name = _isUps ? "AC Utility Line Status" : "Power Source",
                         HardwareId = "battery_0",
-                        HardwareName = "System Power",
+                        HardwareName = deviceTitle,
                         Category = HardwareCategory.Battery,
                         Type = MetricType.Level,
                         Value = isPluggedIn ? 1.0 : 0.0,
-                        Unit = isPluggedIn ? (isCharging ? "Charging" : "Plugged In") : "Battery"
+                        Unit = isPluggedIn ? (_isUps ? "Utility Grid Online" : (isCharging ? "Charging" : "Plugged In")) : (_isUps ? "On Battery Backup" : "Battery")
                     });
                 }
             }

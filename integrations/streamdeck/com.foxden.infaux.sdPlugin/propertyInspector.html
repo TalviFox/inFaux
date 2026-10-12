@@ -248,7 +248,7 @@
             cleanAdapters.forEach(a => {
               const opt = document.createElement('option');
               opt.value = a.id;
-              opt.innerText = `${a.name} — ${a.description || a.type}`;
+              opt.innerText = `${a.name} - ${a.description || a.type}`;
               select.appendChild(opt);
             });
           }

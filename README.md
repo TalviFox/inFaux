@@ -48,14 +48,15 @@ For the last 15 years, the PC hardware monitoring world has been split into two 
 * **Primary Dashboard:** Glanceable metric cards with live 60-second sparklines for:
   * **Processor (CPU):** Package temperature, total load %, dynamic wattage, and boost clock speed.
   * **Graphics (GPU):** Multi-GPU selector pills, core clock, temperature, hotspot, VRAM usage, power, and fan speed.
-  * **System Memory (RAM):** Memory load %, used/total GB, available GB, and memory speed (MT/s).
+  * **System Memory (RAM):** Memory load %, used/total GB, available GB, memory speed (MT/s), committed virtual memory, and hardware DIMM topology.
   * **Storage Volumes:** Live aggregate read/write throughput (MB/s), total capacity, and volume utilization.
-  * **Network & Power:** Real-time download/upload throughput (Mbps), active adapter interface, and battery state (automatically adapts column layout on battery-equipped systems).
+  * **Network & Power / UPS:** Real-time download/upload throughput (Mbps), active adapter interface, and battery/UPS state (automatically detects USB UPS units on desktops and mobile battery packs).
 * **Deep Component Drilldowns:** Click any card on the dashboard to access dedicated telemetry views:
   * **CPU View:** Per-core breakdown across all physical cores and threads with live per-core frequencies (MHz), load percentages, and dynamic thermal flux modeling.
-  * **GPU View:** Multi-adapter switcher, vendor-native hardware telemetry (NVML / ADL / DXGI), core/memory clocks, VRAM allocation, dynamic power wattage, and fan RPM.
+  * **GPU View:** Multi-adapter switcher, custom name aliasing (✏️ Rename / context menu), vendor-native hardware telemetry (NVML / ADL / DXGI), core/memory clocks, VRAM allocation, dynamic power wattage, and fan RPM.
+  * **Memory View:** DDR generation (DDR5/DDR4), configured clock rate, channel topology, physical DIMM module breakdown (capacity, manufacturer, part number, and XMP/EXPO ratings), physical vs. virtual committed memory allocation meters, and driver non-paged pool monitoring.
   * **Storage View:** Volume capacities, real-time read/write throughput rates (MB/s via PDH), physical drive geometry, and volume utilization (bus type NVMe/SATA and media type SSD/HDD).
-  * **Network & Power View:** Real-time throughput rates (Mbps), adapter switcher (`Auto` highest traffic or specific adapter), link speed, battery charge/discharge wattage, AC line state, and estimated runtime minutes.
+  * **Network & Power View:** Real-time throughput rates (Mbps), adapter switcher (`Auto` highest traffic or specific adapter), link speed, battery/UPS charge and AC line state, and estimated runtime minutes.
 * **All Sensors View:** Complete live DataGrid table of all raw hardware sensors and channels with min/max tracking, category, type, and current values (rendered via non-destructive in-place sync to eliminate visual flickering).
 * **Settings & Tuning View:** Interactive configuration for polling intervals, tray icon sensor targets, network adapter binding, chassis form factor profiles, thermal dissipation profiles (AIO, Tower Air, SFF Compact), live thermal calibration offset slider (-15°C to +15°C), CPU TDP override targets, and 1-click API testing.
 
@@ -64,10 +65,12 @@ For the last 15 years, the PC hardware monitoring world has been split into two 
 ### 2. The Thermodynamic Observer & Safe Physics Modeling
 * **Why this exists:** Microsoft Windows does not allow regular user-mode applications to read raw CPU thermal diodes without installing Ring-0 kernel drivers (`.sys`). Legacy tools rely on vulnerable drivers (like `WinRing0.sys`) that trip Windows Defender and trigger Memory Integrity (HVCI) warnings.
 * **The inFaux Solution:**
-  Instead of risking your system stability with kernel drivers, inFaux uses real Newtonian physics:
-  * **Real Hardware Baselines:** Continuously reads safe, user-mode diode temperatures from your GPU and NVMe SSD controllers to establish the true thermal floor of your PC chassis.
+  Instead of risking your system stability with kernel drivers, inFaux uses real Newtonian physics and ground-truth physical anchoring:
+  * **Storage Hardware Diode Anchoring:** Continuously reads safe, user-mode SMART diode temperatures from NVMe and SATA SSD controllers. Storage represents steady-state physical thermal mass immersed in your chassis airflow, providing an unshakeable ground-truth anchor without circular dependencies on CPU load.
+  * **Direct Liquid Cooler (AIO) Loop Alignment:** When a liquid cooler is selected and a radiator exhaust probe is paired, the cold plate solver anchors directly to measured radiator exhaust temperatures. This accounts for real solder TIM (STIM), copper cold plate thermal resistance, and coolant heat soaking (e.g. Core i9-14900K and Ryzen 9 7950X).
   * **Copper Heat Spreader Simulation:** Treats your CPU's integrated heat spreader (IHS) and cooler cold plate like a real thermal mass. Solid copper heats up quickly when a core spikes under heavy load, and dissipates heat gradually into the cooler fins.
   * **Per-Core Temperature Gradients:** Models localized heat blooms across individual cores and clusters based on live clock frequencies and workloads from native Windows performance counters.
+  * **Thermodynamic Floor Clamps:** Strict physical boundary clamps prevent impossible cooling scenarios (such as an idle CPU reading cooler than the liquid loop exhausting its heat).
   * **Zero Elevation, Zero Lag:** Runs 100% in user space (`asInvoker`) with zero UAC prompts, zero background services, and smooth thermal modeling free of raw sensor spike jitter.
   * **Honest Telemetry:** Real physical diode readings (GPU, NVMe, and Bluetooth beacons) are clearly marked with `[📡 Measured]`, while thermodynamic CPU numbers are transparently tagged `[Estimated]`.
 
@@ -75,6 +78,8 @@ For the last 15 years, the PC hardware monitoring world has been split into two 
 
 ### 3. Wireless Bluetooth Environmental Telemetry (BTHome v2)
 * **Passive Windows BLE Listener:** inFaux passively listens for Bluetooth Low Energy (BLE) environmental beacons without needing pairing, dongles, USB bridges, or third-party background software (yes, Windows can do this).
+* **Natural Airflow Header Badge:** Real-time environmental readings are cleanly displayed in natural outside-to-inside airflow order:
+  $$\mathbf{\text{Room}} \;\longrightarrow\; \mathbf{\text{Case}} \;\longrightarrow\; \mathbf{\text{Exhaust}}$$
 * **Plug & Play Hardware Support:** Supports all open **BTHome v2** format thermometers, including:
   * **Shelly BLU H&T** (native, official out-of-the-box BTHome v2)
   * ThermoBeacon / Qingping beacons
@@ -83,7 +88,7 @@ For the last 15 years, the PC hardware monitoring world has been split into two 
 * **Multi-Zone Monitoring:**
   * **Room Ambient:** Monitor your actual office or room temperature and humidity.
   * **In-Case Air:** Place a thermometer inside your case to measure real internal ambient air.
-  * **Radiator Exhaust:** Measure liquid cooler exhaust air to compute radiator delta-T ($\Delta T$) efficiency.
+  * **Radiator / Exhaust:** Measure radiator discharge air to compute radiator delta-T ($\Delta T$) efficiency and anchor liquid cooling models.
 * **Upgrades Estimations to Measured Data:** When a sensor is detected, inFaux automatically upgrades its estimated room/case calculations to 100% real measured physical readings (`[📡 Measured]`).
 
 ---
@@ -95,7 +100,8 @@ For the last 15 years, the PC hardware monitoring world has been split into two 
   * **AMD ADL (`atiadlxx.dll`):** Direct interop with AMD Display Library in `System32` for Overdrive temperatures and power.
   * **DirectX DXGI COM Interop (`IDXGIFactory1`, `IDXGIAdapter3`):** Zero-driver adapter enumeration, dedicated video memory, and shared system memory tracking.
 * **Discrete Prioritization:** Automatically selects high-performance discrete GPUs when present for primary telemetry and tray badge.
-* **APU & iGPU Intelligence:** Dynamically attributes SoC shared die temperatures and allocates load-weighted power slices (e.g., AMD Radeon 780M / 680M / Intel Iris Xe) without false sensor warnings or phantom fan RPMs.
+* **Clean Hardware Normalization:** Automatically sanitizes vendor driver artifacts (e.g., stripping `(TM)` and `(R)` noise) so integrated adapters appear cleanly as `AMD Radeon Graphics` without driver pollution.
+* **Custom Hardware Names & GPU Renaming:** Click `[✏️ Rename]` in GPU details or right-click any GPU pill on the dashboard to assign your own custom display name or short pill label, synchronized in real time across inFaux, the REST/WebSocket API, and your physical Stream Deck keys.
 
 ---
 
@@ -261,7 +267,7 @@ dotnet publish InFox.csproj -c Release -r win-x64 --self-contained true -p:Publi
 ### Automated Release Builder
 Run the automated FoxDen release builder:
 ```powershell
-.\release.ps1 -Version "1.0.0" -SkipGit
+.\release.ps1 -Version "1.2.0" -SkipGit
 ```
 
 The script will:
@@ -294,6 +300,7 @@ Settings are stored in `%LOCALAPPDATA%\inFaux\config.json`:
 | `coolerProfile` | `string` | `"Auto"` | Dissipation scaling: `"Auto"`, `"AIO"`, `"TowerAir"`, `"Compact"` |
 | `cpuThermalOffset` | `double` | `0.0` | Live calibration offset in °C (-15.0 to +15.0) |
 | `cpuTdpOverrideWatts` | `int` | `0` | Package TDP target for Joule heating (0 = auto-detect) |
+| `gpuNameAliases` | `object` | `{}` | Custom hardware labels and GPU name overrides (keyed by ID or description) |
 | `trayDisplayBadge` | `bool` | `true` | Toggle drawing the live numeric temperature badge on the tray icon |
 | `startWithWindows` | `bool` | `true` | Start on user logon via Windows Task Scheduler (0 UAC prompts) |
 | `checkForUpdates` | `bool` | `true` | Automatic GitHub release auditor check |

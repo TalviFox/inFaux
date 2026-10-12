@@ -52,7 +52,7 @@
     "license": "https://polyformproject.org/licenses/noncommercial/1.0.0",
     "url": "https://infaux.foxdensoftware.dev/",
     "downloadUrl": "https://github.com/TalviFox/inFaux/releases",
-    "softwareVersion": "1.1.0",
+    "softwareVersion": "1.2.0",
     "author": {
       "@type": "Organization",
       "name": "FoxDen Software",
@@ -146,7 +146,7 @@
           <div class="hero-btn-row">
             <a href="https://github.com/TalviFox/inFaux/releases/latest" class="btn-primary" id="hero-download-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              <span>Download inFaux <span class="release-version-tag">v1.1.0</span></span>
+              <span>Download inFaux <span class="release-version-tag">v1.2.0</span></span>
             </a>
             <a href="#showcase" class="btn-secondary" id="hero-explore-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
@@ -205,11 +205,11 @@
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg>
             </div>
             <h3 class="feature-title">Smart Thermal Modeling</h3>
-            <p class="feature-desc">Instead of raw sensor jitter that sends your cooler fans into panic mode, inFaux uses real thermodynamic physics to model actual CPU package heat and per-core temps smoothly.</p>
+            <p class="feature-desc">Instead of raw sensor jitter that sends fans into panic mode, inFaux uses Newtonian physics, steady-state storage hardware anchoring, and liquid loop exhaust integration to model CPU package heat smoothly and accurately.</p>
             <div class="feature-pills">
               <span class="feature-pill">Per-Core Temps</span>
               <span class="feature-pill">Physics-Based</span>
-              <span class="feature-pill">Jitter-Free</span>
+              <span class="feature-pill">Storage Anchored</span>
             </div>
           </div>
 
@@ -247,11 +247,11 @@
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 7 10 10-5 5V2l5 5L7 17"></path></svg>
             </div>
             <h3 class="feature-title">Wireless Bluetooth Sensors</h3>
-            <p class="feature-desc">Connect wireless BLE environmental thermometers (Shelly BLU H&amp;T, BTHome v2, ThermoBeacon, or ESPHome) natively with zero dongles. Monitor real room ambient, case air, and radiator exhaust live (yes, Windows can do this).</p>
+            <p class="feature-desc">Connect wireless BLE thermometers (Shelly BLU H&amp;T, BTHome v2, ThermoBeacon, or ESPHome) natively with zero dongles. Monitor real room ambient, case air, and radiator exhaust live in natural airflow order (Room ➔ Case ➔ Exhaust).</p>
             <div class="feature-pills">
               <span class="feature-pill">BTHome v2</span>
               <span class="feature-pill">Zero Dongles</span>
-              <span class="feature-pill">Room &amp; Case Temp</span>
+              <span class="feature-pill">Room ➔ Case ➔ Exhaust</span>
             </div>
           </div>
 
@@ -489,7 +489,7 @@
               <span class="faq-chevron">▼</span>
             </button>
             <div class="faq-answer">
-              inFaux v1.1.0 includes a built-in passive Bluetooth Low Energy (BLE) listener supporting the open <strong>BTHome v2</strong> standard. Supported thermometers (such as <strong>Shelly BLU H&amp;T</strong> out of the box, ThermoBeacon, or custom ESPHome/ESP32 beacons) broadcast passive temperature and humidity packets. inFaux picks them up directly via Windows Bluetooth with zero pairing dongles, upgrading estimated room and case air to 100% measured physical readings (yes, Windows can do this).
+              inFaux includes a built-in passive Bluetooth Low Energy (BLE) listener supporting the open <strong>BTHome v2</strong> standard. Supported thermometers (such as <strong>Shelly BLU H&amp;T</strong> out of the box, ThermoBeacon, or custom ESPHome/ESP32 beacons) broadcast passive telemetry packets. inFaux picks them up directly via Windows Bluetooth with zero pairing dongles, upgrading estimated room, case, and radiator exhaust air to 100% measured physical readings.
             </div>
           </div>
 
