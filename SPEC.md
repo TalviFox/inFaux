@@ -106,10 +106,10 @@ Individual cores and compute clusters (e.g., AMD Zen CCX / CCD or Intel P-Core /
 ### 2.6 Thermodynamic Boundary Clamps
 Physical boundary clamps ensure thermal metrics remain within physically possible bounds:
 * **Cooling Floor Clamp:** $T_{\text{CPU}} \ge T_{\text{ambient}}$ (the CPU cannot read cooler than the air or liquid cooling it).
-* **Radiator Delta Clamp:** For liquid-cooled systems, $T_{\text{die}} \ge T_{\text{radiator\_exhaust}} + \Delta T_{\text{TIM\_minimum}}$.
+* **Radiator Delta Clamp:** For liquid-cooled systems, $T_{\text{die}} \ge T_{\text{radiator exhaust}} + \Delta T_{\text{TIM min}}$.
 * **Honest Telemetry Tagging:** Every metric emitted via UI, Tray, and API is tagged:
-  * `[Measured]` -  Direct diode readings (GPU core, GPU hotspot, NVMe drive, BLE thermometers).
-  * `[Estimated]` -  Solved thermodynamic observer values (CPU package, individual core temperatures).
+  * `[Measured]` - Direct diode readings (GPU core, GPU hotspot, NVMe drive, BLE thermometers).
+  * `[Estimated]` - Solved thermodynamic observer values (CPU package, individual core temperatures).
 
 ---
 
