@@ -38,7 +38,7 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=1.2">
+  <link rel="stylesheet" href="css/style.css?v=1.3">
 
   <!-- Schema.org JSON-LD -->
   <script type="application/ld+json">
@@ -93,31 +93,39 @@
 
   <!-- Site Header & Navigation -->
   <header class="site-header">
-    <div class="container site-nav">
-      <a href="#" class="nav-brand" id="nav-brand">
-        <span class="brand-text">in<span>Faux</span></span>
-      </a>
-
-      <ul class="nav-links">
-        <li><a href="#features" class="nav-link">Features</a></li>
-        <li><a href="#showcase" class="nav-link">Showcase</a></li>
-        <li><a href="#comparison" class="nav-link">Why Zero-Driver</a></li>
-        <li><a href="#api" class="nav-link">Telemetry API</a></li>
-        <li><a href="#install" class="nav-link">Install</a></li>
-        <li><a href="#faq" class="nav-link">FAQ</a></li>
-      </ul>
-
-      <div class="nav-actions">
-        <a href="https://github.com/TalviFox/inFaux" target="_blank" rel="noopener noreferrer" class="btn-github" id="nav-github-btn" title="View Source on GitHub">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-          </svg>
-          <span>GitHub</span>
+    <div class="container">
+      <div class="site-nav">
+        <a href="#" class="nav-brand" id="nav-brand">
+          <img src="assets/inFaux_IHS.png" alt="inFaux Logo" class="nav-logo">
+          <span class="brand-text">in<span>Faux</span></span>
         </a>
-        <a href="https://github.com/TalviFox/inFaux/releases/latest" class="btn-nav-download" id="nav-download-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          <span>Download</span>
-        </a>
+
+        <div class="nav-actions">
+          <a href="https://foxdensoftware.dev/" target="_blank" rel="noopener noreferrer" class="btn-foxden" id="nav-foxden-btn" title="FoxDen Software">
+            <img src="assets/foxden_logo_text.png" alt="FoxDen Software" class="foxden-desktop-logo">
+            <img src="assets/foxden_avatar.jpg" alt="FoxDen Software" class="foxden-mobile-avatar">
+          </a>
+          <a href="https://ko-fi.com/foxdensoftware" target="_blank" rel="noopener noreferrer" class="btn-kofi" id="nav-kofi-btn" title="Support Talvi on Ko-fi">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M23.881 8.948c-.773-4.085-4.859-4.593-4.859-4.593H.723c-.604 0-.679.798-.679.798s-.082 7.324-.022 11.822c.164 2.424 2.586 2.672 2.586 2.672s8.267-.023 11.966-.049c2.438-.426 2.683-2.566 2.658-3.734 4.352.24 7.422-2.831 6.649-6.916zm-11.062 3.511c-1.246 1.453-4.011 3.976-4.011 3.976s-.121.119-.31.023c-.076-.057-.108-.09-.108-.09-.443-.441-3.368-3.049-4.034-3.954-.709-.966-1.041-2.7-.091-3.71.951-1.01 3.005-1.086 4.363.407 0 0 1.565-1.782 3.468-.963 1.904.82 1.832 3.011.723 4.311zm6.173.478c-.928.116-1.682.028-1.682.028V7.284h1.77s1.971.551 1.971 2.373c0 1.822-1.131 3.16-2.059 3.279z"/>
+            </svg>
+            <span>Ko-fi</span>
+          </a>
+          <a href="https://github.com/TalviFox/inFaux" target="_blank" rel="noopener noreferrer" class="btn-github" id="nav-github-btn" title="View Source on GitHub">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+            </svg>
+            <span>GitHub</span>
+          </a>
+          <a href="https://github.com/TalviFox/inFaux/releases/latest" class="btn-nav-download" id="nav-download-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Download</span>
+          </a>
+        </div>
       </div>
     </div>
   </header>
@@ -535,6 +543,24 @@
         </div>
       </div>
     </section>
+
+    <!-- Call to Action Banner -->
+    <div class="container">
+      <div class="cta-banner">
+        <h2>Zero Drivers. Zero Privilege. Real Telemetry.</h2>
+        <p>Experience silent, crash-free hardware monitoring and local WebSockets across Windows 10 &amp; 11 without a single UAC prompt.</p>
+        <div class="hero-btn-row">
+          <a href="https://github.com/TalviFox/inFaux/releases/latest" class="btn-primary" id="footer-cta-download">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>Download inFaux Free</span>
+          </a>
+          <a href="https://github.com/TalviFox/inFaux" target="_blank" rel="noopener noreferrer" class="btn-secondary" id="footer-cta-github">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            <span>Star on GitHub</span>
+          </a>
+        </div>
+      </div>
+    </div>
   </main>
 
   <!-- Lightbox Modal -->
@@ -545,38 +571,47 @@
     </div>
   </div>
 
-  <!-- Footer -->
+  <!-- Site Footer -->
   <footer class="site-footer">
     <div class="container">
-      <div class="footer-inner">
+      <div class="footer-top">
         <div class="footer-brand">
-          <h4>in<span>Faux</span></h4>
-          <p>Real telemetry. Faux drivers. Modern, native, driverless hardware monitor and telemetry server for Windows.</p>
+          <img src="assets/inFaux_IHS.png" alt="inFaux Logo" style="width:28px; height:28px; object-fit:contain;">
+          <span class="brand-text">in<span>Faux</span></span>
         </div>
-
-        <div class="footer-links">
-          <div class="footer-col">
-            <h5>Ecosystem</h5>
-            <ul>
-              <li><a href="https://github.com/TalviFox/inFaux" target="_blank" rel="noopener noreferrer">inFaux on GitHub</a></li>
-              <li><a href="https://wirefox.foxdensoftware.dev/" target="_blank" rel="noopener noreferrer">WireFox VPN Roaming</a></li>
-              <li><a href="https://github.com/TalviFox" target="_blank" rel="noopener noreferrer">FoxDen Software</a></li>
-            </ul>
-          </div>
-          <div class="footer-col">
-            <h5>Community</h5>
-            <ul>
-              <li><a href="https://github.com/TalviFox/inFaux/releases" target="_blank" rel="noopener noreferrer">Releases</a></li>
-              <li><a href="https://github.com/TalviFox/inFaux/issues" target="_blank" rel="noopener noreferrer">Issue Tracker</a></li>
-              <li><a href="https://github.com/TalviFox/inFaux/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">PolyForm Noncommercial 1.0.0</a></li>
-            </ul>
-          </div>
-        </div>
+        <ul class="footer-links">
+          <li><a href="https://foxdensoftware.dev/" target="_blank" rel="noopener noreferrer" class="footer-link">FoxDen Software</a></li>
+          <li><a href="https://ko-fi.com/foxdensoftware" target="_blank" rel="noopener noreferrer" class="footer-link">Support on Ko-fi</a></li>
+          <li><a href="#features" class="footer-link">Features</a></li>
+          <li><a href="#showcase" class="footer-link">Showcase</a></li>
+          <li><a href="#comparison" class="footer-link">Why Zero-Driver</a></li>
+          <li><a href="#api" class="footer-link">Telemetry API</a></li>
+          <li><a href="#install" class="footer-link">Install</a></li>
+          <li><a href="#faq" class="footer-link">FAQ</a></li>
+          <li><a href="https://github.com/TalviFox/inFaux/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" class="footer-link">License</a></li>
+          <li><a href="https://github.com/TalviFox/inFaux/releases" target="_blank" rel="noopener noreferrer" class="footer-link">Releases</a></li>
+          <li><a href="https://github.com/TalviFox/inFaux" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a></li>
+        </ul>
       </div>
 
       <div class="footer-bottom">
-        <div>&copy; 2026 FoxDen Software. Licensed under PolyForm Noncommercial License 1.0.0.</div>
-        <div>Windows is a registered trademark of Microsoft Corp. Stream Deck is a registered trademark of Corsair / Elgato Systems.</div>
+        <div class="footer-bottom-left">
+          <div class="footer-meta-brand">
+            <a href="https://foxdensoftware.dev/" target="_blank" rel="noopener noreferrer" class="footer-foxden-link" title="Crafted with care by FoxDen Software">
+              <img src="assets/FoxDen_Minimal_Universal.png" alt="FoxDen Software Logo" class="footer-foxden-logo">
+            </a>
+            <span class="footer-copyright">Copyright &copy; 2026 <a href="https://foxdensoftware.dev/" target="_blank" rel="noopener noreferrer" style="color:var(--brand-accent-hover); text-decoration:none;">FoxDen Software</a>. Source-available under PolyForm Noncommercial 1.0.0.</span>
+          </div>
+          <div class="footer-disclaimer">
+            <strong>Zero-Driver Telemetry Notice:</strong> inFaux operates 100% in user mode as an unprivileged process (<code>asInvoker</code>). CPU temperature estimates are continuously derived using physical Joule heating modeling and Newton's law of cooling. Virtual and cloud environments will measure host-correlated load contribution.
+          </div>
+          <div class="footer-disclaimer">
+            Windows is a registered trademark of Microsoft Corporation. Stream Deck is a registered trademark of Corsair Memory, Inc. / Elgato Systems. inFaux is an independent companion project and is not affiliated with, endorsed by, or sponsored by Microsoft or Corsair.
+          </div>
+        </div>
+        <div>
+          <a href="#" style="color:var(--brand-accent-hover); font-weight:600;">Back to top &uarr;</a>
+        </div>
       </div>
     </div>
   </footer>

@@ -228,7 +228,7 @@ section[id] {
   z-index: 100;
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  background: rgba(8, 11, 17, 0.88);
+  background: rgba(8, 11, 17, 0.85);
   border-bottom: 1px solid var(--border-subtle);
   transition: var(--transition-normal);
 }
@@ -243,9 +243,22 @@ section[id] {
 .nav-brand {
   display: flex;
   align-items: center;
-  font-weight: 800;
-  font-size: 1.4rem;
+  gap: 12px;
+  font-weight: 700;
+  font-size: 1.25rem;
   letter-spacing: -0.02em;
+}
+
+.nav-logo {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px var(--brand-accent-glow));
+  transition: transform var(--transition-fast);
+}
+
+.nav-brand:hover .nav-logo {
+  transform: scale(1.08) rotate(-3deg);
 }
 
 .brand-text {
@@ -277,45 +290,130 @@ section[id] {
 .nav-actions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+}
+
+.btn-foxden {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-card);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.btn-foxden:hover {
+  background: rgba(255, 107, 53, 0.1);
+  border-color: var(--border-accent);
+  transform: translateY(-1px);
+}
+
+.foxden-desktop-logo {
+  display: block;
+  height: 22px;
+  width: auto;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  object-fit: contain;
+}
+
+.foxden-mobile-avatar {
+  display: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.btn-kofi {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  box-sizing: border-box;
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 94, 91, 0.1);
+  border: 1px solid rgba(255, 94, 91, 0.35);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #ff8c89;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.btn-kofi svg {
+  color: #ff5e5b;
+  transition: transform var(--transition-fast);
+}
+
+.btn-kofi:hover {
+  background: rgba(255, 94, 91, 0.22);
+  border-color: #ff5e5b;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(255, 94, 91, 0.3);
+}
+
+.btn-kofi:hover svg {
+  transform: scale(1.12);
 }
 
 .btn-github {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  height: 40px;
+  box-sizing: border-box;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 0 16px;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-subtle);
-  font-size: 0.9rem;
-  font-weight: 600;
+  border: 1px solid var(--border-card);
+  font-size: 0.88rem;
+  font-weight: 500;
   color: var(--text-primary);
+  text-decoration: none;
   transition: all var(--transition-fast);
 }
 
 .btn-github:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--border-card);
+  background: rgba(255, 107, 53, 0.1);
+  border-color: var(--border-accent);
+  color: var(--brand-accent-hover);
+  transform: translateY(-1px);
 }
 
 .btn-nav-download {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  height: 40px;
+  box-sizing: border-box;
   gap: 8px;
-  padding: 8px 18px;
+  padding: 0 18px;
   border-radius: var(--radius-sm);
   background: linear-gradient(135deg, var(--brand-accent), #c2410c);
+  font-size: 0.88rem;
+  font-weight: 600;
   color: #ffffff;
-  font-size: 0.9rem;
-  font-weight: 700;
-  box-shadow: 0 0 18px var(--brand-accent-glow);
+  text-decoration: none;
+  box-shadow: 0 4px 18px -2px var(--brand-accent-glow);
   transition: all var(--transition-fast);
 }
 
 .btn-nav-download:hover {
   filter: brightness(1.15);
   transform: translateY(-1px);
+  box-shadow: 0 6px 24px 0 var(--brand-accent-glow);
 }
 
 /* Hero Section */
@@ -1034,83 +1132,168 @@ section[id] {
   display: block;
 }
 
-/* Footer */
+/* CTA Footer Banner */
+.cta-banner {
+  margin: 40px 0 80px;
+  padding: 60px 40px;
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.14) 0%, rgba(12, 16, 23, 0.9) 100%);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-xl);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-glow);
+}
+
+.cta-banner h2 {
+  font-size: clamp(2rem, 3.5vw, 2.6rem);
+  font-weight: 800;
+  margin-bottom: 16px;
+  letter-spacing: -0.03em;
+}
+
+.cta-banner p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  max-width: 620px;
+  margin: 0 auto 30px;
+}
+
+/* Site Footer */
 .site-footer {
   border-top: 1px solid var(--border-subtle);
-  background: rgba(8, 11, 17, 0.95);
-  padding: 60px 0 30px;
-  margin-top: 80px;
+  background: #04070d;
+  padding: 50px 0 35px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
 }
 
-.footer-inner {
+.footer-top {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 40px;
   flex-wrap: wrap;
-  margin-bottom: 40px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 30px;
 }
 
-.footer-brand h4 {
-  font-size: 1.4rem;
-  margin-bottom: 8px;
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
 }
 
-.footer-brand h4 span {
+.footer-brand img {
+  filter: drop-shadow(0 0 10px var(--brand-accent-glow));
+}
+
+.footer-brand .brand-text {
+  font-weight: 800;
+}
+
+.footer-brand .brand-text span {
   color: var(--brand-accent);
-}
-
-.footer-brand p {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  max-width: 380px;
 }
 
 .footer-links {
   display: flex;
-  gap: 48px;
   flex-wrap: wrap;
-}
-
-.footer-col h5 {
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  color: var(--brand-accent);
-  margin-bottom: 14px;
-  letter-spacing: 0.05em;
-}
-
-.footer-col ul {
+  gap: 24px;
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
 
-.footer-col a {
-  font-size: 0.88rem;
+.footer-link {
   color: var(--text-secondary);
   transition: color var(--transition-fast);
 }
 
-.footer-col a:hover {
-  color: var(--text-primary);
+.footer-link:hover {
+  color: var(--brand-accent-hover);
 }
 
 .footer-bottom {
+  padding-top: 28px;
   border-top: 1px solid var(--border-subtle);
-  padding-top: 24px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 14px;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
   font-size: 0.82rem;
+}
+
+.footer-bottom-left {
+  flex: 1;
+  min-width: 280px;
+  max-width: 900px;
+}
+
+.footer-meta-brand {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.footer-foxden-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.footer-foxden-logo {
+  height: 52px;
+  width: auto;
+  opacity: 0.92;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.footer-foxden-link:hover .footer-foxden-logo {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.footer-copyright {
   color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.footer-disclaimer {
+  color: #475569;
+  font-size: 0.8rem;
+  margin-top: 8px;
+  line-height: 1.5;
 }
 
 /* Responsive */
 @media (max-width: 900px) {
+  .site-nav {
+    height: 64px;
+    gap: 10px;
+  }
+  .nav-actions {
+    gap: 8px;
+  }
+  .foxden-desktop-logo {
+    display: none;
+  }
+  .foxden-mobile-avatar {
+    display: block !important;
+  }
+  .btn-foxden, .btn-kofi, .btn-github, .btn-nav-download {
+    height: 36px;
+    padding: 0 10px;
+    font-size: 0.82rem;
+    gap: 6px;
+  }
+  .cta-banner {
+    padding: 40px 20px;
+  }
   .hero-brand-heading {
     font-size: 2.8rem;
   }
@@ -1120,6 +1303,17 @@ section[id] {
   }
   .nav-links {
     display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .btn-kofi span,
+  .btn-github span {
+    display: none;
+  }
+  .btn-kofi,
+  .btn-github {
+    padding: 7px 10px;
   }
 }
 
