@@ -16,7 +16,9 @@
   <a href="https://github.com/TalviFox/inFaux"><img src="https://img.shields.io/badge/Background%20Processes-0-success.svg" alt="Background Processes" /></a>
   <a href="https://github.com/TalviFox/inFaux"><img src="https://img.shields.io/badge/Kernel%20Drivers-0%20(100%25%20Driverless)-success.svg" alt="Driverless" /></a>
   <a href="https://github.com/TalviFox/inFaux"><img src="https://img.shields.io/badge/Elevation-Standard%20User%20(asInvoker)-success.svg" alt="Privilege" /></a>
+  <a href="https://github.com/TalviFox/inFaux/releases"><img src="https://img.shields.io/github/downloads/TalviFox/inFaux/total?color=orange&label=Downloads" alt="GitHub Downloads" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue.svg" alt="License" /></a>
+  <a href="https://ko-fi.com/foxdensoftware"><img src="https://img.shields.io/badge/Ko--fi-Support-ff5e5b?logo=kofi&logoColor=white" alt="Support on Ko-fi" /></a>
 </p>
 
 > *"Microsoft basically went 'we can't agree what temp is correct, so you can have none without kernel drivers' unless you do this complicated-ass math."*
@@ -25,9 +27,10 @@
 
 ## ⚡ TL;DR
 
-Most PC hardware monitors force an ugly tradeoff: either sketchy 1990s kernel drivers (`WinRing0.sys`) that trigger Windows Defender Core Isolation, or 800 MB vendor bloatware packed with accounts, stores, and background daemons.
-
-inFaux lives in your system tray as a fast, single-file utility running completely in user space (`asInvoker`) with zero administrator rights. It estimates CPU thermals using Newtonian physics anchored to physical NVMe SSD and GPU diodes instead of vulnerable kernel hooks, and serves clean local telemetry via REST and WebSocket alongside Stream Deck and Bluetooth sensor support.
+* **What it is:** A fast, single-file Windows hardware monitor that lives in your system tray and serves a clean local telemetry API.
+* **Why it exists:** Most PC monitoring tools force a terrible tradeoff - either sketchy 1990s kernel drivers (`WinRing0.sys`) that trip Windows Defender Core Isolation, or 800 MB corporate bloatware with accounts, stores, and background daemons. 
+* **The inFaux way:** Runs 100% in user space (`asInvoker`), requires **zero administrator rights**, and estimates CPU thermals using real Newtonian physics anchored to physical SSD & GPU diodes instead of vulnerable kernel hooks.
+* **Extras:** Built-in Stream Deck companion, dynamic numeric taskbar tray icon, passive Bluetooth room/case thermometers (BTHome v2), and a local REST/WebSocket server for custom dashboards.
 
 <p align="center">
   <img src="docs/assets/screenshots/inFaux-Main-Screen.png" alt="inFaux Dashboard" width="850" />
@@ -35,8 +38,9 @@ inFaux lives in your system tray as a fast, single-file utility running complete
 
 ---
 
-## 🚀 Quick Install
+## 🚀 Quick Install & Downloads
 
+### Option 1: One-Line PowerShell Install
 Run in any standard **(non-elevated)** PowerShell terminal:
 
 ```powershell
@@ -46,32 +50,24 @@ irm https://raw.githubusercontent.com/TalviFox/inFaux/main/install.ps1 | iex
 > [!NOTE]
 > **No Admin Privileges Needed:** inFaux is 100% zero-driver and designed to run safely with standard user permissions (`asInvoker`). Do not run the installer as Administrator!
 
-Prefer a portable executable? Grab `inFaux.exe` directly from the [Releases](https://github.com/TalviFox/inFaux/releases) page.
+### Option 2: Standalone Portable Binary
+Prefer a standalone portable executable? Grab `inFaux.exe` directly:
+
+* 📦 **[Download Latest inFaux Release](https://github.com/TalviFox/inFaux/releases/latest)**
+* 🗂️ **[View All Releases & Changelogs](https://github.com/TalviFox/inFaux/releases)**
+* 🌐 **[Official Website & Web Documentation](https://infaux.foxdensoftware.dev/)**
 
 ---
 
 ## ✨ Features at a Glance
 
-🛡️ **100% Driverless & Zero-UAC**  
-&nbsp;&nbsp;&nbsp;&nbsp;Zero kernel drivers (`.sys`), zero background services, and zero elevation prompts. Fully compatible with Windows 11 Core Isolation, Memory Integrity (HVCI), and Defender.
-
-🌡️ **Thermodynamic Observer**  
-&nbsp;&nbsp;&nbsp;&nbsp;Real physics instead of driver exploits. Models processor thermal mass, Joule heating, and per-core thermal flux, anchored directly to physical NVMe SMART diodes and liquid cooler loops.
-
-📡 **Passive Bluetooth Telemetry (BTHome v2)**  
-&nbsp;&nbsp;&nbsp;&nbsp;Listens passively for open BLE environmental beacons (Shelly BLU H&T, ESPHome, ThermoBeacon) to track ambient room, case, and radiator exhaust temps with zero USB dongles.
-
-🎮 **Stream Deck Companion**  
-&nbsp;&nbsp;&nbsp;&nbsp;Live hardware gauges on your desk with 1-click in-app installation, custom key renaming, and tap-to-cycle metrics.
-
-🔢 **Dynamic Numeric System Tray Icon**  
-&nbsp;&nbsp;&nbsp;&nbsp;Renders live, high-legibility temperature numbers right onto your Windows taskbar, with automatic safety color escalation.
-
-🎨 **Fox Coat Theme Engine**  
-&nbsp;&nbsp;&nbsp;&nbsp;Six curated themes: Silver Fox, Silver Fox OLED (True Black), Red Fox Ember, Arctic Fox Cyan, Arctic Fox Snow White, and Fennec Fox Amber.
-
-🔌 **Embedded Local API**  
-&nbsp;&nbsp;&nbsp;&nbsp;Built-in REST and WebSocket server on `http://127.0.0.1:8765` for Stream Deck, Rainmeter, Home Assistant, and custom dashboards.
+* 🛡️ **100% Driverless & Zero-UAC:** Zero kernel drivers (`.sys`), zero background services, zero elevation prompts. Fully compatible with Windows 11 Core Isolation, Memory Integrity (HVCI), and Defender.
+* 🌡️ **Thermodynamic Observer:** Real physics instead of driver exploits. Models processor thermal mass, Joule heating, and per-core thermal flux, anchored directly to physical NVMe SMART diodes and liquid cooler loops.
+* 📡 **Passive Bluetooth Telemetry (BTHome v2):** Listens passively for open BLE environmental beacons (Shelly BLU H&T, ESPHome, ThermoBeacon) to track ambient room, case, and radiator exhaust temps with zero USB dongles.
+* 🎮 **Stream Deck Companion:** Live hardware gauges on your desk with 1-click in-app installation, custom key renaming, and tap-to-cycle metrics.
+* 🔢 **Dynamic Numeric System Tray Icon:** Renders live, high-legibility temperature numbers right onto your Windows taskbar, with automatic safety color escalation (amber/red).
+* 🎨 **Fox Coat Theme Engine:** 6 curated themes: Silver Fox, Silver Fox OLED (True Black), Red Fox Ember, Arctic Fox Cyan, Arctic Fox Snow White, and Fennec Fox Amber.
+* 🔌 **Embedded Local API:** Built-in REST and WebSocket server on `http://127.0.0.1:8765` for Stream Deck, Rainmeter, Home Assistant, and custom dashboards.
 
 ---
 
@@ -91,19 +87,14 @@ Prefer a portable executable? Grab `inFaux.exe` directly from the [Releases](htt
 
 ## 📖 Detailed Technical Specification
 
-The complete architectural breakdown, thermodynamic formulas, hardware harvesters, and API schemas are documented in [SPEC.md](SPEC.md).
+Looking for the complete architectural breakdown, thermodynamic formulas, API schemas, or configuration tables? Everything is documented in depth:
 
-[Physics & Thermodynamics](SPEC.md#2-the-thermodynamic-observer)  
-&nbsp;&nbsp;&nbsp;&nbsp;Newton's law of cooling, IIR filter constants, storage diode anchoring, and cold plate modeling.
+👉 **[Read the Full Technical Specification (SPEC.md)](SPEC.md)**
 
-[Hardware Harvesters](SPEC.md#3-hardware-harvesters--subsystems)  
-&nbsp;&nbsp;&nbsp;&nbsp;NVML, AMD ADL, DXGI COM interop, SMART IOCTLs, and BTHome v2 BLE packet decoding.
-
-[Local API Reference](SPEC.md#6-embedded-local-api-reference)  
-&nbsp;&nbsp;&nbsp;&nbsp;Endpoint catalogue, curated snapshot schemas (`GET /api/v1/summary`), and WebSocket stream protocol.
-
-[Configuration Reference](SPEC.md#7-configuration-reference)  
-&nbsp;&nbsp;&nbsp;&nbsp;Complete `%LOCALAPPDATA%\inFaux\config.json` options.
+* **[Physics & Thermodynamics](SPEC.md#2-the-thermodynamic-observer):** Newton's law of cooling, IIR filter constants, storage diode anchoring, and cold plate modeling.
+* **[Hardware Harvesters](SPEC.md#3-hardware-harvesters--subsystems):** NVML, AMD ADL, DXGI COM interop, SMART IOCTLs, and BTHome v2 BLE packet decoding.
+* **[Local API Reference](SPEC.md#6-embedded-local-api-reference):** Endpoint catalogue, curated snapshot schemas (`GET /api/v1/summary`), and WebSocket stream protocol.
+* **[Configuration Reference](SPEC.md#7-configuration-reference):** Complete `%LOCALAPPDATA%\inFaux\config.json` options.
 
 ---
 
@@ -133,13 +124,33 @@ Every feature, script, and build is actively dogfooded, tested, and run on my da
 
 ---
 
+## ☕ Support the Project
+
+inFaux is free, source-available, and 100% independent software. If inFaux saves you from bloated, driver-heavy monitoring utilities and you want to support continued development:
+
+<p align="center">
+  <a href="https://ko-fi.com/foxdensoftware">
+    <img src="https://storage.ko-fi.com/cdn/kofi3.png?v=3" height="42" alt="Support on Ko-fi" />
+  </a>
+</p>
+
+Every cup of coffee helps keep the project fast, driverless, and actively maintained!
+
+---
+
 ## 🦊 FoxDen Software Suite
 
-[WireFox](https://wirefox.foxdensoftware.dev/) — Intelligent WireGuard roaming companion for Windows  
-[inFaux](https://github.com/TalviFox/inFaux) — Modern native hardware monitor & telemetry server
+* **[inFaux](https://infaux.foxdensoftware.dev/)**: Modern, Native Hardware Monitor & Telemetry Server for Windows
+* **[WireFox](https://wirefox.foxdensoftware.dev/)**: Intelligent WireGuard Roaming Companion for Windows
+
+<p align="center">
+  <a href="https://foxdensoftware.dev/">
+    <img src="docs/assets/FoxDen_Minimal_Universal.png" alt="FoxDen Software" width="220" />
+  </a><br>
+  <sub><em>Crafted with care by <strong>FoxDen Software</strong></em></sub>
+</p>
 
 ---
 
 *Copyright © FoxDen Software. Distributed under the PolyForm Noncommercial License 1.0.0.*  
 *Elgato and Stream Deck are registered trademarks of Corsair Memory, Inc. inFaux is an independent open-source project and is not affiliated with, endorsed by, or sponsored by Corsair or Elgato.*
-<!-- inFaux Docs Verified -->
