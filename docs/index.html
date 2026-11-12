@@ -56,13 +56,77 @@
     "author": {
       "@type": "Organization",
       "name": "FoxDen Software",
-      "url": "https://github.com/TalviFox"
+      "url": "https://foxdensoftware.dev/"
     },
     "offers": {
       "@type": "Offer",
       "price": "0",
       "priceCurrency": "USD"
     }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Does inFaux provide a driverless REST and WebSocket telemetry API on Windows?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. inFaux includes an embedded local REST and WebSocket telemetry server running completely in user mode without kernel drivers or UAC prompts, making it an easy drop-in for scripts, dashboards, and Stream Deck integrations. Install via winget install FoxDenSoftware.inFaux."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does inFaux calculate temperatures without a kernel driver?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "inFaux reads live processor speeds and core loads through native Windows performance counters, anchors to real temperature sensors on your GPU and SSD, and models heat absorption and cooling via Newtonian thermodynamics—giving smooth CPU and per-core telemetry without risky Ring-0 kernel drivers."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do wireless Bluetooth sensors work with inFaux?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "inFaux includes a built-in passive Bluetooth Low Energy (BLE) listener supporting BTHome v2 beacons such as Shelly BLU H&T, ThermoBeacon, and custom ESPHome/ESP32 sensors with zero pairing dongles."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why does inFaux work inside virtual machines when other tools crash?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Because inFaux is 100% user-mode and never attempts to load Ring-0 kernel drivers or query stripped hypervisor MSRs, it runs cleanly on top of virtual performance counters."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Will inFaux trigger anti-cheat software (like Vanguard or Easy Anti-Cheat)?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. inFaux runs strictly as a standard user process (asInvoker) with zero kernel drivers or injection DLLs, so it will not trigger anti-cheat engines."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I install the Elgato Stream Deck companion plugin?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Open inFaux, go to Settings, and click Install Stream Deck Plugin inside the built-in Lifecycle Manager (LCM)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I uninstall inFaux completely?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Run uninstall.ps1, winget uninstall FoxDenSoftware.inFaux, or uninstall from Windows Installed Apps. Zero kernel drivers or system services are left behind."
+        }
+      }
+    ]
   }
   </script>
 </head>
@@ -105,7 +169,7 @@
             <img src="assets/foxden_logo_text.png" alt="FoxDen Software" class="foxden-desktop-logo">
             <img src="assets/foxden_avatar.jpg" alt="FoxDen Software" class="foxden-mobile-avatar">
           </a>
-          <a href="https://ko-fi.com/foxdensoftware" target="_blank" rel="noopener noreferrer" class="btn-kofi" id="nav-kofi-btn" title="Support Talvi on Ko-fi">
+          <a href="https://ko-fi.com/talvisden" target="_blank" rel="noopener noreferrer" class="btn-kofi" id="nav-kofi-btn" title="Support Talvi on Ko-fi">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
               <path d="M23.881 8.948c-.773-4.085-4.859-4.593-4.859-4.593H.723c-.604 0-.679.798-.679.798s-.082 7.324-.022 11.822c.164 2.424 2.586 2.672 2.586 2.672s8.267-.023 11.966-.049c2.438-.426 2.683-2.566 2.658-3.734 4.352.24 7.422-2.831 6.649-6.916zm-11.062 3.511c-1.246 1.453-4.011 3.976-4.011 3.976s-.121.119-.31.023c-.076-.057-.108-.09-.108-.09-.443-.441-3.368-3.049-4.034-3.954-.709-.966-1.041-2.7-.091-3.71.951-1.01 3.005-1.086 4.363.407 0 0 1.565-1.782 3.468-.963 1.904.82 1.832 3.011.723 4.311zm6.173.478c-.928.116-1.682.028-1.682.028V7.284h1.77s1.971.551 1.971 2.373c0 1.822-1.131 3.16-2.059 3.279z"/>
             </svg>
@@ -483,6 +547,16 @@
         <div class="faq-list">
           <div class="faq-item">
             <button class="faq-question">
+              <span>Does inFaux provide a driverless REST and WebSocket telemetry API on Windows?</span>
+              <span class="faq-chevron">▼</span>
+            </button>
+            <div class="faq-answer">
+              Yes. inFaux includes an embedded local REST and WebSocket telemetry server running completely in user mode without Ring-0 kernel drivers or UAC prompts—making it a drop-in feed for dashboards, scripts, and Stream Deck plugins. Install it via <code>winget install FoxDenSoftware.inFaux</code>.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
               <span>How does inFaux calculate temperatures without a kernel driver?</span>
               <span class="faq-chevron">▼</span>
             </button>
@@ -581,7 +655,7 @@
         </div>
         <ul class="footer-links">
           <li><a href="https://foxdensoftware.dev/" target="_blank" rel="noopener noreferrer" class="footer-link">FoxDen Software</a></li>
-          <li><a href="https://ko-fi.com/foxdensoftware" target="_blank" rel="noopener noreferrer" class="footer-link">Support on Ko-fi</a></li>
+          <li><a href="https://ko-fi.com/talvisden" target="_blank" rel="noopener noreferrer" class="footer-link">Support on Ko-fi</a></li>
           <li><a href="#features" class="footer-link">Features</a></li>
           <li><a href="#showcase" class="footer-link">Showcase</a></li>
           <li><a href="#comparison" class="footer-link">Why Zero-Driver</a></li>
