@@ -21,6 +21,14 @@ namespace InFox.Tray
         [DllImport("user32.dll")]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+        private static readonly IntPtr HWND_TOPMOST = new(-1);
+        private const uint SWP_NOSIZE = 0x0001;
+        private const uint SWP_NOMOVE = 0x0002;
+        private const uint SWP_NOACTIVATE = 0x0010;
+
         private NotifyIcon? _notifyIcon;
         private IntPtr _lastHIcon = IntPtr.Zero;
         private Icon? _defaultIcon;
@@ -28,6 +36,7 @@ namespace InFox.Tray
         private readonly object _renderLock = new();
 
         public event Action? OpenDashboardRequested;
+        public event Action? AboutRequested;
         public event Action? ExitRequested;
 
         private TrayManager() { }
@@ -108,6 +117,11 @@ namespace InFox.Tray
 
             menu.Items.Add(new ToolStripSeparator());
 
+            var aboutItem = new ToolStripMenuItem("About inFaux", null, (s, e) => AboutRequested?.Invoke());
+            menu.Items.Add(aboutItem);
+
+            menu.Items.Add(new ToolStripSeparator());
+
             var exitItem = new ToolStripMenuItem("Exit inFaux", null, (s, e) => ExitRequested?.Invoke());
             menu.Items.Add(exitItem);
 
@@ -115,6 +129,8 @@ namespace InFox.Tray
             {
                 SetForegroundWindow(menu.Handle);
             };
+            menu.Opened += (s, e) => EnsureMenuAboveTaskbar(menu, clampToWorkingArea: true);
+            targetMenu.DropDown.Opened += (s, e) => EnsureMenuAboveTaskbar(targetMenu.DropDown, clampToWorkingArea: false);
 
             _notifyIcon.ContextMenuStrip = menu;
             _notifyIcon.MouseClick += (s, e) =>
@@ -136,6 +152,40 @@ namespace InFox.Tray
         private void OnThemeChanged(FoxThemeDefinition theme)
         {
             UpdateTrayBadge(_lastReportedTemp);
+        }
+
+        private static void EnsureMenuAboveTaskbar(ToolStripDropDown menu, bool clampToWorkingArea)
+        {
+            try
+            {
+                if (clampToWorkingArea)
+                {
+                    var workingArea = Screen.FromPoint(Cursor.Position).WorkingArea;
+                    int left = menu.Left;
+                    int top = menu.Top;
+
+                    if (menu.Bottom > workingArea.Bottom - 4)
+                        top = Math.Max(workingArea.Top + 4, workingArea.Bottom - menu.Height - 4);
+                    if (top < workingArea.Top + 4)
+                        top = workingArea.Top + 4;
+
+                    if (menu.Right > workingArea.Right - 4)
+                        left = Math.Max(workingArea.Left + 4, workingArea.Right - menu.Width - 4);
+                    if (left < workingArea.Left + 4)
+                        left = workingArea.Left + 4;
+
+                    if (left != menu.Left || top != menu.Top)
+                    {
+                        menu.Location = new Point(left, top);
+                    }
+                }
+
+                if (menu.IsHandleCreated && menu.Handle != IntPtr.Zero)
+                {
+                    SetWindowPos(menu.Handle, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+                }
+            }
+            catch { }
         }
 
         private void OnTelemetryUpdated(SystemSummary summary, System.Collections.Generic.IReadOnlyList<SensorMetric> metrics)

@@ -1,0 +1,136 @@
+<UserControl x:Class="InFox.Views.AboutCard"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Border Background="{DynamicResource CardBackgroundBrush}"
+            BorderBrush="{DynamicResource CardBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="10"
+            Padding="20">
+        <StackPanel>
+            <!-- App Header Row -->
+            <Grid Margin="0,2,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Squircle Icon Container -->
+                <Border Grid.Column="0"
+                        Width="48" Height="48"
+                        CornerRadius="10"
+                        Background="{DynamicResource ControlBackgroundBrush}"
+                        BorderBrush="{DynamicResource ControlBorderBrush}"
+                        BorderThickness="1"
+                        Margin="0,0,14,0"
+                        VerticalAlignment="Center">
+                    <Image Source="/inFaux_IHS.png"
+                           Width="36" Height="36"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Border>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <WrapPanel Orientation="Horizontal">
+                        <TextBlock Text="inFaux"
+                                   FontSize="19"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   Margin="0,0,10,4"
+                                   VerticalAlignment="Center"/>
+                        <Border Background="{DynamicResource ControlBackgroundBrush}"
+                                BorderBrush="{DynamicResource ControlBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="8,2"
+                                Margin="0,0,8,4"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="{Binding VersionString}"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       FontFamily="Consolas"/>
+                        </Border>
+                        <Border Background="{DynamicResource ControlBackgroundBrush}"
+                                BorderBrush="{DynamicResource ControlBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="8,2"
+                                Margin="0,0,0,4"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="License: PolyForm Noncommercial"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </Border>
+                    </WrapPanel>
+                    <Image Source="/assets/foxdensoftware.png"
+                           Height="15"
+                           HorizontalAlignment="Left"
+                           Margin="0,2,0,4"
+                           Cursor="Hand"
+                           Tag="https://foxdensoftware.dev/"
+                           MouseLeftButtonDown="OnExternalLinkClick"
+                           ToolTip="Visit FoxDen Software (foxdensoftware.dev)"
+                           RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                    <TextBlock Text="Copyright © 2026 FoxDen Software • Real telemetry. Faux drivers."
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="12"
+                               Margin="0,2,0,0"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Divider -->
+            <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,2,0,12"/>
+
+            <!-- Descriptive Text -->
+            <TextBlock Text="Developed and maintained by FoxDen Software. Source-available under PolyForm Noncommercial License 1.0.0: free to inspect, fork, and use; commercial competition/repackaging prohibited."
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       FontSize="11.5"
+                       LineHeight="17"
+                       TextWrapping="Wrap"/>
+
+            <!-- Links Row -->
+            <Grid Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <WrapPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="GitHub"
+                               Tag="https://github.com/TalviFox/inFaux"
+                               MouseLeftButtonDown="OnExternalLinkClick"
+                               Foreground="{DynamicResource PrimaryAccentBrush}"
+                               FontSize="12" FontWeight="SemiBold"
+                               Cursor="Hand" Margin="0,0,16,0"
+                               ToolTip="Visit GitHub Repository"/>
+                    <TextBlock Text="Releases"
+                               Tag="https://github.com/TalviFox/inFaux/releases"
+                               MouseLeftButtonDown="OnExternalLinkClick"
+                               Foreground="{DynamicResource PrimaryAccentBrush}"
+                               FontSize="12" FontWeight="SemiBold"
+                               Cursor="Hand" Margin="0,0,16,0"
+                               ToolTip="View Releases on GitHub"/>
+                    <TextBlock Text="Report Issue"
+                               Tag="https://github.com/TalviFox/inFaux/issues"
+                               MouseLeftButtonDown="OnExternalLinkClick"
+                               Foreground="{DynamicResource PrimaryAccentBrush}"
+                               FontSize="12" FontWeight="SemiBold"
+                               Cursor="Hand"
+                               ToolTip="Report a bug or request a feature"/>
+                </WrapPanel>
+                <TextBlock Grid.Column="1"
+                           Text="Iced Latte Fund (Ko-fi)"
+                           Tag="https://ko-fi.com/foxdensoftware"
+                           MouseLeftButtonDown="OnExternalLinkClick"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           FontSize="12"
+                           Cursor="Hand"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           ToolTip="Buy an iced latte for Talvi Fox on Ko-fi"/>
+            </Grid>
+        </StackPanel>
+    </Border>
+</UserControl>

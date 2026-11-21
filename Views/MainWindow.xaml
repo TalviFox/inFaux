@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:InFox.Views"
         mc:Ignorable="d"
         Title="inFaux - Hardware Monitor"
         Height="760" Width="1120"
@@ -2217,57 +2218,23 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Group 5: About FoxDen Software (Directly inspired by Screenshot 3) -->
+                        <!-- Group 5: About FoxDen Software -->
                         <TextBlock Text="About • FoxDen Software" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
 
-                        <Border Style="{StaticResource StaticCard}" Margin="0,0,0,16">
-                            <StackPanel>
-                                <!-- App Header Row -->
-                                <Grid Margin="0,4,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
+                        <views:AboutCard Margin="8,0,8,8"/>
 
-                                    <!-- Squircle Icon Container -->
-                                    <Border Grid.Column="0" Width="48" Height="48" CornerRadius="10" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" Margin="0,0,14,0" VerticalAlignment="Top">
-                                        <Image Source="/inFaux_IHS.png" Width="34" Height="34" HorizontalAlignment="Center" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                    </Border>
-
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="inFaux" FontSize="19" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="by FoxDen Software" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryAccentBrush}" Cursor="Hand" MouseDown="OnWebsiteClick" ToolTip="Visit GitHub Repository" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                            <Border Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,6,0" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding VersionString}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="Consolas"/>
-                                            </Border>
-                                            <Border Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                                                <TextBlock Text="License: PolyForm Noncommercial" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                            </Border>
-                                        </StackPanel>
-                                        <TextBlock Text="Copyright © 2026 FoxDen Software • Real telemetry. Faux drivers." Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" Margin="0,4,0,0"/>
-                                    </StackPanel>
-                                </Grid>
-
-                                <!-- Descriptive Text -->
-                                <TextBlock Text="Developed and maintained by FoxDen Software. Source-available under PolyForm Noncommercial License 1.0.0 — free to inspect, fork, and use; commercial competition and repackaging prohibited." Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11.5" LineHeight="17" TextWrapping="Wrap"/>
-
-                                <!-- Divider -->
-                                <Border Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,14"/>
-
-                                <!-- Clean System Removal Row (Screenshot 3 inspired) -->
-                                <Grid Margin="0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
-                                        <TextBlock Text="Clean System Removal" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
-                                        <TextBlock Text="Cleanly deletes scheduled boot tasks, Start Menu shortcuts, and Program Files directory." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                    <Button Grid.Column="1" Content="Uninstall inFaux" Click="OnUninstallClick" Style="{StaticResource DangerButton}" VerticalAlignment="Center"/>
-                                </Grid>
-                            </StackPanel>
+                        <Border Style="{StaticResource StaticCard}" Margin="8,0,8,16">
+                            <Grid Margin="0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                    <TextBlock Text="Clean System Removal" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                    <TextBlock Text="Cleanly deletes scheduled boot tasks, Start Menu shortcuts, and Program Files directory." Style="{StaticResource SubLabel}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Uninstall inFaux" Click="OnUninstallClick" Style="{StaticResource DangerButton}" VerticalAlignment="Center"/>
+                            </Grid>
                         </Border>
 
                     </StackPanel>

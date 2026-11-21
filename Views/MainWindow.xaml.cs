@@ -608,19 +608,6 @@ namespace InFox.Views
                 secondaryButtonText: "Cancel");
         }
 
-        private void OnWebsiteClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            try
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "https://github.com/TalviFox/inFaux",
-                    UseShellExecute = true
-                });
-            }
-            catch { }
-        }
-
         private void OnThemeCardClick(object sender, RoutedEventArgs e)
         {
             if (sender is FrameworkElement fe && fe.Tag is string themeId)
