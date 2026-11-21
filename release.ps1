@@ -294,22 +294,22 @@ ${tripleBt}powershell
 irm https://raw.githubusercontent.com/TalviFox/inFaux/main/install.ps1 | iex
 ${tripleBt}
 
-*Zero-elevation install into `%LOCALAPPDATA%\Programs\inFaux`, sets up shortcuts, Task Scheduler autostart without UAC prompts, and cryptographically validates SHA-256 hashes.*
+*Zero-elevation install into ${bt}%LOCALAPPDATA%\Programs\inFaux${bt}, sets up shortcuts, Task Scheduler autostart without UAC prompts, and cryptographically validates SHA-256 hashes.*
 
 ---
 
 ## $memoEmoji What's New in v$cleanVersion
 
-- **100% Zero-Driver Architecture:** Runs completely as standard user (`asInvoker`) with **0 UAC prompts**, 0 kernel drivers (`.sys`), and passes Windows 11 Core Isolation / Memory Integrity without flags.
+- **100% Zero-Driver Architecture:** Runs completely as standard user (${bt}asInvoker${bt}) with **0 UAC prompts**, 0 kernel drivers (${bt}.sys${bt}), and passes Windows 11 Core Isolation / Memory Integrity without flags.
 - **The Thermodynamic Observer:** Per-core thermal flux simulation using Newton's cooling laws, dynamic Joule heating, and passive chassis baselines.
 - **Curated Multi-View Dashboard:** Instant glanceable metric cards with 60-second rolling sparklines for CPU, GPU, RAM, Storage, and Network, plus deep per-component drilldown views.
 - **Built-In Stream Deck Companion (Zero-Config LCM):**
   - Live CPU wattage, GPU wattage, RAM usage, and Network throughput gauges directly on your Stream Deck.
   - Multi-GPU (discrete cards, integrated APUs/iGPUs) and Multi-Network adapter dropdown picker + physical tap-to-cycle!
   - 1-Click install, repair, and uninstall directly from the inFaux **Settings** tab.
-- **Embedded Kestrel REST & WebSocket API:** Open port `8765` for Home Assistant, custom widgets, or LAN monitoring without shared memory limits or paywalls.
+- **Embedded Kestrel REST & WebSocket API:** Open port ${bt}8765${bt} for Home Assistant, custom widgets, or LAN monitoring without shared memory limits or paywalls.
 - **Dynamic GDI+ Numeric Tray Badge:** Renders live temperature numbers directly onto your Windows notification tray icon with thermal color-coding.
-- **Fox Coat Theme Engine:** 4 curated dark-mode color themes (Classic Cyan, Solar Gold, Blood Orange, Midnight Emerald).
+- **Fox Coat Theme Engine:** 6 curated themes (Silver Fox, Silver Fox OLED, Red Fox Ember, Arctic Fox Cyan, Arctic Fox Snow White, Fennec Fox Amber).
 
 $checksumSection
 "@
