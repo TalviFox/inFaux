@@ -3,6 +3,7 @@ using System.IO;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using InFox.Engine;
@@ -21,6 +22,11 @@ namespace InFox.Api
     {
         private static readonly Lazy<InFoxApiServer> _instance = new(() => new InFoxApiServer());
         public static InFoxApiServer Instance => _instance.Value;
+
+        private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
+        {
+            NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
+        };
 
         private WebApplication? _app;
         private CancellationTokenSource? _cts;
@@ -125,7 +131,7 @@ namespace InFox.Api
                     "/api/v1/health",
                     "/api/v1/stream (WebSocket)"
                 }
-            }));
+            }, _jsonOptions));
 
             // Health check
             app.MapGet("/api/v1/health", () => Results.Json(new
@@ -133,20 +139,20 @@ namespace InFox.Api
                 status = "ok",
                 uptimeSeconds = (DateTime.UtcNow - _startTime).TotalSeconds,
                 timestamp = DateTime.UtcNow
-            }));
+            }, _jsonOptions));
 
             // Curated Human-first Summary (CPU, GPU, RAM, Storage, Battery, Network)
             app.MapGet("/api/v1/summary", () =>
             {
                 var summary = TelemetryEngine.Instance.CurrentSummary;
-                return Results.Json(summary);
+                return Results.Json(summary, _jsonOptions);
             });
 
             // Full raw sensors collection
             app.MapGet("/api/v1/sensors", () =>
             {
                 var metrics = TelemetryEngine.Instance.CurrentMetrics;
-                return Results.Json(metrics);
+                return Results.Json(metrics, _jsonOptions);
             });
 
             // Filtered sensors by category (e.g. /api/v1/sensors/cpu)
@@ -159,7 +165,7 @@ namespace InFox.Api
                     {
                         if (m.Category == cat) filtered.Add(m);
                     }
-                    return Results.Json(filtered);
+                    return Results.Json(filtered, _jsonOptions);
                 }
                 return Results.BadRequest(new { error = $"Unknown category '{category}'" });
             });
@@ -173,7 +179,7 @@ namespace InFox.Api
                     metricId,
                     count = history.Length,
                     values = history
-                });
+                }, _jsonOptions);
             });
 
             // Real-time WebSocket stream (Supports optional ?channel=cpu|gpu|memory|storage|network filter)
@@ -194,7 +200,6 @@ namespace InFox.Api
 
         private static async Task HandleWebSocketStreamAsync(WebSocket ws, string? channel, CancellationToken ct)
         {
-            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
             string normalizedChannel = (channel ?? "").Trim().ToLowerInvariant();
 
             while (ws.State == WebSocketState.Open && !ct.IsCancellationRequested)
@@ -215,7 +220,7 @@ namespace InFox.Api
                         _ => summary
                     };
 
-                    string json = JsonSerializer.Serialize(payload, options);
+                    string json = JsonSerializer.Serialize(payload, _jsonOptions);
                     byte[] bytes = Encoding.UTF8.GetBytes(json);
 
                     await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, ct);
