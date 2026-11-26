@@ -1,4 +1,4 @@
-# inFaux Detailed Technical Specification
+﻿# inFaux Detailed Technical Specification
 
 > **Specification Version:** 1.2.0  
 > **Document Status:** Active Specification  
@@ -17,28 +17,31 @@ Traditional Windows hardware monitoring utilities rely on Ring-0 kernel drivers 
 
 `inFaux` operates strictly within the Windows user security context (`asInvoker`). The executable requires **zero elevation**, loads **zero kernel drivers**, installs **zero background services**, and triggers **zero UAC consent dialogs**. If launched with elevated administrative privileges, the application issues a visual notification reminding the user that elevation is neither required nor recommended.
 
-```mermaid
-flowchart TD
-    subgraph US["USER SPACE (asInvoker — Zero Elevation)"]
-        subgraph APP["inFaux.exe"]
-            TE["Telemetry Engine<br/>(250ms – 1000ms)"]
-            TO["Thermodynamic Observer<br/>(Physics Solver)"]
-            KS["Kestrel Server<br/>(REST & WebSocket)"]
-        end
-    end
-
-    subgraph OS["WINDOWS OS PLATFORM (Zero Kernel Drivers)"]
-        PDH["PDH Perf Counters<br/>(CPU, RAM, Net)"]
-        HW["Direct Hardware APIs<br/>(NVML / ADL / DXGI / SMART)"]
-        BLE["Windows BLE Stack<br/>(BTHome v2 Beacons)"]
-    end
-
-    CLIENTS["Local Consumers<br/>(Stream Deck / Rainmeter / Dashboards)"]
-
-    TE <-->|"Win32 / PDH"| PDH
-    TO <-->|"SMART IOCTL & GPU Diodes"| HW
-    TO <-->|"Passive BLE Packets"| BLE
-    KS <-->|"HTTP & WS (127.0.0.1:8765)"| CLIENTS
+```
++-----------------------------------------------------------------------+
+|                             USER SPACE                                |
+|                                                                       |
+|  +-----------------------------------------------------------------+  |
+|  |                            inFaux                               |  |
+|  |  +-------------------+  +-------------------+  +-------------+  |  |
+|  |  |  Telemetry Engine |  |  Thermo Observer  |  |  Kestrel    |  |  |
+|  |  |  (250ms - 1000ms) |  |  (Physics Solver) |  |  REST & WS  |  |  |
+|  |  +---------+---------+  +---------+---------+  +------+------+  |  |
+|  +------------|----------------------|-------------------|---------+  |
+|               |                      |                   |            |
+|       Win32 / PDH / COM       SMART NVMe / GPU    Local Loopback      |
+|               |                      |            (127.0.0.1:8765)    |
++---------------|----------------------|-------------------|------------+
+                v                      v                   v
++-----------------------------------------------------------------------+
+|                        WINDOWS OS PLATFORM                            |
+|  +------------------+  +-------------------+  +--------------------+  |
+|  | PDH Perf Counters|  | DXGI / NVML / ADL |  | Windows BLE Stack  |  |
+|  | (CPU, RAM, Net)  |  | (DirectX, GPU)    |  | (BTHome v2 Beacons)|  |
+|  +------------------+  +-------------------+  +--------------------+  |
++-----------------------------------------------------------------------+
+|  ZERO KERNEL DRIVERS  |  ZERO RING-0 HOOKS  |  ZERO VULNERABILITIES   |
++-----------------------------------------------------------------------+
 ```
 
 ### 1.2 Memory & Runtime Footprint
@@ -58,8 +61,6 @@ Solid-state drives (NVMe and SATA) expose standard hardware diode telemetry thro
 
 $$T_{\text{ambient}} = \min(T_{\text{NVMe}}, T_{\text{SATA}}) - \Delta T_{\text{offset}}$$
 
-> **In plain English:** Your SSD is bolted right to the motherboard in the chassis airflow. If your coldest idle drive sits at 36°C, case ambient intake air is typically around 28°C. We use that as a rock-solid baseline floor so CPU estimations don't float away.
-
 This prevents circular dependencies where CPU load estimations skew the baseline ambient reference.
 
 ### 2.2 Direct Liquid Cooler (AIO) Radiator Loop Alignment
@@ -68,8 +69,6 @@ When a liquid cooling profile (`AIO`) is active and paired with a radiator exhau
 * Thermal resistance between CPU die, solder thermal interface material (STIM), and the copper cold plate is accounted for:
   $$\theta_{\text{coldplate}} \approx 0.08\,\text{K/W to } 0.14\,\text{K/W}$$
 * Under prolonged all-core workloads (e.g. Core i9-14900K, Ryzen 9 7950X), coolant heat soaking is simulated, preventing the cold plate from dissipating heat faster than the physical radiator fluid loop allows.
-
-> **In plain English:** Liquid coolers don't stay ice cold forever. As fluid absorbs heat over 10 minutes of heavy rendering, the baseline rises. If a Bluetooth sensor measures warm exhaust coming off your radiator, inFaux reflects that heat soak on the CPU die.
 
 ### 2.3 Copper Integrated Heat Spreader (IHS) Simulation
 The thermal mass of the processor package (silicon die, STIM, and nickel-plated copper heat spreader) is solved using an asymmetric first-order Infinite Impulse Response (IIR) low-pass filter:
@@ -81,8 +80,6 @@ where the smoothing coefficient $\alpha$ is dynamic based on thermal flux direct
   $$\tau_{\text{rise}} = 1.8\,\text{seconds} \quad \implies \quad \alpha_{\text{rise}} = 1 - e^{-\Delta t / \tau_{\text{rise}}}$$
 * **Gradual Radiative Dissipation ($\Delta T < 0$):**
   $$\tau_{\text{fall}} = 3.5\,\text{seconds} \quad \implies \quad \alpha_{\text{fall}} = 1 - e^{-\Delta t / \tau_{\text{fall}}}$$
-
-> **In plain English:** Silicon heats up instantly when you click render, but copper and water hold onto heat. The filter responds quickly to sudden load surges ($\tau = 1.8\text{s}$), but lets the cooler bleed off stored energy more gradually when the load drops ($\tau = 3.5\text{s}$).
 
 This accurately replicates physical copper heat conduction: silicon heats up near-instantaneously under surge loads, while the cold plate and fin stack dissipate stored thermal energy gradually.
 
@@ -96,8 +93,6 @@ Where:
 * $U_i \in [0, 1]$ is the utilization percentage of core $i$.
 * $\text{TDP}$ is the processor thermal design power (auto-detected or overridden in settings).
 
-> **In plain English:** User mode can't read core voltage without a kernel driver. But since voltage increases alongside clock speed on modern boost algorithms, squaring the boost ratio $\left(\frac{f}{f_{\text{base}}}\right)^2$ acts as a clean stand-in for the missing voltage telemetry, capturing the non-linear power surge of turbo clocks.
-
 ### 2.5 Localized Per-Core Thermal Flux Modeling
 Individual cores and compute clusters (e.g., AMD Zen CCX / CCD or Intel P-Core / E-Core clusters) exhibit non-uniform temperature gradients during asymmetric workloads. `inFaux` distributes thermal bloat across the package matrix:
 * Cores sustaining boost frequencies ($f_i > f_{\text{base}}$) at high loads receive localized positive thermal deltas (+4°C to +18°C above IHS base).
@@ -106,10 +101,10 @@ Individual cores and compute clusters (e.g., AMD Zen CCX / CCD or Intel P-Core /
 ### 2.6 Thermodynamic Boundary Clamps
 Physical boundary clamps ensure thermal metrics remain within physically possible bounds:
 * **Cooling Floor Clamp:** $T_{\text{CPU}} \ge T_{\text{ambient}}$ (the CPU cannot read cooler than the air or liquid cooling it).
-* **Radiator Delta Clamp:** For liquid-cooled systems, $T_{\text{die}} \ge T_{\text{radiator exhaust}} + \Delta T_{\text{TIM min}}$.
+* **Radiator Delta Clamp:** For liquid-cooled systems, $T_{\text{die}} \ge T_{\text{radiator\_exhaust}} + \Delta T_{\text{TIM\_minimum}}$.
 * **Honest Telemetry Tagging:** Every metric emitted via UI, Tray, and API is tagged:
-  * `[Measured]` - Direct diode readings (GPU core, GPU hotspot, NVMe drive, BLE thermometers).
-  * `[Estimated]` - Solved thermodynamic observer values (CPU package, individual core temperatures).
+  * `[Measured]` -  Direct diode readings (GPU core, GPU hotspot, NVMe drive, BLE thermometers).
+  * `[Estimated]` -  Solved thermodynamic observer values (CPU package, individual core temperatures).
 
 ---
 

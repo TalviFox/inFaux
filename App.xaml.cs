@@ -14,6 +14,7 @@ namespace InFox
     {
         private static Mutex? _singleInstanceMutex;
         private MainWindow? _mainWindow;
+        private AboutWindow? _aboutWindow;
 
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         private static extern uint RegisterWindowMessage(string lpString);
@@ -24,6 +25,20 @@ namespace InFox
         private const int HWND_BROADCAST = 0xFFFF;
         public static readonly uint WM_SHOW_INFAUX = RegisterWindowMessage("inFaux_ShowDashboardMessage");
 
+        private static void WriteCrashLog(string msg)
+        {
+            try
+            {
+                string dir = System.IO.Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "inFaux");
+                System.IO.Directory.CreateDirectory(dir);
+                string crashLogPath = System.IO.Path.Combine(dir, "crash.log");
+                System.IO.File.AppendAllText(crashLogPath, $"[{DateTime.UtcNow:O}] {msg}\n");
+            }
+            catch { }
+        }
+
         protected override async void OnStartup(StartupEventArgs e)
         {
             AppDomain.CurrentDomain.UnhandledException += (s, args) =>
@@ -31,21 +46,21 @@ namespace InFox
                 var ex = args.ExceptionObject as Exception;
                 string msg = $"CRASH (AppDomain): {ex?.ToString() ?? args.ExceptionObject?.ToString()}";
                 LoggingService.Instance.Error("Crash", msg);
-                try { System.IO.File.AppendAllText("crash.log", $"[{DateTime.UtcNow}] {msg}\n"); } catch { }
+                WriteCrashLog(msg);
             };
 
             DispatcherUnhandledException += (s, args) =>
             {
                 string msg = $"CRASH (Dispatcher): {args.Exception}";
                 LoggingService.Instance.Error("Crash", msg);
-                try { System.IO.File.AppendAllText("crash.log", $"[{DateTime.UtcNow}] {msg}\n"); } catch { }
+                WriteCrashLog(msg);
             };
 
             TaskScheduler.UnobservedTaskException += (s, args) =>
             {
                 string msg = $"CRASH (TaskScheduler): {args.Exception}";
                 LoggingService.Instance.Error("Crash", msg);
-                try { System.IO.File.AppendAllText("crash.log", $"[{DateTime.UtcNow}] {msg}\n"); } catch { }
+                WriteCrashLog(msg);
             };
 
             base.OnStartup(e);
@@ -130,6 +145,7 @@ namespace InFox
                 {
                     TrayManager.Instance.Initialize();
                     TrayManager.Instance.OpenDashboardRequested += ShowDashboard;
+                    TrayManager.Instance.AboutRequested += ShowAboutWindow;
                     TrayManager.Instance.ExitRequested += ExitApp;
                 }
                 catch (Exception ex)
@@ -175,6 +191,27 @@ namespace InFox
                 _mainWindow.WindowState = WindowState.Normal;
             }
             _mainWindow.Activate();
+        }
+
+        private void ShowAboutWindow()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (_aboutWindow != null)
+                {
+                    if (_aboutWindow.WindowState == WindowState.Minimized)
+                    {
+                        _aboutWindow.WindowState = WindowState.Normal;
+                    }
+                    _aboutWindow.Activate();
+                    return;
+                }
+
+                _aboutWindow = new AboutWindow();
+                _aboutWindow.Closed += (s, e) => _aboutWindow = null;
+                _aboutWindow.Show();
+                _aboutWindow.Activate();
+            });
         }
 
         internal void ExitApp()

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/inFaux_IHS.png" alt="inFaux Logo" width="128" height="128" />
+  <img src="inFaux.ico" alt="inFaux Logo" width="128" height="128" />
 </p>
 
 <h1 align="center">inFaux</h1>
