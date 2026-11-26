@@ -355,6 +355,16 @@ namespace InFox.ViewModels
             ? "Loopback Only (127.0.0.1) — Safely restricted to this PC"
             : "LAN Enabled (0.0.0.0) — Accessible by other devices on your local network";
 
+        public bool IsApiRunning => InFoxApiServer.Instance.IsRunning;
+        public string ApiErrorMessage => InFoxApiServer.Instance.LastError ?? string.Empty;
+        public System.Windows.Visibility ApiErrorVisibility =>
+            !string.IsNullOrEmpty(InFoxApiServer.Instance.LastError)
+                ? System.Windows.Visibility.Visible
+                : System.Windows.Visibility.Collapsed;
+        public string ApiStatusTooltip => !string.IsNullOrEmpty(ApiErrorMessage)
+            ? ApiErrorMessage
+            : (IsApiRunning ? $"API listening at {ApiEndpointUrl}" : "API server is stopped");
+
         public string LocalExecutableHash => UpdateService.Instance.GetLocalExecutableHash();
 
         public IReadOnlyList<FoxThemeDefinition> AvailableThemes => ThemeService.AvailableThemes;
@@ -1406,6 +1416,18 @@ namespace InFox.ViewModels
                     OnPropertyChanged(nameof(CurrentTheme));
                     OnPropertyChanged(nameof(AvailableThemes));
                     OnPropertyChanged(nameof(SelectedThemeId));
+                });
+            };
+
+            InFoxApiServer.Instance.StatusChanged += (isRunning, lastError) =>
+            {
+                _dispatcher.InvokeAsync(() =>
+                {
+                    OnPropertyChanged(nameof(IsApiRunning));
+                    OnPropertyChanged(nameof(ApiErrorMessage));
+                    OnPropertyChanged(nameof(ApiErrorVisibility));
+                    OnPropertyChanged(nameof(ApiStatusTooltip));
+                    OnPropertyChanged(nameof(ApiEndpointUrl));
                 });
             };
         }

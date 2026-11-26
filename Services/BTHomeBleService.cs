@@ -218,11 +218,6 @@ namespace InFox.Services
                     rssi = existingSensor.Rssi;
                 }
 
-                if (mac.StartsWith("F8:44:77", StringComparison.OrdinalIgnoreCase))
-                {
-                    LoggingService.Instance.Info("BTHomeBle", $"Observed beacon {mac} (RSSI: {rssi} dBm, Name: '{localName}', Sections: {args.Advertisement.DataSections.Count})");
-                }
-
                 foreach (var section in args.Advertisement.DataSections)
                 {
                     // Look for Service Data 16-bit UUID (0x16)

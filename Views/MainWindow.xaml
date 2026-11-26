@@ -489,7 +489,7 @@
                     </Border>
 
                     <!-- Telemetry Live & API Pill -->
-                    <Border Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10,4" VerticalAlignment="Center">
+                    <Border Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10,4" VerticalAlignment="Center" ToolTip="{Binding ApiStatusTooltip}">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Ellipse Width="7" Height="7" Fill="#10B981" Margin="0,0,6,0"/>
                             <TextBlock Text="Telemetry Live" FontSize="11" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" Margin="0,0,10,0"/>
@@ -1480,6 +1480,7 @@
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
                                     <!-- Bind Localhost Only Toggle -->
@@ -1509,6 +1510,9 @@
 
                                         <Button Grid.Column="1" Content="🌐 Open Live API in Browser" Click="OnOpenApiInBrowserClick" Style="{StaticResource ActionButton}"/>
                                     </Grid>
+
+                                    <!-- API Bind / Startup Error Banner -->
+                                    <TextBlock Grid.Row="2" Text="{Binding ApiErrorMessage}" Visibility="{Binding ApiErrorVisibility}" Foreground="#EF4444" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"/>
                                 </Grid>
                             </Grid>
                         </Border>

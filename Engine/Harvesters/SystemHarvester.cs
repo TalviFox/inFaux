@@ -1344,7 +1344,7 @@ namespace InFox.Engine.Harvesters
                     summary.Memory.SlotsUsed = _cachedMemoryTopology.SlotsUsed;
                     summary.Memory.TotalSlots = _cachedMemoryTopology.TotalSlots;
                     summary.Memory.ChannelLayout = _cachedMemoryTopology.ChannelLayout;
-                    summary.Memory.Modules = _cachedMemoryTopology.Modules;
+                    summary.Memory.Modules = new List<DimmModuleSummary>(_cachedMemoryTopology.Modules);
                 }
 
                 if (_cachedRamSpeedMts.HasValue)

@@ -28,32 +28,81 @@ namespace InFox.Api
             NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
         };
 
+        private readonly SemaphoreSlim _lifecycleLock = new(1, 1);
         private WebApplication? _app;
         private CancellationTokenSource? _cts;
         private readonly DateTime _startTime = DateTime.UtcNow;
-        private bool _isRunning = false;
+        private volatile bool _isRunning = false;
 
         public bool IsRunning => _isRunning;
+        public string? LastError { get; private set; }
+        public event Action<bool, string?>? StatusChanged;
 
         private InFoxApiServer() { }
 
         public async Task StartAsync()
         {
-            if (_isRunning) return;
+            await _lifecycleLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                await StartCoreAsync().ConfigureAwait(false);
+            }
+            finally
+            {
+                _lifecycleLock.Release();
+            }
+        }
+
+        public async Task StopAsync()
+        {
+            await _lifecycleLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                await StopCoreAsync().ConfigureAwait(false);
+            }
+            finally
+            {
+                _lifecycleLock.Release();
+            }
+        }
+
+        public async Task RestartAsync()
+        {
+            await _lifecycleLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                await StopCoreAsync().ConfigureAwait(false);
+                await StartCoreAsync().ConfigureAwait(false);
+            }
+            finally
+            {
+                _lifecycleLock.Release();
+            }
+        }
+
+        private async Task StartCoreAsync()
+        {
+            if (_isRunning && _app != null) return;
 
             var config = ConfigManager.Instance.Config;
             if (!config.EnableApi)
             {
+                LastError = null;
                 LoggingService.Instance.Info("ApiServer", "Open API is disabled in configuration.");
+                NotifyStatusChanged();
                 return;
             }
 
+            WebApplication? app = null;
+            CancellationTokenSource? cts = null;
+            string url = string.Empty;
+
             try
             {
-                _cts = new CancellationTokenSource();
+                cts = new CancellationTokenSource();
                 int port = config.ApiPort > 0 ? config.ApiPort : 8765;
                 string host = config.ApiBindLocalhostOnly ? "127.0.0.1" : "*";
-                string url = $"http://{host}:{port}";
+                url = $"http://{host}:{port}";
 
                 LoggingService.Instance.Info("ApiServer", $"Configuring embedded Kestrel server at {url}...");
 
@@ -69,52 +118,86 @@ namespace InFox.Api
                     });
                 });
 
-                _app = builder.Build();
+                app = builder.Build();
 
-                _app.UseCors();
-                _app.UseWebSockets();
+                app.UseCors();
+                app.UseWebSockets();
 
-                ConfigureEndpoints(_app);
+                ConfigureEndpoints(app, cts.Token);
 
                 LoggingService.Instance.Info("ApiServer", "Starting API server...");
-                await _app.StartAsync(_cts.Token);
+                await app.StartAsync(cts.Token).ConfigureAwait(false);
+
+                _app = app;
+                _cts = cts;
                 _isRunning = true;
+                LastError = null;
+
                 LoggingService.Instance.Info("ApiServer", $"inFaux Open API is live at {url}");
+                NotifyStatusChanged();
             }
             catch (Exception ex)
             {
-                LoggingService.Instance.Error("ApiServer", "Failed to start API server", ex);
+                _isRunning = false;
+                LastError = $"Failed to start API at {(string.IsNullOrEmpty(url) ? "configured port" : url)}: {ex.Message}";
+                LoggingService.Instance.Error("ApiServer", LastError, ex);
+
+                if (app != null)
+                {
+                    try { await app.DisposeAsync().ConfigureAwait(false); } catch { }
+                }
+                try { cts?.Dispose(); } catch { }
+
+                NotifyStatusChanged();
             }
         }
 
-        public async Task StopAsync()
+        private async Task StopCoreAsync()
         {
-            if (!_isRunning || _app == null) return;
+            var app = _app;
+            var cts = _cts;
+            _app = null;
+            _cts = null;
             _isRunning = false;
+
+            if (app == null)
+            {
+                try { cts?.Dispose(); } catch { }
+                return;
+            }
 
             try
             {
-                _cts?.Cancel();
-                await _app.StopAsync();
-                await _app.DisposeAsync();
-                _app = null;
-                _cts?.Dispose();
-                _cts = null;
+                // Signal active WebSocket loops to close immediately so Kestrel doesn't stall on shutdown
+                try { cts?.Cancel(); } catch { }
+
+                using var shutdownTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                await app.StopAsync(shutdownTimeout.Token).ConfigureAwait(false);
+                await app.DisposeAsync().ConfigureAwait(false);
                 LoggingService.Instance.Info("ApiServer", "API server stopped.");
             }
             catch (Exception ex)
             {
                 LoggingService.Instance.Error("ApiServer", "Error stopping API server", ex);
+                try { await app.DisposeAsync().ConfigureAwait(false); } catch { }
+            }
+            finally
+            {
+                try { cts?.Dispose(); } catch { }
+                NotifyStatusChanged();
             }
         }
 
-        public async Task RestartAsync()
+        private void NotifyStatusChanged()
         {
-            await StopAsync();
-            await StartAsync();
+            try
+            {
+                StatusChanged?.Invoke(_isRunning, LastError);
+            }
+            catch { }
         }
 
-        private void ConfigureEndpoints(WebApplication app)
+        private void ConfigureEndpoints(WebApplication app, CancellationToken serverShutdownToken)
         {
             // Root overview
             app.MapGet("/", () => Results.Json(new
@@ -144,42 +227,74 @@ namespace InFox.Api
             // Curated Human-first Summary (CPU, GPU, RAM, Storage, Battery, Network)
             app.MapGet("/api/v1/summary", () =>
             {
-                var summary = TelemetryEngine.Instance.CurrentSummary;
-                return Results.Json(summary, _jsonOptions);
+                try
+                {
+                    var summary = TelemetryEngine.Instance.CurrentSummary;
+                    return Results.Json(summary, _jsonOptions);
+                }
+                catch (Exception ex)
+                {
+                    LoggingService.Instance.Error("ApiServer", "Error serializing /api/v1/summary", ex);
+                    return Results.StatusCode(StatusCodes.Status500InternalServerError);
+                }
             });
 
             // Full raw sensors collection
             app.MapGet("/api/v1/sensors", () =>
             {
-                var metrics = TelemetryEngine.Instance.CurrentMetrics;
-                return Results.Json(metrics, _jsonOptions);
+                try
+                {
+                    var metrics = TelemetryEngine.Instance.CurrentMetrics;
+                    return Results.Json(metrics, _jsonOptions);
+                }
+                catch (Exception ex)
+                {
+                    LoggingService.Instance.Error("ApiServer", "Error serializing /api/v1/sensors", ex);
+                    return Results.StatusCode(StatusCodes.Status500InternalServerError);
+                }
             });
 
             // Filtered sensors by category (e.g. /api/v1/sensors/cpu)
             app.MapGet("/api/v1/sensors/{category}", (string category) =>
             {
-                if (Enum.TryParse<HardwareCategory>(category, true, out var cat))
+                try
                 {
-                    var filtered = new System.Collections.Generic.List<SensorMetric>();
-                    foreach (var m in TelemetryEngine.Instance.CurrentMetrics)
+                    if (Enum.TryParse<HardwareCategory>(category, true, out var cat))
                     {
-                        if (m.Category == cat) filtered.Add(m);
+                        var filtered = new System.Collections.Generic.List<SensorMetric>();
+                        foreach (var m in TelemetryEngine.Instance.CurrentMetrics)
+                        {
+                            if (m.Category == cat) filtered.Add(m);
+                        }
+                        return Results.Json(filtered, _jsonOptions);
                     }
-                    return Results.Json(filtered, _jsonOptions);
+                    return Results.BadRequest(new { error = $"Unknown category '{category}'" });
                 }
-                return Results.BadRequest(new { error = $"Unknown category '{category}'" });
+                catch (Exception ex)
+                {
+                    LoggingService.Instance.Error("ApiServer", $"Error serializing /api/v1/sensors/{category}", ex);
+                    return Results.StatusCode(StatusCodes.Status500InternalServerError);
+                }
             });
 
             // Metric history for sparklines
             app.MapGet("/api/v1/history/{metricId}", (string metricId) =>
             {
-                var history = TelemetryEngine.Instance.GetHistory(metricId);
-                return Results.Json(new
+                try
                 {
-                    metricId,
-                    count = history.Length,
-                    values = history
-                }, _jsonOptions);
+                    var history = TelemetryEngine.Instance.GetHistory(metricId);
+                    return Results.Json(new
+                    {
+                        metricId,
+                        count = history.Length,
+                        values = history
+                    }, _jsonOptions);
+                }
+                catch (Exception ex)
+                {
+                    LoggingService.Instance.Error("ApiServer", $"Error serializing /api/v1/history/{metricId}", ex);
+                    return Results.StatusCode(StatusCodes.Status500InternalServerError);
+                }
             });
 
             // Real-time WebSocket stream (Supports optional ?channel=cpu|gpu|memory|storage|network filter)
@@ -189,7 +304,8 @@ namespace InFox.Api
                 {
                     string? channel = context.Request.Query["channel"].ToString();
                     using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                    await HandleWebSocketStreamAsync(webSocket, channel, context.RequestAborted);
+                    using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted, serverShutdownToken);
+                    await HandleWebSocketStreamAsync(webSocket, channel, linkedCts.Token);
                 }
                 else
                 {
@@ -243,9 +359,15 @@ namespace InFox.Api
         {
             try
             {
-                _cts?.Cancel();
+                var app = _app;
+                var cts = _cts;
+                _app = null;
+                _cts = null;
                 _isRunning = false;
-                _app?.DisposeAsync().AsTask().Wait(500);
+
+                try { cts?.Cancel(); } catch { }
+                app?.DisposeAsync().AsTask().Wait(500);
+                try { cts?.Dispose(); } catch { }
             }
             catch { }
         }
